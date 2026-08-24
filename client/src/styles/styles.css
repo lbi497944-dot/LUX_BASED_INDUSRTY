@@ -1645,6 +1645,20 @@ h1 em, h2 em, h3 em {
   margin: 0 10px;
 }
 
+.lux-trigger {
+  cursor: inherit;
+  color: inherit;
+  font-family: inherit;
+  font-size: inherit;
+  font-weight: inherit;
+  letter-spacing: inherit;
+  line-height: inherit;
+  outline: none;
+  user-select: none;
+  -webkit-user-select: none;
+  -webkit-tap-highlight-color: transparent;
+}
+
 /* COLLECTIONS PAGE LIST */
 .collections-editorial-list {
   display: flex;

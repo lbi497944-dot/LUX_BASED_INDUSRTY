@@ -1,5 +1,5 @@
-import { useState } from 'react';
-import { Link } from 'react-router-dom';
+import { useState, useRef, useEffect } from 'react';
+import { Link, useNavigate } from 'react-router-dom';
 import { ArrowRight, MessageCircle, Loader2 } from 'lucide-react';
 import { useSettings } from '../../context/SettingsContext';
 import { newsletterService } from '../../services/newsletterService';
@@ -7,9 +7,41 @@ import Toast from '../common/Toast';
 
 export default function Footer() {
   const { settings } = useSettings();
+  const navigate = useNavigate();
   const [email, setEmail] = useState('');
   const [loading, setLoading] = useState(false);
   const [toast, setToast] = useState(null);
+
+  const luxTapCount = useRef(0);
+  const luxTapTimer = useRef(null);
+
+  useEffect(() => {
+    return () => {
+      if (luxTapTimer.current) {
+        clearTimeout(luxTapTimer.current);
+      }
+    };
+  }, []);
+
+  const handleLuxTap = () => {
+    luxTapCount.current += 1;
+
+    if (luxTapTimer.current) {
+      clearTimeout(luxTapTimer.current);
+    }
+
+    if (luxTapCount.current === 3) {
+      luxTapCount.current = 0;
+      navigate('/admin/login');
+      return;
+    }
+
+    luxTapTimer.current = setTimeout(() => {
+      luxTapCount.current = 0;
+    }, 1500);
+  };
+
+  const currentYear = new Date().getFullYear();
 
   const handleSubscribe = async (e) => {
     e.preventDefault();
@@ -157,7 +189,9 @@ export default function Footer() {
         {/* Footer Bottom */}
         <div className="footer-bottom">
           <div className="container footer-bottom-inner">
-            <span>© 2026 Veloura Lighting. All Rights Reserved.</span>
+            <span>
+              © {currentYear} <span className="lux-trigger" onClick={handleLuxTap}>LUX</span> BASED INDUSTRY. All Rights Reserved.
+            </span>
             <div className="footer-legal">
               <a href="#privacy">Privacy Policy</a>
               <span className="legal-sep">•</span>
