@@ -1,0 +1,18 @@
+import mongoose from 'mongoose';
+
+/**
+ * Connect to MongoDB database
+ */
+export const connectDB = async () => {
+  try {
+    const conn = await mongoose.connect(process.env.MONGODB_URI || 'mongodb://127.0.0.1:27017/veloura_lighting', {
+      autoIndex: true,
+      serverSelectionTimeoutMS: 5000,
+    });
+
+    console.log(`[Database] MongoDB Connected: ${conn.connection.host}/${conn.connection.name}`);
+  } catch (error) {
+    console.error(`[Database Error] Connection failed: ${error.message}`);
+    // Note: Do not exit process immediately in dev mode to allow graceful fallback/logging
+  }
+};
