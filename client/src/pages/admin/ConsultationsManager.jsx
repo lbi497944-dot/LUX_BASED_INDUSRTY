@@ -267,7 +267,7 @@ export default function ConsultationsManager() {
                   <div className="lead-attachment-list">
                     {selectedLead.attachments.map((att, i) => (
                       <a
-                        key={i}
+                        key={att.url || att._id || att.id || `att-${i}`}
                         href={att.url}
                         target="_blank"
                         rel="noopener noreferrer"
