@@ -55,7 +55,7 @@ export default function Collections() {
               const title = item.name || item.title;
               const img = item.heroImage || item.image;
               return (
-                <Reveal key={item.slug} delay={idx * 0.1}>
+                <Reveal key={item._id || item.id || item.slug || `col-${idx}`} delay={idx * 0.1}>
                   <Link to={`/collections/${item.slug}`} className="collection-editorial-row">
                     <div className="row-index">0{idx + 1}</div>
                     <div className="row-image-frame">

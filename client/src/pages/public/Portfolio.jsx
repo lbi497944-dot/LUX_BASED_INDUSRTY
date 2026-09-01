@@ -91,7 +91,7 @@ export default function Portfolio() {
           <div className="portfolio-editorial-grid">
             {filteredProjects.map((proj, idx) => {
               const projectImg = proj.coverImage || proj.image;
-              const projectKey = proj.slug || proj.id || proj._id || idx;
+              const projectKey = proj._id || proj.id || proj.slug || proj.title || `proj-${idx}`;
               return (
                 <Reveal key={projectKey} delay={idx * 0.1}>
                   <div

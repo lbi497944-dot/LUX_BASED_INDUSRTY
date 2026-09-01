@@ -92,7 +92,7 @@ export default function CollectionDetail() {
                 </div>
                 <ul className="spec-list">
                   {collection.features?.map((feat, i) => (
-                    <li key={i}>
+                    <li key={feat || `feat-${i}`}>
                       <CheckCircle2 size={16} className="gold-icon" />
                       <span>{feat}</span>
                     </li>
@@ -133,7 +133,7 @@ export default function CollectionDetail() {
             {relatedProducts.map((prod, idx) => {
               const productWhatsAppUrl = getWhatsAppLink(getProductWhatsAppMessage(prod.name));
               return (
-                <Reveal key={prod.id} delay={idx * 0.1}>
+                <Reveal key={prod._id || prod.id || prod.slug || `prod-${idx}`} delay={idx * 0.1}>
                   <div className="product-card-luxury detail-product-card">
                     <div className="product-image-frame">
                       <img src={prod.image} alt={`Veloura ${prod.name} ${prod.category}`} loading="lazy" decoding="async" />

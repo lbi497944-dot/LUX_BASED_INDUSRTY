@@ -108,7 +108,7 @@ export default function About() {
 
           <div className="principles-grid-luxury">
             {principles.map((p, idx) => (
-              <Reveal key={p.num} delay={idx * 0.1}>
+              <Reveal key={p.num || p.title || `principle-${idx}`} delay={idx * 0.1}>
                 <div className="principle-card-luxury">
                   <div className="principle-header">
                     <span className="principle-icon">{p.icon}</span>
@@ -132,8 +132,8 @@ export default function About() {
           />
 
           <div className="process-list-vertical">
-            {processSteps.map((step) => (
-              <div key={step.step} className="process-row-item">
+            {processSteps.map((step, idx) => (
+              <div key={step.step || step.title || `step-${idx}`} className="process-row-item">
                 <span className="process-row-num">{step.step}</span>
                 <div className="process-row-content">
                   <h3>{step.title}</h3>

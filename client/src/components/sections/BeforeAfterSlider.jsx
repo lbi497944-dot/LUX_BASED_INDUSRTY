@@ -42,10 +42,18 @@ export default function BeforeAfterSlider() {
         <div
           ref={containerRef}
           className="before-after-container"
+          role="slider"
+          aria-label="Before and after lighting comparison slider"
+          aria-valuenow={Math.round(sliderPosition)}
+          aria-valuemin={0}
+          aria-valuemax={100}
           onMouseDown={handleMouseDown}
           onMouseUp={handleMouseUp}
           onMouseLeave={handleMouseUp}
           onMouseMove={handleMouseMove}
+          onTouchStart={handleMouseDown}
+          onTouchEnd={handleMouseUp}
+          onTouchCancel={handleMouseUp}
           onTouchMove={handleTouchMove}
         >
           {/* AFTER IMAGE (Warm Illuminated Interior) */}

@@ -268,21 +268,24 @@ export default function Home() {
             title="Lighting Designed Around Extraordinary Spaces."
           />
           <div className="collection-grid-large">
-            {collections.slice(0, 3).map((item, idx) => (
-              <Reveal key={item.slug} delay={idx * 0.15}>
-                <Link className="collection-card-luxury" to={`/collections/${item.slug}`}>
-                  <img src={item.image} alt={`Veloura ${item.title} Collection`} loading="lazy" decoding="async" />
-                  <div className="card-overlay-luxury">
-                    <span className="card-number">0{idx + 1}</span>
-                    <h3 className="card-title">{item.title}</h3>
-                    <p className="card-tagline">{item.tagline}</p>
-                    <div className="card-arrow-circle">
-                      <ArrowRight size={18} />
+            {collections.slice(0, 3).map((item, idx) => {
+              const collectionKey = item._id || item.id || item.slug || `collection-${idx}`;
+              return (
+                <Reveal key={collectionKey} delay={idx * 0.15}>
+                  <Link className="collection-card-luxury" to={`/collections/${item.slug}`}>
+                    <img src={item.heroImage || item.image} alt={`Veloura ${item.title || item.name} Collection`} loading="lazy" decoding="async" />
+                    <div className="card-overlay-luxury">
+                      <span className="card-number">0{idx + 1}</span>
+                      <h3 className="card-title">{item.title || item.name}</h3>
+                      <p className="card-tagline">{item.tagline}</p>
+                      <div className="card-arrow-circle">
+                        <ArrowRight size={18} />
+                      </div>
                     </div>
-                  </div>
-                </Link>
-              </Reveal>
-            ))}
+                  </Link>
+                </Reveal>
+              );
+            })}
           </div>
         </div>
       </section>
@@ -302,16 +305,18 @@ export default function Home() {
 
           <div className="product-grid-luxury">
             {products.map((prod, idx) => {
-              const isSaved = savedIds.includes(prod.id);
+              const prodKey = prod._id || prod.id || prod.slug || `product-${idx}`;
+              const prodId = prod._id || prod.id;
+              const isSaved = savedIds.includes(prodId);
               return (
-                <Reveal key={prod.id} delay={idx * 0.1}>
+                <Reveal key={prodKey} delay={idx * 0.1}>
                   <div className="product-card-luxury">
                     <Link to={`/collections/${prod.collectionSlug}`}>
                       <div className="product-image-frame">
                         <img src={prod.image} alt={`Veloura ${prod.name} ${prod.category}`} loading="lazy" decoding="async" />
                         <button
                           className={`product-save-heart ${isSaved ? 'saved' : ''}`}
-                          onClick={(e) => handleToggleHeart(e, prod.id)}
+                          onClick={(e) => handleToggleHeart(e, prodId)}
                           aria-label={isSaved ? `Remove ${prod.name} from saved items` : `Save ${prod.name} to saved items`}
                           title={isSaved ? 'Saved to bookmarks' : 'Save product'}
                         >
@@ -375,15 +380,18 @@ export default function Home() {
             align="center"
           />
           <div className="why-grid">
-            {whyVelouraItems.map((item, idx) => (
-              <Reveal key={item.title} delay={idx * 0.1}>
-                <div className="why-card">
-                  <div className="why-icon-box">{item.icon}</div>
-                  <h3>{item.title}</h3>
-                  <p>{item.text}</p>
-                </div>
-              </Reveal>
-            ))}
+            {whyVelouraItems.map((item, idx) => {
+              const whyKey = item.id || item.title || `why-${idx}`;
+              return (
+                <Reveal key={whyKey} delay={idx * 0.1}>
+                  <div className="why-card">
+                    <div className="why-icon-box">{item.icon}</div>
+                    <h3>{item.title}</h3>
+                    <p>{item.text}</p>
+                  </div>
+                </Reveal>
+              );
+            })}
           </div>
         </div>
       </section>
@@ -402,19 +410,22 @@ export default function Home() {
           </div>
 
           <div className="projects-grid-editorial">
-            {featuredProjects.map((proj, idx) => (
-              <Reveal key={proj.title} delay={idx * 0.12}>
-                <Link className="project-card-luxury" to="/portfolio">
-                  <div className="project-image-box">
-                    <img src={proj.image} alt={`Veloura Lighting Project - ${proj.title} in ${proj.location}`} loading="lazy" decoding="async" />
-                    <div className="project-overlay-content">
-                      <small>{proj.location}</small>
-                      <h3>{proj.title}</h3>
+            {featuredProjects.map((proj, idx) => {
+              const projectKey = proj._id || proj.id || proj.slug || proj.title || `project-${idx}`;
+              return (
+                <Reveal key={projectKey} delay={idx * 0.12}>
+                  <Link className="project-card-luxury" to="/portfolio">
+                    <div className="project-image-box">
+                      <img src={proj.coverImage || proj.image} alt={`Veloura Lighting Project - ${proj.title} in ${proj.location}`} loading="lazy" decoding="async" />
+                      <div className="project-overlay-content">
+                        <small>{proj.location}</small>
+                        <h3>{proj.title}</h3>
+                      </div>
                     </div>
-                  </div>
-                </Link>
-              </Reveal>
-            ))}
+                  </Link>
+                </Reveal>
+              );
+            })}
           </div>
 
           <div className="mobile-center-link">
@@ -436,13 +447,16 @@ export default function Home() {
             title="From Vision to Illumination"
           />
           <div className="process-timeline-desktop">
-            {processSteps.map((step) => (
-              <div key={step.step} className="process-step-col">
-                <span className="process-number">{step.step}</span>
-                <h3>{step.title}</h3>
-                <p>{step.description}</p>
-              </div>
-            ))}
+            {processSteps.map((step, idx) => {
+              const stepKey = step.step || step.title || `step-${idx}`;
+              return (
+                <div key={stepKey} className="process-step-col">
+                  <span className="process-number">{step.step}</span>
+                  <h3>{step.title}</h3>
+                  <p>{step.description}</p>
+                </div>
+              );
+            })}
           </div>
         </div>
       </section>
@@ -457,23 +471,26 @@ export default function Home() {
           />
 
           <div className="faq-accordion-container">
-            {faqItems.map((faq, index) => (
-              <div
-                key={index}
-                className={`faq-item ${openFaq === index ? 'open' : ''}`}
-                onClick={() => setOpenFaq(openFaq === index ? null : index)}
-              >
-                <div className="faq-question">
-                  <h3>{faq.question}</h3>
-                  <span className="faq-icon">{openFaq === index ? '−' : '+'}</span>
-                </div>
-                {openFaq === index && (
-                  <div className="faq-answer">
-                    <p>{faq.answer}</p>
+            {faqItems.map((faq, index) => {
+              const faqKey = faq._id || faq.id || faq.question || `faq-${index}`;
+              return (
+                <div
+                  key={faqKey}
+                  className={`faq-item ${openFaq === index ? 'open' : ''}`}
+                  onClick={() => setOpenFaq(openFaq === index ? null : index)}
+                >
+                  <div className="faq-question">
+                    <h3>{faq.question}</h3>
+                    <span className="faq-icon">{openFaq === index ? '−' : '+'}</span>
                   </div>
-                )}
-              </div>
-            ))}
+                  {openFaq === index && (
+                    <div className="faq-answer">
+                      <p>{faq.answer}</p>
+                    </div>
+                  )}
+                </div>
+              );
+            })}
           </div>
         </div>
       </section>
