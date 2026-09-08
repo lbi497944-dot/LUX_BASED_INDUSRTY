@@ -1,51 +1,56 @@
-import nodemailer from 'nodemailer';
+import { Resend } from 'resend';
 
-let transporter = null;
-let isEmailConfigured = false;
+let resendClient = null;
 
 /**
- * Initialize and verify SMTP email transporter
- * Designed to be resilient: logs clear diagnostics and marks email unavailable
- * if SMTP is unreachable, without terminating the HTTP server process.
+ * Determines whether email delivery is fully configured.
+ * Email is considered configured ONLY when all three environment variables exist:
+ *   1. RESEND_API_KEY
+ *   2. EMAIL_FROM
+ *   3. ADMIN_NOTIFICATION_EMAIL
+ *
+ * Production strictly requires explicitly configured EMAIL_FROM; no implicit fallback is used.
  */
-export const initEmailTransporter = async () => {
-  console.log('[Email] Initializing SMTP transporter...');
-  const { SMTP_HOST, SMTP_PORT, SMTP_USER, SMTP_PASS } = process.env;
+export const getIsEmailConfigured = () => {
+  return Boolean(
+    process.env.RESEND_API_KEY &&
+    process.env.EMAIL_FROM &&
+    process.env.ADMIN_NOTIFICATION_EMAIL
+  );
+};
 
-  if (SMTP_HOST && SMTP_PORT && SMTP_USER && SMTP_PASS) {
-    try {
-      const port = parseInt(SMTP_PORT, 10) || 587;
-      transporter = nodemailer.createTransport({
-        host: SMTP_HOST,
-        port,
-        secure: port === 465,
-        auth: {
-          user: SMTP_USER,
-          pass: SMTP_PASS,
-        },
-        connectionTimeout: 10000, // 10 second timeout for initial connection
-        greetingTimeout: 5000,    // 5 second greeting timeout
-        socketTimeout: 10000,     // 10 second socket timeout
-      });
+/**
+ * Get or instantiate the singleton Resend client.
+ * Returns null if the required email configuration is incomplete.
+ */
+export const getResendClient = () => {
+  if (!getIsEmailConfigured()) {
+    return null;
+  }
+  if (!resendClient) {
+    resendClient = new Resend(process.env.RESEND_API_KEY);
+  }
+  return resendClient;
+};
 
-      // Verify connection configuration
-      await transporter.verify();
-      isEmailConfigured = true;
-      console.log(`[Email] SMTP transporter verified successfully (${SMTP_HOST}:${port}).`);
-    } catch (err) {
-      console.warn('[Email Warning] SMTP transporter verification failed.');
-      console.warn('[Email Warning] Outbound email is temporarily unavailable.');
-      console.warn(`[Email Warning] Error: ${err.message}`);
-      isEmailConfigured = false;
-      transporter = null;
-    }
+/**
+ * Log startup configuration status for the Resend email service.
+ * Resilient & non-blocking: Never performs outbound network requests during startup
+ * and never halts the HTTP server. Never logs secrets or API keys.
+ */
+export const initEmailService = () => {
+  if (getIsEmailConfigured()) {
+    console.log(`[Email] Resend HTTPS email service ready (Sender: ${process.env.EMAIL_FROM}).`);
   } else {
-    console.warn('[Email Warning] SMTP credentials not configured.');
+    const missing = [];
+    if (!process.env.RESEND_API_KEY) missing.push('RESEND_API_KEY');
+    if (!process.env.EMAIL_FROM) missing.push('EMAIL_FROM');
+    if (!process.env.ADMIN_NOTIFICATION_EMAIL) missing.push('ADMIN_NOTIFICATION_EMAIL');
+    console.warn(`[Email Warning] Incomplete email configuration. Missing: ${missing.join(', ')}.`);
     console.warn('[Email Warning] Outbound email notifications are disabled.');
-    isEmailConfigured = false;
-    transporter = null;
   }
 };
 
-export const getTransporter = () => transporter;
-export const getIsEmailConfigured = () => isEmailConfigured;
+// Aliases for compatibility
+export const initEmailTransporter = initEmailService;
+export const getTransporter = () => null;

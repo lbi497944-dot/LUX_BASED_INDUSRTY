@@ -1,26 +1,28 @@
-import { getTransporter, getIsEmailConfigured } from '../config/email.js';
+import { getResendClient, getIsEmailConfigured } from '../config/email.js';
 
 const getNotificationRecipient = () => {
   return process.env.ADMIN_NOTIFICATION_EMAIL || null;
 };
 
 const getSenderAddress = () => {
-  return process.env.EMAIL_FROM || 'Veloura Lighting <no-reply@veloura-lighting.com>';
+  return process.env.EMAIL_FROM || null;
 };
 
 /**
- * Send Contact Enquiry notification email to administrator
+ * Send Contact Enquiry notification email to administrator via Resend HTTPS API
  */
 export const sendContactNotification = async (enquiry) => {
-  const recipient = getNotificationRecipient();
-  if (!recipient || !getIsEmailConfigured()) {
-    console.warn('[Email Warning] Outbound contact notification skipped: SMTP is unavailable or recipient is not configured.');
+  if (!getIsEmailConfigured()) {
+    console.warn('[Email Warning] Outbound contact notification skipped: Email service is not fully configured (requires RESEND_API_KEY, EMAIL_FROM, ADMIN_NOTIFICATION_EMAIL).');
     return;
   }
 
-  const transporter = getTransporter();
-  if (!transporter) {
-    console.warn('[Email Warning] Outbound contact notification skipped: No active transporter.');
+  const resend = getResendClient();
+  const recipient = getNotificationRecipient();
+  const sender = getSenderAddress();
+
+  if (!resend || !recipient || !sender) {
+    console.warn('[Email Warning] Outbound contact notification skipped: Missing Resend client or sender/recipient address.');
     return;
   }
 
@@ -76,32 +78,39 @@ export const sendContactNotification = async (enquiry) => {
       </div>
     `;
 
-    await transporter.sendMail({
-      from: getSenderAddress(),
+    const response = await resend.emails.send({
+      from: sender,
       to: recipient,
       subject: `[Veloura Lead] New Contact Enquiry: ${clientName}`,
       html: htmlContent,
     });
 
-    console.log('[Email] Contact enquiry notification sent to admin.');
+    if (response.error) {
+      console.error(`[Email Error] Resend API rejected contact notification: ${response.error.message || JSON.stringify(response.error)}`);
+      return;
+    }
+
+    console.log(`[Email] Contact enquiry notification sent to admin via Resend (ID: ${response.data?.id || 'OK'}).`);
   } catch (error) {
     console.error(`[Email Error] Failed to send contact notification: ${error.message}`);
   }
 };
 
 /**
- * Send Private Consultation request notification email to administrator
+ * Send Private Consultation request notification email to administrator via Resend HTTPS API
  */
 export const sendConsultationNotification = async (consultation) => {
-  const recipient = getNotificationRecipient();
-  if (!recipient || !getIsEmailConfigured()) {
-    console.warn('[Email Warning] Outbound consultation notification skipped: SMTP is unavailable or recipient is not configured.');
+  if (!getIsEmailConfigured()) {
+    console.warn('[Email Warning] Outbound consultation notification skipped: Email service is not fully configured (requires RESEND_API_KEY, EMAIL_FROM, ADMIN_NOTIFICATION_EMAIL).');
     return;
   }
 
-  const transporter = getTransporter();
-  if (!transporter) {
-    console.warn('[Email Warning] Outbound consultation notification skipped: No active transporter.');
+  const resend = getResendClient();
+  const recipient = getNotificationRecipient();
+  const sender = getSenderAddress();
+
+  if (!resend || !recipient || !sender) {
+    console.warn('[Email Warning] Outbound consultation notification skipped: Missing Resend client or sender/recipient address.');
     return;
   }
 
@@ -177,14 +186,19 @@ export const sendConsultationNotification = async (consultation) => {
       </div>
     `;
 
-    await transporter.sendMail({
-      from: getSenderAddress(),
+    const response = await resend.emails.send({
+      from: sender,
       to: recipient,
       subject: `[Veloura Consultation] Booking from ${fullName}`,
       html: htmlContent,
     });
 
-    console.log('[Email] Consultation booking notification sent to admin.');
+    if (response.error) {
+      console.error(`[Email Error] Resend API rejected consultation notification: ${response.error.message || JSON.stringify(response.error)}`);
+      return;
+    }
+
+    console.log(`[Email] Consultation booking notification sent to admin via Resend (ID: ${response.data?.id || 'OK'}).`);
   } catch (error) {
     console.error(`[Email Error] Failed to send consultation notification: ${error.message}`);
   }

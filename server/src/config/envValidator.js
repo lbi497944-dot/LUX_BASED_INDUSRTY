@@ -24,25 +24,18 @@ export const validateEnvironment = () => {
     errors.push('CRITICAL: MONGODB_URI environment variable is missing. Explicit database URI configuration is required.');
   }
 
-  // 3. Email Configuration (Production Strictness)
-  const hasSmtp = Boolean(
-    process.env.SMTP_HOST &&
-    process.env.SMTP_PORT &&
-    process.env.SMTP_USER &&
-    process.env.SMTP_PASS
-  );
+  // 3. Email Configuration (Resend HTTPS API)
+  const missingEmailVars = [];
+  if (!process.env.RESEND_API_KEY) missingEmailVars.push('RESEND_API_KEY');
+  if (!process.env.EMAIL_FROM) missingEmailVars.push('EMAIL_FROM');
+  if (!process.env.ADMIN_NOTIFICATION_EMAIL) missingEmailVars.push('ADMIN_NOTIFICATION_EMAIL');
 
-  if (!hasSmtp) {
+  if (missingEmailVars.length > 0) {
     if (isProduction) {
-      warnings.push('SMTP email configuration (SMTP_HOST, SMTP_PORT, SMTP_USER, SMTP_PASS) is missing in production.');
+      warnings.push(`Incomplete email configuration in production. Missing: ${missingEmailVars.join(', ')}. Outbound email notifications will be disabled.`);
     } else {
-      warnings.push('SMTP credentials not configured. Contact and consultation email notifications will be skipped safely in development.');
+      warnings.push(`Email configuration incomplete (${missingEmailVars.join(', ')}). Contact and consultation email notifications will be skipped safely in development.`);
     }
-  }
-
-  // 4. Admin Notification Email
-  if (!process.env.ADMIN_NOTIFICATION_EMAIL) {
-    warnings.push('ADMIN_NOTIFICATION_EMAIL is not set. Emails will use fallback or default system sender.');
   }
 
   // Report Warnings

@@ -393,7 +393,7 @@ async function runE2ETests() {
 
     // 9. CONSULTATION CRM & EMAIL ISOLATION
     console.log('\n--- 9. Consultation CRM & Email Fault-Tolerance ---');
-    // Public visitor submits (even when SMTP is not configured)
+    // Public visitor submits (even when Resend is unconfigured or offline)
     const resSubmitConsult = await request('POST', '/api/consultations', {
       fullName: 'VIP Security Lead',
       email: 'vip.security@example.com',
@@ -407,7 +407,7 @@ async function runE2ETests() {
     });
     createdConsultationId = resSubmitConsult.data?.data?.consultation?._id;
     record(
-      'Public POST /api/consultations succeeds even if SMTP is unconfigured/offline',
+      'Public POST /api/consultations succeeds even if Resend email is unconfigured/offline',
       resSubmitConsult.status === 201 && Boolean(createdConsultationId)
     );
 
@@ -448,7 +448,7 @@ async function runE2ETests() {
     });
     createdContactId = resSubmitContact.data?.data?.enquiry?._id || resSubmitContact.data?.data?.contact?._id;
     record(
-      'Public POST /api/contact succeeds and persists to database even when SMTP is unconfigured',
+      'Public POST /api/contact succeeds and persists to database even when Resend email is unconfigured',
       resSubmitContact.status === 201 && Boolean(createdContactId)
     );
 
