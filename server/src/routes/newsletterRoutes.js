@@ -2,7 +2,7 @@ import express from 'express';
 import { body } from 'express-validator';
 import * as newsletterController from '../controllers/newsletterController.js';
 import { validate } from '../middleware/validateMiddleware.js';
-import { protect } from '../middleware/authMiddleware.js';
+import { protect, authorize } from '../middleware/authMiddleware.js';
 import { formLimiter } from '../middleware/rateLimitMiddleware.js';
 
 const router = express.Router();
@@ -23,7 +23,7 @@ router.post(
   newsletterController.subscribe
 );
 
-router.get('/', protect, newsletterController.getSubscribers);
-router.delete('/:id', protect, newsletterController.deleteSubscriber);
+router.get('/', protect, authorize('admin'), newsletterController.getSubscribers);
+router.delete('/:id', protect, authorize('admin'), newsletterController.deleteSubscriber);
 
 export default router;

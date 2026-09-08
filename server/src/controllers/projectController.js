@@ -3,7 +3,12 @@ import { successResponse } from '../utils/apiResponse.js';
 
 export const getProjects = async (req, res, next) => {
   try {
-    const result = await projectService.getAllProjects(req.query);
+    const isAdmin = Boolean(req.admin && req.admin.role === 'admin');
+    const queryParams = {
+      ...req.query,
+      adminView: isAdmin && (req.query.adminView === 'true' || req.query.adminView === true),
+    };
+    const result = await projectService.getAllProjects(queryParams);
     return successResponse(res, 'Projects retrieved successfully.', result.projects, 200, result.pagination);
   } catch (error) {
     next(error);

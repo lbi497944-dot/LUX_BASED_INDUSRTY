@@ -3,7 +3,12 @@ import { successResponse } from '../utils/apiResponse.js';
 
 export const getCollections = async (req, res, next) => {
   try {
-    const collections = await collectionService.getAllCollections(req.query);
+    const isAdmin = Boolean(req.admin && req.admin.role === 'admin');
+    const queryParams = {
+      ...req.query,
+      adminView: isAdmin && (req.query.adminView === 'true' || req.query.adminView === true),
+    };
+    const collections = await collectionService.getAllCollections(queryParams);
     return successResponse(res, 'Collections retrieved successfully.', collections);
   } catch (error) {
     next(error);

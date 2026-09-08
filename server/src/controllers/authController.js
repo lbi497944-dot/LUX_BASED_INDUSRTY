@@ -23,3 +23,13 @@ export const getMe = async (req, res, next) => {
 export const logout = async (req, res) => {
   return successResponse(res, 'Successfully logged out.');
 };
+
+export const changePassword = async (req, res, next) => {
+  try {
+    const { currentPassword, newPassword } = req.body;
+    const result = await authService.changeAdminPassword(req.admin._id, currentPassword, newPassword);
+    return successResponse(res, result.message);
+  } catch (error) {
+    next(error);
+  }
+};

@@ -1,4 +1,5 @@
 import Consultation from '../models/Consultation.js';
+import { sendConsultationNotification } from './emailService.js';
 
 export const createConsultation = async (data, files = []) => {
   const attachments = files.map((file) => ({
@@ -11,6 +12,11 @@ export const createConsultation = async (data, files = []) => {
   const consultation = await Consultation.create({
     ...data,
     attachments,
+  });
+
+  // Asynchronously trigger admin email notification (non-blocking)
+  sendConsultationNotification(consultation).catch((err) => {
+    console.error(`[Consultation Email Notification Error]: ${err.message}`);
   });
 
   return consultation;

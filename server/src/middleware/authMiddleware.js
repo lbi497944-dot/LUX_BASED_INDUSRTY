@@ -16,8 +16,13 @@ export const protect = async (req, res, next) => {
     return errorResponse(res, 'Not authorized. Please login to access this resource.', 401);
   }
 
+  if (!process.env.JWT_SECRET) {
+    console.error('[Auth Error] JWT_SECRET is not configured on server.');
+    return errorResponse(res, 'Internal authentication service misconfiguration.', 500);
+  }
+
   try {
-    const decoded = jwt.verify(token, process.env.JWT_SECRET || 'veloura_default_jwt_secret');
+    const decoded = jwt.verify(token, process.env.JWT_SECRET);
     const admin = await Admin.findById(decoded.id).select('-password');
 
     if (!admin) {
@@ -36,13 +41,43 @@ export const protect = async (req, res, next) => {
  */
 export const authorize = (...roles) => {
   return (req, res, next) => {
-    if (!req.admin || !roles.includes(req.admin.role)) {
+    if (!req.admin) {
+      return errorResponse(res, 'Authentication required to access this resource.', 401);
+    }
+    if (!roles.includes(req.admin.role)) {
       return errorResponse(
         res,
-        `Role (${req.admin ? req.admin.role : 'Guest'}) is not permitted to perform this action.`,
+        `Role (${req.admin.role || 'Guest'}) is not permitted to perform this action.`,
         403
       );
     }
     next();
   };
+};
+
+/**
+ * Optional authentication middleware
+ * Attaches req.admin if a valid Bearer token is passed; otherwise proceeds anonymously without error.
+ */
+export const optionalAuth = async (req, res, next) => {
+  let token;
+
+  if (req.headers.authorization && req.headers.authorization.startsWith('Bearer')) {
+    token = req.headers.authorization.split(' ')[1];
+  }
+
+  if (!token || !process.env.JWT_SECRET) {
+    req.admin = null;
+    return next();
+  }
+
+  try {
+    const decoded = jwt.verify(token, process.env.JWT_SECRET);
+    const admin = await Admin.findById(decoded.id).select('-password');
+    req.admin = admin || null;
+  } catch {
+    req.admin = null;
+  }
+
+  next();
 };

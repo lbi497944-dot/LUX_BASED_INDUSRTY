@@ -1,7 +1,14 @@
 import ContactEnquiry from '../models/ContactEnquiry.js';
+import { sendContactNotification } from './emailService.js';
 
 export const createContactEnquiry = async (data) => {
   const enquiry = await ContactEnquiry.create(data);
+
+  // Asynchronously trigger admin email notification (non-blocking)
+  sendContactNotification(enquiry).catch((err) => {
+    console.error(`[Contact Email Notification Error]: ${err.message}`);
+  });
+
   return enquiry;
 };
 

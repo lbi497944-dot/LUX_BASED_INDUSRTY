@@ -22,21 +22,35 @@ app.use(
 app.use(compression());
 
 // CORS configuration
-const allowedOrigins = [
-  process.env.CLIENT_URL || 'http://localhost:5173',
+const isProduction = process.env.NODE_ENV === 'production';
+
+// Support multiple origins through a comma-separated CLIENT_URL value
+const configuredClientUrls = (process.env.CLIENT_URL || '')
+  .split(',')
+  .map((url) => url.trim())
+  .filter(Boolean);
+
+const devOrigins = [
+  'http://localhost:5173',
   'http://localhost:3000',
   'http://127.0.0.1:5173',
 ];
+
+const allowedOrigins = isProduction
+  ? configuredClientUrls
+  : Array.from(new Set([...configuredClientUrls, ...devOrigins]));
 
 app.use(
   cors({
     origin: (origin, callback) => {
       // Allow requests with no origin (like mobile apps, curl, server-to-server)
-      if (!origin || allowedOrigins.includes(origin)) {
-        callback(null, true);
-      } else {
-        callback(null, true); // Permissive in dev to avoid friction
+      if (!origin) {
+        return callback(null, true);
       }
+      if (allowedOrigins.includes(origin)) {
+        return callback(null, true);
+      }
+      return callback(new Error(`CORS blocked: Origin '${origin}' is not permitted.`));
     },
     credentials: true,
     methods: ['GET', 'POST', 'PUT', 'PATCH', 'DELETE', 'OPTIONS'],

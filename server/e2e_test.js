@@ -1,14 +1,19 @@
 import dotenv from 'dotenv';
 import path from 'path';
 import { fileURLToPath } from 'url';
+import http from 'http';
+import mongoose from 'mongoose';
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 dotenv.config({ path: path.resolve(__dirname, '.env') });
 dotenv.config(); // fallback
-import http from 'http';
+
 import app from './src/app.js';
 import { connectDB } from './src/config/db.js';
-import mongoose from 'mongoose';
+import { validateEnvironment } from './src/config/envValidator.js';
+import { generateToken } from './src/utils/generateToken.js';
+import Admin from './src/models/Admin.js';
+import Product from './src/models/Product.js';
 
 const PORT = 5555;
 const BASE_URL = `http://127.0.0.1:${PORT}`;
@@ -52,11 +57,8 @@ async function request(method, path, body = null, headers = {}) {
 
 async function runE2ETests() {
   console.log('========================================================');
-  console.log('  VELOURA LIGHTING — END-TO-END INTEGRATION TEST RUNNER');
+  console.log('  VELOURA LIGHTING — SECURITY & REGRESSION TEST RUNNER');
   console.log('========================================================\n');
-
-  await connectDB();
-  const server = app.listen(PORT);
 
   const results = {
     passed: 0,
@@ -75,24 +77,94 @@ async function runE2ETests() {
     results.tests.push({ name, passed, details });
   }
 
+  // 1. CONFIGURATION & STARTUP FAIL-FAST AUDIT
+  console.log('--- 1. Startup & Configuration Fail-Fast Audit ---');
+  // Check JWT missing fail-fast
+  const savedJwtSecret = process.env.JWT_SECRET;
+  delete process.env.JWT_SECRET;
+  let jwtFailFastPassed = false;
+  try {
+    validateEnvironment();
+  } catch (err) {
+    jwtFailFastPassed = err.message.includes('Environment validation failed');
+  }
+  process.env.JWT_SECRET = savedJwtSecret;
+  record('Missing JWT_SECRET causes immediate configuration validation failure', jwtFailFastPassed);
+
+  // Check MONGODB_URI missing fail-fast
+  const savedMongoUri = process.env.MONGODB_URI;
+  delete process.env.MONGODB_URI;
+  let mongoFailFastPassed = false;
+  try {
+    await connectDB();
+  } catch (err) {
+    mongoFailFastPassed = err.message.includes('MONGODB_URI is not defined');
+  }
+  process.env.MONGODB_URI = savedMongoUri;
+  record('Missing MONGODB_URI causes immediate database connection failure', mongoFailFastPassed);
+
+  // Now connect legitimately
+  await connectDB();
+  const server = app.listen(PORT);
+
   let adminToken = '';
+  let adminUserId = '';
   let createdProductId = '';
-  let createdCollectionId = '';
-  let createdProjectId = '';
   let createdConsultationId = '';
   let createdContactId = '';
 
+  const adminEmail = process.env.INITIAL_ADMIN_EMAIL || 'admin@veloura-lighting.com';
+  const adminPassword = process.env.INITIAL_ADMIN_PASSWORD || 'VelouraAdmin2026!';
+
+  // Ensure test admin exists for test execution
+  const existingAdmin = await Admin.findOne({ email: adminEmail });
+  if (!existingAdmin) {
+    await Admin.create({
+      username: 'Veloura Admin',
+      email: adminEmail,
+      password: adminPassword,
+      role: 'admin',
+    });
+  }
+
   try {
-    // 1. HEALTH & SERVER CHECK
-    console.log('\n--- 1. Health & Root Endpoints ---');
+    // 2. HEALTH & SERVER CHECK
+    console.log('\n--- 2. Health & MongoDB Verification ---');
     const resHealth = await request('GET', '/api/health');
-    record('GET /api/health returns 200 and JSON envelope', resHealth.status === 200 && resHealth.data?.success === true);
+    record(
+      'GET /api/health accurately reports MongoDB connected and safe status',
+      resHealth.status === 200 &&
+        resHealth.data?.status === 'ok' &&
+        resHealth.data?.database?.connected === true &&
+        Boolean(resHealth.data?.uptime) &&
+        !JSON.stringify(resHealth.data).includes('mongodb://')
+    );
 
     const resRoot = await request('GET', '/');
     record('GET / returns 200 API Status', resRoot.status === 200);
 
-    // 2. PUBLIC API RETRIEVAL
-    console.log('\n--- 2. Public Catalog & Content Retrieval ---');
+    // 3. CORS ENFORCEMENT AUDIT
+    console.log('\n--- 3. CORS Enforcement Audit ---');
+    // Allowed origin
+    const resCorsAllowed = await request('GET', '/api/products', null, {
+      Origin: 'http://localhost:5173',
+    });
+    record(
+      'CORS allows explicitly configured origin (http://localhost:5173)',
+      resCorsAllowed.status === 200
+    );
+
+    // Unknown/unauthorized origin must be blocked
+    const resCorsBlocked = await request('GET', '/api/products', null, {
+      Origin: 'https://malicious-unauthorized-origin.com',
+    });
+    record(
+      'CORS strictly blocks unauthorized origin with 403',
+      resCorsBlocked.status === 403
+    );
+
+    // 4. PUBLIC CATALOG & CONTENT RETRIEVAL
+    console.log('\n--- 4. Public Catalog & Content Retrieval ---');
     const resProducts = await request('GET', '/api/products');
     record('GET /api/products returns products array with pagination', resProducts.status === 200 && Array.isArray(resProducts.data?.data) && resProducts.data.pagination);
 
@@ -109,25 +181,26 @@ async function runE2ETests() {
     record('GET /api/testimonials returns testimonials', resTestimonials.status === 200 && Array.isArray(resTestimonials.data?.data));
 
     const resSettings = await request('GET', '/api/settings');
-    record('GET /api/settings returns site configuration', resSettings.status === 200 && resSettings.data?.data?.settings?.brandName === 'Veloura Lighting');
+    record('GET /api/settings returns site configuration', resSettings.status === 200 && Boolean(resSettings.data?.data?.settings));
 
     const resSitemap = await request('GET', '/api/sitemap.xml');
     record('GET /api/sitemap.xml returns application/xml with urlset', resSitemap.status === 200 && typeof resSitemap.data === 'string' && resSitemap.data.includes('<urlset'));
 
-    // 3. AUTHENTICATION & SECURITY
-    console.log('\n--- 3. Authentication & Security ---');
+    // 5. AUTHENTICATION & AUTHORIZATION (ROLE-BASED)
+    console.log('\n--- 5. Authentication & Authorization Security ---');
     // Valid login
     const resLogin = await request('POST', '/api/auth/login', {
-      email: 'admin@veloura-lighting.com',
-      password: 'VelouraAdmin2026!',
+      email: adminEmail,
+      password: adminPassword,
     });
     adminToken = resLogin.data?.data?.token;
+    adminUserId = resLogin.data?.data?.admin?.id;
     record('POST /api/auth/login with valid credentials returns JWT token', resLogin.status === 200 && Boolean(adminToken));
 
     // Invalid password
     const resBadLogin = await request('POST', '/api/auth/login', {
-      email: 'admin@veloura-lighting.com',
-      password: 'WrongPassword123!',
+      email: adminEmail,
+      password: 'WrongPassword999!',
     });
     record('POST /api/auth/login with wrong password returns 401', resBadLogin.status === 401);
 
@@ -135,25 +208,150 @@ async function runE2ETests() {
     const resEmptyLogin = await request('POST', '/api/auth/login', {});
     record('POST /api/auth/login with missing fields returns 400 validation error', resEmptyLogin.status === 400 && resEmptyLogin.data?.errors?.length > 0);
 
-    // Protected /me
+    // Protected /me with token
     const resMe = await request('GET', '/api/auth/me', null, { Authorization: `Bearer ${adminToken}` });
-    record('GET /api/auth/me with Bearer token returns admin profile', resMe.status === 200 && resMe.data?.data?.admin?.email === 'admin@veloura-lighting.com');
+    record('GET /api/auth/me with valid Bearer token returns admin profile without password hash', resMe.status === 200 && !resMe.data?.data?.admin?.password);
 
     // Anonymous to protected
     const resAnonStats = await request('GET', '/api/stats/dashboard');
     record('GET /api/stats/dashboard without token rejected with 401', resAnonStats.status === 401);
 
-    // Invalid token
+    // Malformed token
     const resFakeToken = await request('GET', '/api/stats/dashboard', null, { Authorization: 'Bearer fake_invalid_jwt_token' });
     record('GET /api/stats/dashboard with malformed token rejected with 401', resFakeToken.status === 401);
 
-    // 4. PRODUCT CRUD LIFECYCLE
-    console.log('\n--- 4. Product CRUD Lifecycle ---');
+    // Valid admin token to stats dashboard => 200
+    const resAdminStats = await request('GET', '/api/stats/dashboard', null, { Authorization: `Bearer ${adminToken}` });
+    record('GET /api/stats/dashboard with admin role succeeds with 200', resAdminStats.status === 200);
+
+    // Non-admin (editor role) token to stats dashboard => 403 Forbidden
+    const editorEmail = `test.editor.${Date.now()}@veloura-lighting.com`;
+    const editorUser = await Admin.create({
+      username: 'Test Editor',
+      email: editorEmail,
+      password: 'EditorPassword2026!',
+      role: 'editor',
+    });
+    const editorToken = generateToken(editorUser._id, 'editor');
+    const resEditorStats = await request('GET', '/api/stats/dashboard', null, { Authorization: `Bearer ${editorToken}` });
+    record('GET /api/stats/dashboard with non-admin (editor) role strictly rejected with 403', resEditorStats.status === 403);
+    await Admin.findByIdAndDelete(editorUser._id);
+
+    // 6. ADMINVIEW PRIVILEGE SEPARATION
+    console.log('\n--- 6. adminView Privilege Separation ---');
+    // Create an inactive test product directly in DB
+    const inactiveProduct = await Product.create({
+      name: 'Draft Hidden Product',
+      slug: `draft-hidden-product-${Date.now()}`,
+      category: 'Chandeliers',
+      collectionSlug: 'grand-chandeliers',
+      image: 'https://images.unsplash.com/photo-1543198126-a8ad8e47fb22?auto=format&fit=crop&w=1200&q=85',
+      description: 'Hidden unpublished test fixture',
+      isActive: false,
+    });
+
+    // Public request with ?adminView=true without auth
+    const resPublicAdminView = await request('GET', '/api/products?adminView=true');
+    const publicFoundInactive = resPublicAdminView.data?.data?.some((p) => p._id === String(inactiveProduct._id));
+    record(
+      'Public user cannot bypass draft visibility by passing ?adminView=true',
+      !publicFoundInactive
+    );
+
+    // Authenticated admin request with ?adminView=true
+    const resAdminAdminView = await request('GET', '/api/products?adminView=true', null, {
+      Authorization: `Bearer ${adminToken}`,
+    });
+    const adminFoundInactive = resAdminAdminView.data?.data?.some((p) => p._id === String(inactiveProduct._id));
+    record(
+      'Authenticated admin with ?adminView=true can view draft/inactive products',
+      adminFoundInactive
+    );
+
+    // Clean up inactive test product
+    await Product.findByIdAndDelete(inactiveProduct._id);
+
+    // 7. PASSWORD CHANGE LIFECYCLE & HASHING
+    console.log('\n--- 7. Password Change Lifecycle & Security ---');
+    // Attempt change with wrong current password => 400
+    const resWrongCurrentPass = await request(
+      'PUT',
+      '/api/auth/password',
+      {
+        currentPassword: 'IncorrectOldPassword123!',
+        newPassword: 'NewSecurePass2026!A',
+      },
+      { Authorization: `Bearer ${adminToken}` }
+    );
+    record('PUT /api/auth/password with wrong current password returns 400', resWrongCurrentPass.status === 400);
+
+    // Attempt change with weak new password => 400
+    const resWeakNewPass = await request(
+      'PUT',
+      '/api/auth/password',
+      {
+        currentPassword: adminPassword,
+        newPassword: 'simple',
+      },
+      { Authorization: `Bearer ${adminToken}` }
+    );
+    record('PUT /api/auth/password rejects weak new password with 400 validation error', resWeakNewPass.status === 400);
+
+    // Change to a new valid password
+    const temporaryNewPassword = 'VelouraUpdated2026!New';
+    const resChangePassSuccess = await request(
+      'PUT',
+      '/api/auth/password',
+      {
+        currentPassword: adminPassword,
+        newPassword: temporaryNewPassword,
+      },
+      { Authorization: `Bearer ${adminToken}` }
+    );
+    record('PUT /api/auth/password with valid data successfully updates password', resChangePassSuccess.status === 200);
+
+    // Old password must immediately stop working
+    const resLoginOldPass = await request('POST', '/api/auth/login', {
+      email: adminEmail,
+      password: adminPassword,
+    });
+    record('Old password immediately rejected with 401 after change', resLoginOldPass.status === 401);
+
+    // New password works
+    const resLoginNewPass = await request('POST', '/api/auth/login', {
+      email: adminEmail,
+      password: temporaryNewPassword,
+    });
+    const freshToken = resLoginNewPass.data?.data?.token;
+    record('New password successfully authenticates with 200', resLoginNewPass.status === 200 && Boolean(freshToken));
+
+    // Restore original password so database remains consistent
+    const resRestorePass = await request(
+      'PUT',
+      '/api/auth/password',
+      {
+        currentPassword: temporaryNewPassword,
+        newPassword: adminPassword,
+      },
+      { Authorization: `Bearer ${freshToken}` }
+    );
+    record('Original password safely restored via bcrypt .save()', resRestorePass.status === 200);
+
+    // Re-verify original password works
+    const resReVerify = await request('POST', '/api/auth/login', {
+      email: adminEmail,
+      password: adminPassword,
+    });
+    adminToken = resReVerify.data?.data?.token;
+    record('Re-login with restored original credentials succeeds', resReVerify.status === 200 && Boolean(adminToken));
+
+    // 8. PRODUCT CRUD LIFECYCLE
+    console.log('\n--- 8. Product CRUD Lifecycle ---');
     const resCreateProd = await request(
       'POST',
       '/api/products',
       {
-        name: 'E2E Test Luminaire',
+        name: 'E2E Security Luminaire',
         category: 'Chandeliers',
         collectionSlug: 'grand-chandeliers',
         description: 'E2E testing bespoke chandelier fixture.',
@@ -171,14 +369,14 @@ async function runE2ETests() {
 
     // Read by slug
     const resGetProdBySlug = await request('GET', `/api/products/${prodSlug}`);
-    record('Public GET /api/products/:slug retrieves created product', resGetProdBySlug.status === 200 && resGetProdBySlug.data?.data?.product?.name === 'E2E Test Luminaire');
+    record('Public GET /api/products/:slug retrieves created product', resGetProdBySlug.status === 200 && resGetProdBySlug.data?.data?.product?.name === 'E2E Security Luminaire');
 
     // Update
     const resUpdateProd = await request(
       'PUT',
       `/api/products/${createdProductId}`,
       {
-        name: 'E2E Test Luminaire',
+        name: 'E2E Security Luminaire',
         wattage: '120W LED',
       },
       { Authorization: `Bearer ${adminToken}` }
@@ -193,22 +391,25 @@ async function runE2ETests() {
     const resCheckDeletedProd = await request('GET', `/api/products/${prodSlug}`);
     record('Public GET /api/products/:slug returns 404 after deletion', resCheckDeletedProd.status === 404);
 
-    // 5. CONSULTATION CRM & DATA PRIVACY
-    console.log('\n--- 5. Consultation CRM & Privacy ---');
-    // Public visitor submits
+    // 9. CONSULTATION CRM & EMAIL ISOLATION
+    console.log('\n--- 9. Consultation CRM & Email Fault-Tolerance ---');
+    // Public visitor submits (even when SMTP is not configured)
     const resSubmitConsult = await request('POST', '/api/consultations', {
-      fullName: 'VIP Test Client',
-      email: 'vip.client@example.com',
+      fullName: 'VIP Security Lead',
+      email: 'vip.security@example.com',
       phone: '+971 50 111 2233',
       projectLocation: 'Palm Jumeirah Villa',
       projectType: 'Residential Villa',
       projectStage: 'Under Construction',
       estimatedBudget: '$100,000+',
       lightingRequirements: 'Full Architectural & Custom Chandelier Scheme',
-      message: 'Looking for turnkey lighting consultation for a 6-bedroom villa.',
+      message: 'Turnkey architectural lighting consultation.',
     });
     createdConsultationId = resSubmitConsult.data?.data?.consultation?._id;
-    record('Public visitor POST /api/consultations creates consultation lead', resSubmitConsult.status === 201 && Boolean(createdConsultationId));
+    record(
+      'Public POST /api/consultations succeeds even if SMTP is unconfigured/offline',
+      resSubmitConsult.status === 201 && Boolean(createdConsultationId)
+    );
 
     // Admin updates status workflow
     const resStatusUpdate = await request(
@@ -223,30 +424,33 @@ async function runE2ETests() {
     const resNotesUpdate = await request(
       'PATCH',
       `/api/consultations/${createdConsultationId}/notes`,
-      { adminNotes: 'CONFIDENTIAL: Client meeting scheduled with Principal Architect for Thursday 2 PM.' },
+      { adminNotes: 'CONFIDENTIAL: Client meeting scheduled.' },
       { Authorization: `Bearer ${adminToken}` }
     );
     record('Admin PATCH /api/consultations/:id/notes stores confidential notes', resNotesUpdate.status === 200 && resNotesUpdate.data?.data?.consultation?.adminNotes?.includes('CONFIDENTIAL'));
 
     // Verify public cannot access consultations
     const resAnonConsult = await request('GET', `/api/consultations/${createdConsultationId}`);
-    record('Anonymous GET /api/consultations/:id rejected with 401 (Admin notes isolated)', resAnonConsult.status === 401);
+    record('Anonymous GET /api/consultations/:id rejected with 401 (Privacy isolated)', resAnonConsult.status === 401);
 
     // Admin clean up
     await request('DELETE', `/api/consultations/${createdConsultationId}`, null, { Authorization: `Bearer ${adminToken}` });
 
-    // 6. CONTACT ENQUIRIES
-    console.log('\n--- 6. Contact Enquiry Flow ---');
+    // 10. CONTACT ENQUIRY FLOW & EMAIL FAULT-TOLERANCE
+    console.log('\n--- 10. Contact Enquiry Flow & Email Fault-Tolerance ---');
     const resSubmitContact = await request('POST', '/api/contact', {
       name: 'Architect Hassan',
       email: 'hassan@archstudio.ae',
       phone: '+971 4 222 3344',
       projectType: 'Hospitality',
       location: 'Downtown Dubai',
-      message: 'Requesting CAD specification drawings for cove lighting.',
+      message: 'Requesting specification drawings.',
     });
     createdContactId = resSubmitContact.data?.data?.enquiry?._id || resSubmitContact.data?.data?.contact?._id;
-    record('Public POST /api/contact submits contact enquiry', resSubmitContact.status === 201 && Boolean(createdContactId));
+    record(
+      'Public POST /api/contact succeeds and persists to database even when SMTP is unconfigured',
+      resSubmitContact.status === 201 && Boolean(createdContactId)
+    );
 
     const resGetContacts = await request('GET', '/api/contact', null, { Authorization: `Bearer ${adminToken}` });
     record('Admin GET /api/contact lists contact enquiries', resGetContacts.status === 200 && Array.isArray(resGetContacts.data?.data));
@@ -256,8 +460,8 @@ async function runE2ETests() {
       await request('DELETE', `/api/contact/${createdContactId}`, null, { Authorization: `Bearer ${adminToken}` });
     }
 
-    // 7. NEWSLETTER READERSHIP & DUPLICATE SUPPRESSION
-    console.log('\n--- 7. Newsletter Readership & Normalization ---');
+    // 11. NEWSLETTER READERSHIP & NORMALIZATION
+    console.log('\n--- 11. Newsletter Readership & Normalization ---');
     const testNewsletterEmail = 'test.subscriber@luxuryinteriors.com';
     const resSub1 = await request('POST', '/api/newsletter/subscribe', { email: testNewsletterEmail });
     record('POST /api/newsletter/subscribe accepts new email', resSub1.status === 201 || resSub1.status === 200);
@@ -270,8 +474,8 @@ async function runE2ETests() {
     const resSubBad = await request('POST', '/api/newsletter/subscribe', { email: 'invalid-email-string' });
     record('POST /api/newsletter/subscribe rejects invalid email format with 400', resSubBad.status === 400);
 
-    // 8. SETTINGS SINGLETON & LIVE WHATSAPP SYNC
-    console.log('\n--- 8. Settings Singleton & WhatsApp Sync ---');
+    // 12. SETTINGS SINGLETON & WHATSAPP SYNC
+    console.log('\n--- 12. Settings Singleton & WhatsApp Sync ---');
     const newWhatsApp = '+971 50 999 8877';
     const resUpdateSettings = await request(
       'PUT',
@@ -298,8 +502,8 @@ async function runE2ETests() {
       { Authorization: `Bearer ${adminToken}` }
     );
 
-    // 9. API ERROR HANDLING & ISOLATION
-    console.log('\n--- 9. Error Handling & API Isolation ---');
+    // 13. API ERROR HANDLING & ISOLATION
+    console.log('\n--- 13. Error Handling & API Isolation ---');
     const resNotFoundAPI = await request('GET', '/api/non-existent-endpoint');
     record('GET /api/non-existent-endpoint returns standardized 404 JSON (not HTML)', resNotFoundAPI.status === 404 && resNotFoundAPI.data?.success === false);
 

@@ -3,7 +3,12 @@ import { successResponse } from '../utils/apiResponse.js';
 
 export const getProducts = async (req, res, next) => {
   try {
-    const result = await productService.getAllProducts(req.query);
+    const isAdmin = Boolean(req.admin && req.admin.role === 'admin');
+    const queryParams = {
+      ...req.query,
+      adminView: isAdmin && (req.query.adminView === 'true' || req.query.adminView === true),
+    };
+    const result = await productService.getAllProducts(queryParams);
     return successResponse(res, 'Products retrieved successfully.', result.products, 200, result.pagination);
   } catch (error) {
     next(error);

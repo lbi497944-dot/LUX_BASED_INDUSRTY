@@ -14,9 +14,22 @@ import { adminSeed, collectionsSeed, productsSeed, projectsSeed, faqsSeed } from
 
 dotenv.config();
 
+// Refuse execution in production environment
+if (process.env.NODE_ENV === 'production') {
+  console.error('\n======================================================');
+  console.error('  FATAL: Seeder execution is prohibited in production.');
+  console.error('======================================================\n');
+  process.exit(1);
+}
+
 const connectDB = async () => {
+  if (!process.env.MONGODB_URI) {
+    console.error('[Seeder Error] FATAL: MONGODB_URI environment variable is required to run the seeder.');
+    process.exit(1);
+  }
+
   try {
-    const conn = await mongoose.connect(process.env.MONGODB_URI || 'mongodb://127.0.0.1:27017/veloura_lighting');
+    const conn = await mongoose.connect(process.env.MONGODB_URI);
     console.log(`[Seeder] MongoDB Connected: ${conn.connection.host}`);
   } catch (err) {
     console.error(`[Seeder Error]: ${err.message}`);
@@ -67,8 +80,7 @@ const importData = async () => {
     await SiteSetting.create({});
 
     console.log('\n========================================================');
-    console.log('  SUCCESS: Database seeded with Veloura demonstration data!');
-    console.log('  Admin Login: admin@veloura-lighting.com / VelouraAdmin2026!');
+    console.log('  SUCCESS: Database seeded with Veloura demonstration data.');
     console.log('========================================================\n');
     process.exit(0);
   } catch (err) {

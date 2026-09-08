@@ -44,3 +44,32 @@ export const getAdminProfile = async (adminId) => {
   }
   return admin;
 };
+
+export const changeAdminPassword = async (adminId, currentPassword, newPassword) => {
+  const admin = await Admin.findById(adminId).select('+password');
+  if (!admin) {
+    const error = new Error('Admin profile not found.');
+    error.statusCode = 404;
+    throw error;
+  }
+
+  const isMatch = await admin.matchPassword(currentPassword);
+  if (!isMatch) {
+    const error = new Error('Current password does not match.');
+    error.statusCode = 400;
+    throw error;
+  }
+
+  if (currentPassword === newPassword) {
+    const error = new Error('New password must be different from current password.');
+    error.statusCode = 400;
+    throw error;
+  }
+
+  admin.password = newPassword;
+  await admin.save();
+
+  return {
+    message: 'Password updated successfully.',
+  };
+};

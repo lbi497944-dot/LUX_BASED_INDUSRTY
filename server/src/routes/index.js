@@ -12,17 +12,33 @@ import settingRoutes from './settingRoutes.js';
 import statsRoutes from './statsRoutes.js';
 import uploadRoutes from './uploadRoutes.js';
 
+import mongoose from 'mongoose';
 import Collection from '../models/Collection.js';
 import Project from '../models/Project.js';
+import { isCloudinaryConfigured } from '../config/cloudinary.js';
 
 const router = express.Router();
 
 router.get('/health', (req, res) => {
-  res.status(200).json({
+  const isDbConnected = mongoose.connection.readyState === 1;
+
+  const healthData = {
+    status: isDbConnected ? 'ok' : 'degraded',
     success: true,
-    message: 'Veloura Lighting REST API is operational',
+    message: isDbConnected
+      ? 'Veloura Lighting REST API is operational'
+      : 'Veloura Lighting REST API is operational (database disconnected)',
+    database: {
+      connected: isDbConnected,
+    },
+    uptime: Math.floor(process.uptime()),
+    environment: process.env.NODE_ENV || 'development',
+    storage: isCloudinaryConfigured ? 'cloudinary' : 'local',
     timestamp: new Date().toISOString(),
-  });
+  };
+
+  const statusCode = isDbConnected ? 200 : 503;
+  res.status(statusCode).json(healthData);
 });
 
 /**

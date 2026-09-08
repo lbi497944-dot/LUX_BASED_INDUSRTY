@@ -3,7 +3,12 @@ import { successResponse } from '../utils/apiResponse.js';
 
 export const getFaqs = async (req, res, next) => {
   try {
-    const faqs = await faqService.getAllFaqs(req.query);
+    const isAdmin = Boolean(req.admin && req.admin.role === 'admin');
+    const queryParams = {
+      ...req.query,
+      adminView: isAdmin && (req.query.adminView === 'true' || req.query.adminView === true),
+    };
+    const faqs = await faqService.getAllFaqs(queryParams);
     return successResponse(res, 'FAQs retrieved.', faqs);
   } catch (error) {
     next(error);

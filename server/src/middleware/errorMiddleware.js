@@ -59,6 +59,11 @@ export const errorHandler = (err, req, res, next) => {
     statusCode = 401;
   }
 
+  // CORS Error
+  if (err.message && err.message.includes('CORS')) {
+    statusCode = 403;
+  }
+
   if (process.env.NODE_ENV !== 'production') {
     console.error('[Error Details]', err);
   }
