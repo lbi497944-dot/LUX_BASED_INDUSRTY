@@ -16,6 +16,7 @@ import mongoose from 'mongoose';
 import Collection from '../models/Collection.js';
 import Project from '../models/Project.js';
 import { isCloudinaryConfigured } from '../config/cloudinary.js';
+import { getIsEmailConfigured } from '../config/email.js';
 
 const router = express.Router();
 
@@ -30,6 +31,9 @@ router.get('/health', (req, res) => {
       : 'Veloura Lighting REST API is operational (database disconnected)',
     database: {
       connected: isDbConnected,
+    },
+    email: {
+      configured: getIsEmailConfigured(),
     },
     uptime: Math.floor(process.uptime()),
     environment: process.env.NODE_ENV || 'development',

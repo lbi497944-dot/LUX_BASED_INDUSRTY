@@ -9,11 +9,11 @@ import { initEmailTransporter } from './src/config/email.js';
 const PORT = process.env.PORT || 5000;
 
 /**
- * Application startup sequence:
- *  1. Validate all required environment variables — fail fast if any critical var is missing.
- *  2. Connect to MongoDB — exit in production if connection fails.
- *  3. Initialize email transporter — fail fast in production if SMTP is not configured.
- *  4. Start HTTP listener.
+ * Resilient Application Startup Sequence:
+ *  1. Validate critical environment variables (JWT_SECRET, MONGODB_URI) — fail fast if missing.
+ *  2. Connect to MongoDB — fatal if database connection fails.
+ *  3. Start HTTP server listening on 0.0.0.0:PORT immediately so cloud platforms (Render) detect open port.
+ *  4. Initialize and verify SMTP email transporter asynchronously without blocking HTTP availability.
  */
 const startServer = async () => {
   try {
@@ -23,20 +23,25 @@ const startServer = async () => {
     // Step 2 — Database connection
     await connectDB();
 
-    // Step 3 — Email transporter initialization
-    await initEmailTransporter();
-
-    // Step 4 — HTTP server
-    app.listen(PORT, () => {
+    // Step 3 — HTTP server (bind immediately on 0.0.0.0 for cloud port detection)
+    const server = app.listen(PORT, '0.0.0.0', () => {
       console.log(`\n======================================================`);
       console.log(`  VELOURA LIGHTING BACKEND API`);
       console.log(`  Environment: ${process.env.NODE_ENV || 'development'}`);
       console.log(`  Server Port: ${PORT}`);
+      console.log(`  Listening on: http://0.0.0.0:${PORT}`);
       console.log(`  API Endpoint: http://localhost:${PORT}/api`);
       console.log(`======================================================\n`);
     });
+
+    // Step 4 — Initialize/verify SMTP in a controlled async operation (non-blocking)
+    initEmailTransporter().catch((err) => {
+      console.warn(`[Email Warning] Background SMTP initialization encountered an error: ${err.message}`);
+    });
+
+    return server;
   } catch (err) {
-    console.error(`\n[Startup Fatal] ${err.message}`);
+    console.error('\n[Startup Fatal Error]:', err.stack || err);
     process.exit(1);
   }
 };
@@ -45,10 +50,10 @@ startServer();
 
 // Handle unhandled promise rejections
 process.on('unhandledRejection', (err) => {
-  console.error(`[Unhandled Rejection] ${err.message}`);
+  console.error(`[Unhandled Rejection]:`, err.stack || err);
 });
 
 // Handle uncaught exceptions
 process.on('uncaughtException', (err) => {
-  console.error(`[Uncaught Exception] ${err.message}`);
+  console.error(`[Uncaught Exception]:`, err.stack || err);
 });

@@ -14,11 +14,15 @@ const getSenderAddress = () => {
 export const sendContactNotification = async (enquiry) => {
   const recipient = getNotificationRecipient();
   if (!recipient || !getIsEmailConfigured()) {
+    console.warn('[Email Warning] Outbound contact notification skipped: SMTP is unavailable or recipient is not configured.');
     return;
   }
 
   const transporter = getTransporter();
-  if (!transporter) return;
+  if (!transporter) {
+    console.warn('[Email Warning] Outbound contact notification skipped: No active transporter.');
+    return;
+  }
 
   try {
     const clientName = enquiry.name || 'Anonymous Visitor';
@@ -91,11 +95,15 @@ export const sendContactNotification = async (enquiry) => {
 export const sendConsultationNotification = async (consultation) => {
   const recipient = getNotificationRecipient();
   if (!recipient || !getIsEmailConfigured()) {
+    console.warn('[Email Warning] Outbound consultation notification skipped: SMTP is unavailable or recipient is not configured.');
     return;
   }
 
   const transporter = getTransporter();
-  if (!transporter) return;
+  if (!transporter) {
+    console.warn('[Email Warning] Outbound consultation notification skipped: No active transporter.');
+    return;
+  }
 
   try {
     const fullName = consultation.fullName || 'VIP Client';

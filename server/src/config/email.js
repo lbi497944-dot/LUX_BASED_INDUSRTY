@@ -3,7 +3,13 @@ import nodemailer from 'nodemailer';
 let transporter = null;
 let isEmailConfigured = false;
 
+/**
+ * Initialize and verify SMTP email transporter
+ * Designed to be resilient: logs clear diagnostics and marks email unavailable
+ * if SMTP is unreachable, without terminating the HTTP server process.
+ */
 export const initEmailTransporter = async () => {
+  console.log('[Email] Initializing SMTP transporter...');
   const { SMTP_HOST, SMTP_PORT, SMTP_USER, SMTP_PASS } = process.env;
 
   if (SMTP_HOST && SMTP_PORT && SMTP_USER && SMTP_PASS) {
@@ -17,6 +23,9 @@ export const initEmailTransporter = async () => {
           user: SMTP_USER,
           pass: SMTP_PASS,
         },
+        connectionTimeout: 10000, // 10 second timeout for initial connection
+        greetingTimeout: 5000,    // 5 second greeting timeout
+        socketTimeout: 10000,     // 10 second socket timeout
       });
 
       // Verify connection configuration
@@ -24,18 +33,17 @@ export const initEmailTransporter = async () => {
       isEmailConfigured = true;
       console.log(`[Email] SMTP transporter verified successfully (${SMTP_HOST}:${port}).`);
     } catch (err) {
-      console.warn(`[Email Warning] SMTP connection verification failed: ${err.message}`);
-      if (process.env.NODE_ENV === 'production') {
-        throw new Error(`Production email configuration error: ${err.message}`);
-      }
+      console.warn('[Email Warning] SMTP transporter verification failed.');
+      console.warn('[Email Warning] Outbound email is temporarily unavailable.');
+      console.warn(`[Email Warning] Error: ${err.message}`);
       isEmailConfigured = false;
+      transporter = null;
     }
   } else {
-    if (process.env.NODE_ENV === 'production') {
-      throw new Error('Production environment requires complete SMTP configuration (SMTP_HOST, SMTP_PORT, SMTP_USER, SMTP_PASS, EMAIL_FROM, ADMIN_NOTIFICATION_EMAIL).');
-    }
-    console.log('[Email] SMTP not configured; notification skipped.');
+    console.warn('[Email Warning] SMTP credentials not configured.');
+    console.warn('[Email Warning] Outbound email notifications are disabled.');
     isEmailConfigured = false;
+    transporter = null;
   }
 };
 
