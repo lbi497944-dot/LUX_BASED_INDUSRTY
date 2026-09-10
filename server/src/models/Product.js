@@ -42,7 +42,16 @@ const productSchema = new mongoose.Schema(
       type: String,
       required: [true, 'Primary image URL is required'],
     },
+    imagePublicId: {
+      type: String,
+      default: '',
+    },
     gallery: [
+      {
+        type: String,
+      },
+    ],
+    galleryPublicIds: [
       {
         type: String,
       },

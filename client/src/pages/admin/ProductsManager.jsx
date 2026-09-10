@@ -1,7 +1,8 @@
 import { useState, useEffect } from 'react';
 import { productService } from '../../services/productService';
 import { collectionService } from '../../services/collectionService';
-import { Plus, Edit2, Trash2, Search, Filter, Loader2, Sparkles, X, Check } from 'lucide-react';
+import { uploadService } from '../../services/uploadService';
+import { Plus, Edit2, Trash2, Search, Filter, Loader2, Sparkles, X, Check, Upload } from 'lucide-react';
 import ModalConfirm from '../../components/modals/ModalConfirm';
 import Toast from '../../components/common/Toast';
 import SEO from '../../components/common/SEO';
@@ -17,11 +18,15 @@ export default function ProductsManager() {
   // Edit/Create Modal state
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [editingProduct, setEditingProduct] = useState(null);
+  const [imageUploading, setImageUploading] = useState(false);
+  const [uploadError, setUploadError] = useState(null);
+  const [imageMode, setImageMode] = useState('upload'); // 'upload' | 'url'
   const [formData, setFormData] = useState({
     name: '',
     category: 'Grand Chandelier',
     collectionSlug: 'grand-chandeliers',
     image: '',
+    imagePublicId: '',
     description: '',
     specifications: '',
     materials: '',
@@ -59,13 +64,61 @@ export default function ProductsManager() {
     fetchData();
   }, [search, selectedCategory]);
 
+  const handleFileSelect = async (e) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+
+    setUploadError(null);
+
+    const validExtensions = ['.jpg', '.jpeg', '.png', '.webp'];
+    const ext = file.name.substring(file.name.lastIndexOf('.')).toLowerCase();
+    if (!validExtensions.includes(ext)) {
+      setUploadError('Unsupported format. Only JPG, PNG, and WEBP images are allowed.');
+      e.target.value = '';
+      return;
+    }
+
+    if (file.size > 10 * 1024 * 1024) {
+      setUploadError('File size exceeds the 10MB limit.');
+      e.target.value = '';
+      return;
+    }
+
+    try {
+      setImageUploading(true);
+      const res = await uploadService.uploadFile(file);
+      if (res?.data?.url) {
+        setFormData((prev) => ({
+          ...prev,
+          image: res.data.url,
+          imagePublicId: res.data.publicId || '',
+        }));
+      }
+    } catch (err) {
+      setUploadError(err?.message || 'Failed to upload image to Cloudinary.');
+    } finally {
+      setImageUploading(false);
+      e.target.value = '';
+    }
+  };
+
+  const handleClearImage = () => {
+    setFormData((prev) => ({
+      ...prev,
+      image: '',
+      imagePublicId: '',
+    }));
+    setUploadError(null);
+  };
+
   const handleOpenCreate = () => {
     setEditingProduct(null);
     setFormData({
       name: '',
       category: 'Grand Chandelier',
       collectionSlug: collections[0]?.slug || 'grand-chandeliers',
-      image: 'https://images.unsplash.com/photo-1540932239986-30128078f3c5?auto=format&fit=crop&w=1400&q=85',
+      image: '',
+      imagePublicId: '',
       description: '',
       specifications: '',
       materials: '',
@@ -77,6 +130,8 @@ export default function ProductsManager() {
       featured: false,
       isActive: true,
     });
+    setImageMode('upload');
+    setUploadError(null);
     setIsModalOpen(true);
   };
 
@@ -87,6 +142,7 @@ export default function ProductsManager() {
       category: prod.category || 'Grand Chandelier',
       collectionSlug: prod.collectionSlug || 'grand-chandeliers',
       image: prod.image || '',
+      imagePublicId: prod.imagePublicId || '',
       description: prod.description || '',
       specifications: prod.specifications || '',
       materials: prod.materials || '',
@@ -98,6 +154,8 @@ export default function ProductsManager() {
       featured: prod.featured || false,
       isActive: prod.isActive !== false,
     });
+    setImageMode(prod.imagePublicId ? 'upload' : 'url');
+    setUploadError(null);
     setIsModalOpen(true);
   };
 
@@ -323,16 +381,133 @@ export default function ProductsManager() {
                     )}
                   </select>
                 </label>
-                <label>
-                  IMAGE URL *
-                  <input
-                    type="url"
-                    required
-                    value={formData.image}
-                    onChange={(e) => setFormData({ ...formData, image: e.target.value })}
-                    placeholder="https://..."
-                  />
-                </label>
+              </div>
+
+              {/* Primary Image Upload / URL */}
+              <div className="admin-media-upload-section" style={{ marginBottom: '16px' }}>
+                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '8px' }}>
+                  <span style={{ fontSize: '11px', fontWeight: 600, letterSpacing: '0.05em', color: 'rgba(243, 243, 235, 0.55)', textTransform: 'uppercase' }}>
+                    PRIMARY FIXTURE IMAGE *
+                  </span>
+                  <div style={{ display: 'flex', gap: '6px' }}>
+                    <button
+                      type="button"
+                      className={`btn btn-sm ${imageMode === 'upload' ? 'btn-gold' : 'btn-outline'}`}
+                      style={{ padding: '2px 10px', fontSize: '11px' }}
+                      onClick={() => { setImageMode('upload'); setUploadError(null); }}
+                    >
+                      <Upload size={12} style={{ marginRight: '4px' }} /> Upload
+                    </button>
+                    <button
+                      type="button"
+                      className={`btn btn-sm ${imageMode === 'url' ? 'btn-gold' : 'btn-outline'}`}
+                      style={{ padding: '2px 10px', fontSize: '11px' }}
+                      onClick={() => { setImageMode('url'); setUploadError(null); }}
+                    >
+                      URL
+                    </button>
+                  </div>
+                </div>
+
+                {imageMode === 'upload' ? (
+                  <label
+                    className="file-upload-box"
+                    style={{
+                      display: 'block',
+                      padding: '16px',
+                      borderRadius: '4px',
+                      cursor: imageUploading ? 'wait' : 'pointer',
+                      border: '1px dashed rgba(230, 199, 122, 0.3)',
+                      backgroundColor: 'rgba(255, 255, 255, 0.02)',
+                    }}
+                  >
+                    <input
+                      type="file"
+                      accept=".jpg,.jpeg,.png,.webp"
+                      onChange={handleFileSelect}
+                      disabled={imageUploading}
+                      className="file-input-hidden"
+                    />
+                    <div className="file-upload-label" style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '8px' }}>
+                      {imageUploading ? (
+                        <>
+                          <Loader2 size={16} className="spin-icon" style={{ color: 'var(--gold)' }} />
+                          <span style={{ color: 'var(--gold)' }}>Uploading to Cloudinary...</span>
+                        </>
+                      ) : (
+                        <>
+                          <Upload size={16} style={{ color: 'var(--gold)' }} />
+                          <span>Click to upload image (JPG, PNG, WEBP · Max 10MB)</span>
+                        </>
+                      )}
+                    </div>
+                  </label>
+                ) : (
+                  <div>
+                    <input
+                      type="url"
+                      value={formData.image}
+                      onChange={(e) => setFormData({ ...formData, image: e.target.value, imagePublicId: '' })}
+                      placeholder="https://images.unsplash.com/... or external image URL"
+                    />
+                  </div>
+                )}
+
+                {uploadError && (
+                  <p style={{ color: '#f87171', fontSize: '12px', marginTop: '6px', marginBottom: 0 }}>
+                    {uploadError}
+                  </p>
+                )}
+
+                {/* Thumbnail Preview Card */}
+                {formData.image && (
+                  <div
+                    style={{
+                      display: 'flex',
+                      alignItems: 'center',
+                      gap: '12px',
+                      marginTop: '10px',
+                      padding: '8px 12px',
+                      background: 'rgba(255, 255, 255, 0.03)',
+                      border: '1px solid rgba(230, 199, 122, 0.2)',
+                      borderRadius: '4px',
+                    }}
+                  >
+                    <img
+                      src={formData.image}
+                      alt="Fixture Preview"
+                      style={{ width: '48px', height: '48px', objectFit: 'cover', borderRadius: '4px' }}
+                      onError={(e) => { e.target.style.display = 'none'; }}
+                    />
+                    <div style={{ flex: 1, minWidth: 0 }}>
+                      <p style={{ fontSize: '12px', margin: 0, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
+                        {formData.image}
+                      </p>
+                      <small style={{ fontSize: '10px', color: formData.imagePublicId ? '#4ade80' : 'rgba(243, 243, 235, 0.55)' }}>
+                        {formData.imagePublicId ? '✓ Cloudinary Hosted' : 'External Image Link'}
+                      </small>
+                    </div>
+                    <button
+                      type="button"
+                      className="admin-action-btn danger"
+                      onClick={handleClearImage}
+                      title="Clear image"
+                      style={{ flexShrink: 0 }}
+                    >
+                      <X size={14} />
+                    </button>
+                  </div>
+                )}
+
+                {/* Hidden input to ensure HTML5 required validation passes only when image is non-empty */}
+                <input
+                  type="text"
+                  required
+                  value={formData.image}
+                  onChange={() => {}}
+                  style={{ position: 'absolute', opacity: 0, pointerEvents: 'none', height: 0, width: 0 }}
+                  tabIndex={-1}
+                />
               </div>
 
               <label>
