@@ -46,7 +46,16 @@ const projectSchema = new mongoose.Schema(
       type: String,
       required: [true, 'Project image is required'],
     },
+    coverImagePublicId: {
+      type: String,
+      default: '',
+    },
     gallery: [
+      {
+        type: String,
+      },
+    ],
+    galleryPublicIds: [
       {
         type: String,
       },

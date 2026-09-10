@@ -1,6 +1,7 @@
 import { useState, useEffect } from 'react';
 import { projectService } from '../../services/projectService';
-import { Plus, Edit2, Trash2, Search, Filter, Loader2, Building2, X } from 'lucide-react';
+import { uploadService } from '../../services/uploadService';
+import { Plus, Edit2, Trash2, Search, Filter, Loader2, Building2, X, Upload, Image } from 'lucide-react';
 import ModalConfirm from '../../components/modals/ModalConfirm';
 import Toast from '../../components/common/Toast';
 import SEO from '../../components/common/SEO';
@@ -13,6 +14,13 @@ export default function ProjectsManager() {
 
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [editingProject, setEditingProject] = useState(null);
+  const [imageUploading, setImageUploading] = useState(false);
+  const [uploadError, setUploadError] = useState(null);
+  const [imageMode, setImageMode] = useState('upload'); // 'upload' | 'url'
+  const [galleryUploading, setGalleryUploading] = useState(false);
+  const [galleryUploadError, setGalleryUploadError] = useState(null);
+  const [galleryExternalUrl, setGalleryExternalUrl] = useState('');
+
   const [formData, setFormData] = useState({
     title: '',
     location: '',
@@ -21,6 +29,9 @@ export default function ProjectsManager() {
     description: '',
     scope: '',
     coverImage: '',
+    coverImagePublicId: '',
+    gallery: [],
+    galleryPublicIds: [],
     featured: false,
     isActive: true,
   });
@@ -45,6 +56,127 @@ export default function ProjectsManager() {
     fetchProjects();
   }, [selectedCategory]);
 
+  const handleFileSelect = async (e) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+
+    setUploadError(null);
+
+    const validExtensions = ['.jpg', '.jpeg', '.png', '.webp'];
+    const ext = file.name.substring(file.name.lastIndexOf('.')).toLowerCase();
+    if (!validExtensions.includes(ext)) {
+      setUploadError('Unsupported format. Only JPG, PNG, and WEBP images are allowed.');
+      e.target.value = '';
+      return;
+    }
+
+    if (file.size > 10 * 1024 * 1024) {
+      setUploadError('File size exceeds the 10MB limit.');
+      e.target.value = '';
+      return;
+    }
+
+    try {
+      setImageUploading(true);
+      const res = await uploadService.uploadFile(file);
+      if (res?.data?.url) {
+        setFormData((prev) => ({
+          ...prev,
+          coverImage: res.data.url,
+          coverImagePublicId: res.data.publicId || '',
+        }));
+      }
+    } catch (err) {
+      setUploadError(err?.message || 'Failed to upload image to Cloudinary.');
+    } finally {
+      setImageUploading(false);
+      e.target.value = '';
+    }
+  };
+
+  const handleClearCoverImage = () => {
+    setFormData((prev) => ({
+      ...prev,
+      coverImage: '',
+      coverImagePublicId: '',
+    }));
+    setUploadError(null);
+  };
+
+  const handleGalleryFilesSelect = async (e) => {
+    const files = Array.from(e.target.files || []);
+    if (files.length === 0) return;
+
+    setGalleryUploadError(null);
+    const validExtensions = ['.jpg', '.jpeg', '.png', '.webp'];
+
+    for (const file of files) {
+      const ext = file.name.substring(file.name.lastIndexOf('.')).toLowerCase();
+      if (!validExtensions.includes(ext)) {
+        setGalleryUploadError(`Unsupported format for "${file.name}". Only JPG, PNG, and WEBP are allowed.`);
+        e.target.value = '';
+        return;
+      }
+      if (file.size > 10 * 1024 * 1024) {
+        setGalleryUploadError(`File "${file.name}" exceeds the 10MB limit.`);
+        e.target.value = '';
+        return;
+      }
+    }
+
+    try {
+      setGalleryUploading(true);
+      if (files.length === 1) {
+        const res = await uploadService.uploadFile(files[0]);
+        if (res?.data?.url) {
+          setFormData((prev) => ({
+            ...prev,
+            gallery: [...prev.gallery, res.data.url],
+            galleryPublicIds: [...prev.galleryPublicIds, res.data.publicId || ''],
+          }));
+        }
+      } else {
+        const res = await uploadService.uploadMultiple(files);
+        const uploaded = Array.isArray(res?.data) ? res.data : [];
+        const newUrls = uploaded.map((item) => item.url).filter(Boolean);
+        const newPublicIds = uploaded.map((item) => item.publicId || '');
+        if (newUrls.length > 0) {
+          setFormData((prev) => ({
+            ...prev,
+            gallery: [...prev.gallery, ...newUrls],
+            galleryPublicIds: [...prev.galleryPublicIds, ...newPublicIds],
+          }));
+        }
+      }
+    } catch (err) {
+      setGalleryUploadError(err?.message || 'Failed to upload gallery image(s).');
+    } finally {
+      setGalleryUploading(false);
+      e.target.value = '';
+    }
+  };
+
+  const handleAddExternalGalleryUrl = (e) => {
+    e.preventDefault();
+    if (!galleryExternalUrl || !galleryExternalUrl.trim()) return;
+    const trimmed = galleryExternalUrl.trim();
+    setFormData((prev) => ({
+      ...prev,
+      gallery: [...prev.gallery, trimmed],
+      galleryPublicIds: [...prev.galleryPublicIds, ''],
+    }));
+    setGalleryExternalUrl('');
+    setGalleryUploadError(null);
+  };
+
+  const handleRemoveGalleryItem = (index) => {
+    setFormData((prev) => ({
+      ...prev,
+      gallery: prev.gallery.filter((_, i) => i !== index),
+      galleryPublicIds: prev.galleryPublicIds.filter((_, i) => i !== index),
+    }));
+  };
+
   const handleOpenCreate = () => {
     setEditingProject(null);
     setFormData({
@@ -54,10 +186,17 @@ export default function ProjectsManager() {
       year: '2025',
       description: '',
       scope: 'Interior Lighting Design, Custom Chandelier Fabrication',
-      coverImage: 'https://images.unsplash.com/photo-1600607687920-4e2a09cf159d?auto=format&fit=crop&w=1400&q=85',
+      coverImage: '',
+      coverImagePublicId: '',
+      gallery: [],
+      galleryPublicIds: [],
       featured: false,
       isActive: true,
     });
+    setImageMode('upload');
+    setUploadError(null);
+    setGalleryUploadError(null);
+    setGalleryExternalUrl('');
     setIsModalOpen(true);
   };
 
@@ -71,9 +210,16 @@ export default function ProjectsManager() {
       description: proj.description || '',
       scope: proj.scope || '',
       coverImage: proj.coverImage || proj.image || '',
+      coverImagePublicId: proj.coverImagePublicId || '',
+      gallery: Array.isArray(proj.gallery) ? [...proj.gallery] : [],
+      galleryPublicIds: Array.isArray(proj.galleryPublicIds) ? [...proj.galleryPublicIds] : [],
       featured: proj.featured || false,
       isActive: proj.isActive !== false,
     });
+    setImageMode(proj.coverImagePublicId ? 'upload' : 'url');
+    setUploadError(null);
+    setGalleryUploadError(null);
+    setGalleryExternalUrl('');
     setIsModalOpen(true);
   };
 
@@ -278,17 +424,135 @@ export default function ProjectsManager() {
                 </label>
               </div>
 
+              {/* Primary Cover Image Upload / URL */}
+              <div className="admin-media-upload-section" style={{ marginBottom: '16px' }}>
+                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '8px' }}>
+                  <span style={{ fontSize: '11px', fontWeight: 600, letterSpacing: '0.05em', color: 'rgba(243, 243, 235, 0.55)', textTransform: 'uppercase' }}>
+                    PROJECT COVER IMAGE *
+                  </span>
+                  <div style={{ display: 'flex', gap: '6px' }}>
+                    <button
+                      type="button"
+                      className={`btn btn-sm ${imageMode === 'upload' ? 'btn-gold' : 'btn-outline'}`}
+                      style={{ padding: '2px 10px', fontSize: '11px' }}
+                      onClick={() => { setImageMode('upload'); setUploadError(null); }}
+                    >
+                      <Upload size={12} style={{ marginRight: '4px' }} /> Upload
+                    </button>
+                    <button
+                      type="button"
+                      className={`btn btn-sm ${imageMode === 'url' ? 'btn-gold' : 'btn-outline'}`}
+                      style={{ padding: '2px 10px', fontSize: '11px' }}
+                      onClick={() => { setImageMode('url'); setUploadError(null); }}
+                    >
+                      URL
+                    </button>
+                  </div>
+                </div>
+
+                {imageMode === 'upload' ? (
+                  <label
+                    className="file-upload-box"
+                    style={{
+                      display: 'block',
+                      padding: '16px',
+                      borderRadius: '4px',
+                      cursor: imageUploading ? 'wait' : 'pointer',
+                      border: '1px dashed rgba(230, 199, 122, 0.3)',
+                      backgroundColor: 'rgba(255, 255, 255, 0.02)',
+                    }}
+                  >
+                    <input
+                      type="file"
+                      accept=".jpg,.jpeg,.png,.webp"
+                      onChange={handleFileSelect}
+                      disabled={imageUploading}
+                      className="file-input-hidden"
+                    />
+                    <div className="file-upload-label" style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '8px' }}>
+                      {imageUploading ? (
+                        <>
+                          <Loader2 size={16} className="spin-icon" style={{ color: 'var(--gold)' }} />
+                          <span style={{ color: 'var(--gold)' }}>Uploading to Cloudinary...</span>
+                        </>
+                      ) : (
+                        <>
+                          <Upload size={16} style={{ color: 'var(--gold)' }} />
+                          <span>Click to upload cover image (JPG, PNG, WEBP · Max 10MB)</span>
+                        </>
+                      )}
+                    </div>
+                  </label>
+                ) : (
+                  <div>
+                    <input
+                      type="url"
+                      value={formData.coverImage}
+                      onChange={(e) => setFormData({ ...formData, coverImage: e.target.value, coverImagePublicId: '' })}
+                      placeholder="https://images.unsplash.com/... or external image URL"
+                    />
+                  </div>
+                )}
+
+                {uploadError && (
+                  <p style={{ color: '#f87171', fontSize: '12px', marginTop: '6px', marginBottom: 0 }}>
+                    {uploadError}
+                  </p>
+                )}
+
+                {/* Thumbnail Preview Card */}
+                {formData.coverImage && (
+                  <div
+                    style={{
+                      display: 'flex',
+                      alignItems: 'center',
+                      gap: '12px',
+                      marginTop: '10px',
+                      padding: '8px 12px',
+                      background: 'rgba(255, 255, 255, 0.03)',
+                      border: '1px solid rgba(230, 199, 122, 0.2)',
+                      borderRadius: '4px',
+                    }}
+                  >
+                    <img
+                      src={formData.coverImage}
+                      alt="Cover Preview"
+                      style={{ width: '48px', height: '48px', objectFit: 'cover', borderRadius: '4px' }}
+                      onError={(e) => { e.target.style.display = 'none'; }}
+                    />
+                    <div style={{ flex: 1, minWidth: 0 }}>
+                      <p style={{ fontSize: '12px', margin: 0, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
+                        {formData.coverImage}
+                      </p>
+                      <small style={{ fontSize: '10px', color: formData.coverImagePublicId ? '#4ade80' : 'rgba(243, 243, 235, 0.55)' }}>
+                        {formData.coverImagePublicId ? '✓ Cloudinary Hosted' : 'External Image Link'}
+                      </small>
+                    </div>
+                    <button
+                      type="button"
+                      className="admin-action-btn danger"
+                      onClick={handleClearCoverImage}
+                      title="Clear cover image"
+                      style={{ flexShrink: 0 }}
+                    >
+                      <X size={14} />
+                    </button>
+                  </div>
+                )}
+
+                {/* Hidden input to ensure HTML5 required validation passes only when coverImage is non-empty */}
+                <input
+                  type="text"
+                  required
+                  value={formData.coverImage}
+                  onChange={() => {}}
+                  style={{ position: 'absolute', opacity: 0, pointerEvents: 'none', height: 0, width: 0 }}
+                  tabIndex={-1}
+                />
+              </div>
+
+              {/* Scope & Deliverables */}
               <div className="form-row">
-                <label>
-                  COVER IMAGE URL *
-                  <input
-                    type="url"
-                    required
-                    value={formData.coverImage}
-                    onChange={(e) => setFormData({ ...formData, coverImage: e.target.value })}
-                    placeholder="https://..."
-                  />
-                </label>
                 <label>
                   DELIVERABLES / SCOPE
                   <input
@@ -298,6 +562,146 @@ export default function ProjectsManager() {
                     placeholder="Interior Lighting Design, Custom Chandelier Fabrication"
                   />
                 </label>
+              </div>
+
+              {/* Project Gallery Images Section */}
+              <div className="admin-media-upload-section" style={{ marginBottom: '16px' }}>
+                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '8px' }}>
+                  <span style={{ fontSize: '11px', fontWeight: 600, letterSpacing: '0.05em', color: 'rgba(243, 243, 235, 0.55)', textTransform: 'uppercase' }}>
+                    PROJECT GALLERY IMAGES ({formData.gallery.length})
+                  </span>
+                </div>
+
+                {/* Upload Gallery Files Box */}
+                <label
+                  className="file-upload-box"
+                  style={{
+                    display: 'block',
+                    padding: '12px',
+                    borderRadius: '4px',
+                    cursor: galleryUploading ? 'wait' : 'pointer',
+                    border: '1px dashed rgba(230, 199, 122, 0.25)',
+                    backgroundColor: 'rgba(255, 255, 255, 0.02)',
+                    marginBottom: '8px',
+                  }}
+                >
+                  <input
+                    type="file"
+                    accept=".jpg,.jpeg,.png,.webp"
+                    multiple
+                    onChange={handleGalleryFilesSelect}
+                    disabled={galleryUploading}
+                    className="file-input-hidden"
+                  />
+                  <div className="file-upload-label" style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '8px' }}>
+                    {galleryUploading ? (
+                      <>
+                        <Loader2 size={16} className="spin-icon" style={{ color: 'var(--gold)' }} />
+                        <span style={{ color: 'var(--gold)' }}>Uploading gallery images to Cloudinary...</span>
+                      </>
+                    ) : (
+                      <>
+                        <Upload size={16} style={{ color: 'var(--gold)' }} />
+                        <span>Upload Gallery Image(s) (Select multiple · JPG, PNG, WEBP · Max 10MB each)</span>
+                      </>
+                    )}
+                  </div>
+                </label>
+
+                {/* Or Add External URL */}
+                <div style={{ display: 'flex', gap: '8px', marginBottom: '8px' }}>
+                  <input
+                    type="url"
+                    value={galleryExternalUrl}
+                    onChange={(e) => setGalleryExternalUrl(e.target.value)}
+                    placeholder="Or enter external gallery image URL..."
+                    style={{ flex: 1 }}
+                  />
+                  <button
+                    type="button"
+                    className="btn btn-outline btn-sm"
+                    onClick={handleAddExternalGalleryUrl}
+                    disabled={!galleryExternalUrl.trim()}
+                    style={{ whiteSpace: 'nowrap' }}
+                  >
+                    <Plus size={14} style={{ marginRight: '4px' }} /> Add URL
+                  </button>
+                </div>
+
+                {galleryUploadError && (
+                  <p style={{ color: '#f87171', fontSize: '12px', marginTop: '4px', marginBottom: '8px' }}>
+                    {galleryUploadError}
+                  </p>
+                )}
+
+                {/* Gallery Thumbnails List */}
+                {formData.gallery.length > 0 && (
+                  <div
+                    style={{
+                      display: 'grid',
+                      gridTemplateColumns: 'repeat(auto-fill, minmax(100px, 1fr))',
+                      gap: '8px',
+                      marginTop: '8px',
+                    }}
+                  >
+                    {formData.gallery.map((imgUrl, idx) => (
+                      <div
+                        key={`proj-gallery-${idx}`}
+                        style={{
+                          position: 'relative',
+                          borderRadius: '4px',
+                          overflow: 'hidden',
+                          border: '1px solid rgba(230, 199, 122, 0.2)',
+                          background: 'rgba(255, 255, 255, 0.03)',
+                        }}
+                      >
+                        <img
+                          src={imgUrl}
+                          alt={`Gallery ${idx + 1}`}
+                          style={{ width: '100%', height: '70px', objectFit: 'cover', display: 'block' }}
+                          onError={(e) => { e.target.style.display = 'none'; }}
+                        />
+                        <div
+                          style={{
+                            padding: '2px 4px',
+                            fontSize: '9px',
+                            textAlign: 'center',
+                            background: 'rgba(0, 0, 0, 0.6)',
+                            color: formData.galleryPublicIds[idx] ? '#4ade80' : 'rgba(243, 243, 235, 0.55)',
+                            whiteSpace: 'nowrap',
+                            overflow: 'hidden',
+                            textOverflow: 'ellipsis',
+                          }}
+                        >
+                          {formData.galleryPublicIds[idx] ? '✓ Cloudinary' : 'External'}
+                        </div>
+                        <button
+                          type="button"
+                          onClick={() => handleRemoveGalleryItem(idx)}
+                          title="Remove image"
+                          style={{
+                            position: 'absolute',
+                            top: '4px',
+                            right: '4px',
+                            background: 'rgba(0, 0, 0, 0.75)',
+                            border: 'none',
+                            color: '#f87171',
+                            borderRadius: '50%',
+                            width: '20px',
+                            height: '20px',
+                            display: 'flex',
+                            alignItems: 'center',
+                            justifyContent: 'center',
+                            cursor: 'pointer',
+                            padding: 0,
+                          }}
+                        >
+                          <X size={12} />
+                        </button>
+                      </div>
+                    ))}
+                  </div>
+                )}
               </div>
 
               <label>
