@@ -1,5 +1,6 @@
 import Consultation from '../models/Consultation.js';
 import { sendConsultationNotification } from './emailService.js';
+import { deleteCloudinaryAsset } from '../middleware/uploadMiddleware.js';
 
 export const createConsultation = async (data, files = []) => {
   const attachments = files.map((file) => ({
@@ -92,11 +93,29 @@ export const updateConsultationNotes = async (id, adminNotes) => {
 };
 
 export const deleteConsultation = async (id) => {
-  const consultation = await Consultation.findByIdAndDelete(id);
+  const consultation = await Consultation.findById(id);
   if (!consultation) {
     const error = new Error(`Consultation request not found with id: ${id}`);
     error.statusCode = 404;
     throw error;
   }
+
+  // Safely clean up any Cloudinary-stored attachments associated with this consultation
+  if (Array.isArray(consultation.attachments) && consultation.attachments.length > 0) {
+    for (const attachment of consultation.attachments) {
+      if (attachment && typeof attachment.publicId === 'string' && attachment.publicId.trim()) {
+        try {
+          await deleteCloudinaryAsset(attachment.publicId.trim());
+        } catch (cleanupErr) {
+          console.error(
+            `[Consultation Media Cleanup Error] Failed to delete asset ${attachment.publicId}:`,
+            cleanupErr.message
+          );
+        }
+      }
+    }
+  }
+
+  await Consultation.findByIdAndDelete(id);
   return consultation;
 };
