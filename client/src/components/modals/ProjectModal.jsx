@@ -1,16 +1,20 @@
-import { useEffect } from 'react';
+import { useState, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { X, MapPin, Calendar, Layers, ArrowUpRight, MessageCircle, ChevronLeft, ChevronRight } from 'lucide-react';
 import { Link } from 'react-router-dom';
 import { projects } from '../../data/site';
 import { getWhatsAppLink, getProjectWhatsAppMessage } from '../../seo/seoConfig';
 
-export default function ProjectModal({ project, onClose, onSelectProject }) {
+export default function ProjectModal({ project, onClose, onSelectProject, projectList }) {
+  const [selectedImage, setSelectedImage] = useState(null);
+
   useEffect(() => {
     if (project) {
       document.body.style.overflow = 'hidden';
+      setSelectedImage(null);
     } else {
       document.body.style.overflow = '';
+      setSelectedImage(null);
     }
 
     const handleKeyDown = (e) => {
@@ -29,17 +33,30 @@ export default function ProjectModal({ project, onClose, onSelectProject }) {
 
   if (!project) return null;
 
-  const currentIndex = projects.findIndex((p) => p.title === project.title);
+  const activeList = Array.isArray(projectList) && projectList.length > 0 ? projectList : projects;
+  const currentIndex = activeList.findIndex(
+    (p) => (p._id && project._id && p._id === project._id) || p.title === project.title
+  );
+  const safeIndex = currentIndex >= 0 ? currentIndex : 0;
+
   const handlePrev = () => {
-    if (!onSelectProject) return;
-    const prevIdx = (currentIndex - 1 + projects.length) % projects.length;
-    onSelectProject(projects[prevIdx]);
+    if (!onSelectProject || activeList.length === 0) return;
+    const prevIdx = (safeIndex - 1 + activeList.length) % activeList.length;
+    onSelectProject(activeList[prevIdx]);
   };
   const handleNext = () => {
-    if (!onSelectProject) return;
-    const nextIdx = (currentIndex + 1) % projects.length;
-    onSelectProject(projects[nextIdx]);
+    if (!onSelectProject || activeList.length === 0) return;
+    const nextIdx = (safeIndex + 1) % activeList.length;
+    onSelectProject(activeList[nextIdx]);
   };
+
+  // Safe image resolution: coverImage -> primary source, image -> backwards-compatible fallback, gallery -> fallback if neither exists
+  const primaryCover =
+    project.coverImage ||
+    project.image ||
+    (Array.isArray(project.gallery) && project.gallery.length > 0 ? project.gallery[0] : '');
+  const activeImage = selectedImage || primaryCover;
+  const hasGallery = Array.isArray(project.gallery) && project.gallery.length > 0;
 
   const whatsappMsg = getProjectWhatsAppMessage(project.title);
   const whatsappUrl = getWhatsAppLink(whatsappMsg);
@@ -80,7 +97,7 @@ export default function ProjectModal({ project, onClose, onSelectProject }) {
           )}
 
           <div className="modal-image-wrapper">
-            <img src={project.image} alt={project.title} loading="lazy" decoding="async" />
+            <img src={activeImage} alt={project.title} loading="lazy" decoding="async" />
             <div className="modal-image-overlay" />
           </div>
 
@@ -102,6 +119,34 @@ export default function ProjectModal({ project, onClose, onSelectProject }) {
                 <span><strong>Category:</strong> {project.category}</span>
               </div>
             </div>
+
+            {hasGallery && (
+              <div className="modal-gallery-strip" style={{ display: 'flex', gap: '8px', marginBottom: '18px', overflowX: 'auto', paddingBottom: '4px' }}>
+                {[primaryCover, ...project.gallery.filter((g) => g && g !== primaryCover)].map((imgUrl, gIdx) => (
+                  <button
+                    key={`gallery-thumb-${gIdx}`}
+                    type="button"
+                    onClick={() => setSelectedImage(imgUrl)}
+                    style={{
+                      border: activeImage === imgUrl ? '2px solid var(--gold, #e6c77a)' : '1px solid rgba(0,0,0,0.1)',
+                      padding: 0,
+                      background: 'none',
+                      cursor: 'pointer',
+                      borderRadius: '4px',
+                      overflow: 'hidden',
+                      width: '64px',
+                      height: '44px',
+                      flexShrink: 0,
+                      opacity: activeImage === imgUrl ? 1 : 0.65,
+                      transition: 'all 0.2s ease',
+                    }}
+                    aria-label={`View photo ${gIdx + 1}`}
+                  >
+                    <img src={imgUrl} alt="" style={{ width: '100%', height: '100%', objectFit: 'cover', display: 'block' }} />
+                  </button>
+                ))}
+              </div>
+            )}
 
             <p className="modal-description">{project.description}</p>
 

@@ -25,7 +25,7 @@ export const siteConfig = {
     pinterest: 'https://pinterest.com/velouralighting',
     facebook: 'https://facebook.com/velouralighting'
   },
-  catalogueUrl: '/downloads/Veloura_Lighting_2026_Catalogue.pdf' // Configurable catalogue path
+  catalogueUrl: '' // Configurable catalogue path (empty by default; set when real PDF URL is configured)
 };
 
 export const getWhatsAppLink = (message = '') => {

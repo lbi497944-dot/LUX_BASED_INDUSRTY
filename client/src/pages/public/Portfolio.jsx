@@ -58,6 +58,7 @@ export default function Portfolio() {
         project={selectedProject}
         onClose={() => setSelectedProject(null)}
         onSelectProject={(proj) => setSelectedProject(proj)}
+        projectList={filteredProjects}
       />
 
       <PageHero

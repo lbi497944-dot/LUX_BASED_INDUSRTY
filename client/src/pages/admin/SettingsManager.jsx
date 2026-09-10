@@ -46,7 +46,7 @@ export default function SettingsManager() {
         city: settings.city || 'Dubai',
         country: settings.country || 'United Arab Emirates',
         businessHours: settings.businessHours || 'Monday – Saturday: 09:00 AM – 07:00 PM GST',
-        catalogueUrl: settings.catalogueUrl || '/downloads/Veloura_Lighting_2026_Catalogue.pdf',
+        catalogueUrl: settings.catalogueUrl || '',
         socialLinks: {
           instagram: settings.socialLinks?.instagram || 'https://instagram.com/veloura.lighting',
           linkedin: settings.socialLinks?.linkedin || 'https://linkedin.com/company/veloura-lighting',
