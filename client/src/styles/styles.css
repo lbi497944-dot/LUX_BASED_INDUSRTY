@@ -3923,6 +3923,31 @@ h1 em, h2 em, h3 em {
   outline: none;
 }
 
+.password-toggle-btn {
+  background: transparent;
+  border: none;
+  color: var(--gold);
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 0;
+  opacity: 0.75;
+  transition: opacity 0.2s ease, color 0.2s ease;
+  flex-shrink: 0;
+}
+
+.password-toggle-btn:hover {
+  opacity: 1;
+  color: var(--gold-light, #f0dfa8);
+}
+
+.password-toggle-btn:focus-visible {
+  outline: 1px solid var(--gold);
+  outline-offset: 2px;
+  border-radius: 2px;
+}
+
 .admin-login-footer {
   display: flex;
   align-items: center;

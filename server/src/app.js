@@ -11,6 +11,10 @@ import { localUploadsDir } from './config/cloudinary.js';
 
 const app = express();
 
+// Trust the single reverse proxy hop used by Render.
+// This allows Express and express-rate-limit to resolve the real client IP safely.
+app.set('trust proxy', 1);
+
 // Security HTTP headers
 app.use(
   helmet({
@@ -24,17 +28,20 @@ app.use(compression());
 // CORS configuration
 const isProduction = process.env.NODE_ENV === 'production';
 
+// Helper to normalize origin strings by trimming whitespace and trailing slashes
+const normalizeOrigin = (url) => (url ? url.trim().replace(/\/+$/, '') : '');
+
 // Support multiple origins through a comma-separated CLIENT_URL value
 const configuredClientUrls = (process.env.CLIENT_URL || '')
   .split(',')
-  .map((url) => url.trim())
+  .map(normalizeOrigin)
   .filter(Boolean);
 
 const devOrigins = [
   'http://localhost:5173',
   'http://localhost:3000',
   'http://127.0.0.1:5173',
-];
+].map(normalizeOrigin);
 
 const allowedOrigins = isProduction
   ? configuredClientUrls
@@ -47,7 +54,8 @@ app.use(
       if (!origin) {
         return callback(null, true);
       }
-      if (allowedOrigins.includes(origin)) {
+      const normalizedIncomingOrigin = normalizeOrigin(origin);
+      if (allowedOrigins.includes(normalizedIncomingOrigin)) {
         return callback(null, true);
       }
       return callback(new Error(`CORS blocked: Origin '${origin}' is not permitted.`));

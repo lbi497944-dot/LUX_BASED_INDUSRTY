@@ -48,3 +48,7 @@ pnpm-debug.log*
 # Test Coverage
 coverage/
 .nyc_output/
+
+# Temporary Admin Recovery Utility (Local One-Time Use Only)
+reset_admin_password.js
+server/reset_admin_password.js

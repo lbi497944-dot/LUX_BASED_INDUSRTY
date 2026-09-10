@@ -38,6 +38,11 @@ export const validateEnvironment = () => {
     }
   }
 
+  // 4. CORS CLIENT_URL Configuration
+  if (isProduction && !process.env.CLIENT_URL) {
+    warnings.push('CLIENT_URL environment variable is missing in production. Cross-origin browser requests will be blocked by CORS.');
+  }
+
   // Report Warnings
   if (warnings.length > 0) {
     warnings.forEach((warn) => console.warn(`[Config Warning] ${warn}`));
