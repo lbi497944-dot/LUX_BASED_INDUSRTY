@@ -28,6 +28,7 @@ const NewsletterManager = lazy(() => import('../pages/admin/NewsletterManager'))
 const FaqsManager = lazy(() => import('../pages/admin/FaqsManager'));
 const TestimonialsManager = lazy(() => import('../pages/admin/TestimonialsManager'));
 const SettingsManager = lazy(() => import('../pages/admin/SettingsManager'));
+const ChangePasswordManager = lazy(() => import('../pages/admin/ChangePasswordManager'));
 
 // Branded Luxury Loading Fallback
 function BrandedLoadingFallback() {
@@ -109,6 +110,7 @@ export default function AppRoutes() {
             <Route path="newsletter" element={<NewsletterManager />} />
             <Route path="faqs" element={<FaqsManager />} />
             <Route path="testimonials" element={<TestimonialsManager />} />
+            <Route path="account" element={<ChangePasswordManager />} />
             <Route path="settings" element={<SettingsManager />} />
           </Route>
         </Route>

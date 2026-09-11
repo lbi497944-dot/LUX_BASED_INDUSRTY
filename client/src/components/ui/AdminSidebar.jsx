@@ -11,6 +11,7 @@ import {
   HelpCircle,
   MessageSquareQuote,
   Settings,
+  KeyRound,
   X,
 } from 'lucide-react';
 
@@ -24,6 +25,7 @@ const links = [
   { label: 'Newsletter', path: '/admin/newsletter', icon: Send },
   { label: 'FAQs', path: '/admin/faqs', icon: HelpCircle },
   { label: 'Testimonials', path: '/admin/testimonials', icon: MessageSquareQuote },
+  { label: 'Account Security', path: '/admin/account', icon: KeyRound },
   { label: 'Site Settings', path: '/admin/settings', icon: Settings },
 ];
 

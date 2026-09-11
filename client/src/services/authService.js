@@ -39,4 +39,8 @@ export const authService = {
   isAuthenticated: () => {
     return Boolean(localStorage.getItem('veloura_admin_token'));
   },
+
+  changePassword: async (currentPassword, newPassword) => {
+    return await api.put('/auth/password', { currentPassword, newPassword });
+  },
 };
