@@ -20,20 +20,20 @@ import { getSavedProductIds, toggleSaveProduct } from '../../utils/savedProducts
 
 const fallbackFaqs = [
   {
-    question: 'What types of architectural lighting does Veloura offer?',
-    answer: 'Veloura specializes in luxury chandeliers, architectural pendants, concealed smart ambient cove systems, low-profile wall sconces, and fully bespoke custom lighting concepts for high-end residential and commercial spaces.'
+    question: 'What types of architectural lighting does LUX BASED INDUSTRY offer?',
+    answer: 'LUX BASED INDUSTRY specializes in luxury chandeliers, architectural pendants, concealed smart ambient cove systems, low-profile wall sconces, and fully bespoke custom lighting concepts for high-end residential and commercial spaces.'
   },
   {
     question: 'Do you provide custom lighting solutions for private villas and hotels?',
     answer: 'Yes, our lighting architects and master craftsmen engineer bespoke one-of-one lighting fixtures tailored to unique room ceiling scales, architectural geometry, and interior design briefs across Dubai, Abu Dhabi, Doha, and globally.'
   },
   {
-    question: 'Does Veloura provide lighting consultation services in Dubai & UAE?',
+    question: 'Does LUX BASED INDUSTRY provide lighting consultation services in Dubai & UAE?',
     answer: 'We provide end-to-end lighting consultations in Dubai and the UAE. Our team reviews room blueprints, natural light orientation, material finishes, photometrics, and smart lighting scene controls.'
   },
   {
     question: 'Are your lighting systems compatible with Lutron, KNX, or DALI controls?',
-    answer: 'All Veloura fixtures and ambient systems integrate seamlessly with major smart automation standards including DALI-2, Lutron HomeWorks, Control4, and KNX digital dimming controllers.'
+    answer: 'All LUX BASED INDUSTRY fixtures and ambient systems integrate seamlessly with major smart automation standards including DALI-2, Lutron HomeWorks, Control4, and KNX digital dimming controllers.'
   }
 ];
 
@@ -97,28 +97,28 @@ export default function Home() {
   const homeSchema = {
     '@context': 'https://schema.org',
     '@type': 'LocalBusiness',
-    name: siteConfig.siteName,
+    name: settings?.brandName || siteConfig.siteName,
     url: siteConfig.siteUrl,
-    logo: `${siteConfig.siteUrl}/favicon.svg`,
+    logo: settings?.logo || `${siteConfig.siteUrl}/favicon.svg`,
     image: siteConfig.defaultImage,
     description: siteConfig.defaultDescription,
-    telephone: siteConfig.contact.phone,
-    email: siteConfig.contact.email,
+    telephone: settings?.phone || siteConfig.contact.phone,
+    email: settings?.email || siteConfig.contact.email,
     address: {
       '@type': 'PostalAddress',
-      streetAddress: 'Alserkal Avenue, Building 42',
-      addressLocality: 'Dubai',
-      addressCountry: 'AE'
+      streetAddress: settings?.address || 'Alserkal Avenue, Building 42',
+      addressLocality: settings?.city || 'Dubai',
+      addressCountry: settings?.country ? 'AE' : 'AE'
     },
     geo: {
       '@type': 'GeoCoordinates',
       latitude: siteConfig.contact.geo.latitude,
       longitude: siteConfig.contact.geo.longitude
     },
-    sameAs: Object.values(siteConfig.socialLinks)
+    sameAs: Object.values(settings?.socialLinks || siteConfig.socialLinks)
   };
 
-  const whyVelouraItems = [
+  const whyCompanyItems = [
     {
       title: 'BESPOKE DESIGN',
       text: 'Tailored lighting solutions crafted for your space.',
@@ -257,7 +257,7 @@ export default function Home() {
             </div>
             <div className="editorial-right">
               <p className="editorial-body">
-                Veloura Lighting approaches illumination as an architectural discipline. We fuse technical optical precision with hand-finished craftsmanship to shape mood, accentuate texture, and elevate extraordinary residential and hospitality spaces worldwide.
+                {settings?.brandName || 'LUX BASED INDUSTRY'} approaches illumination as an architectural discipline. We fuse technical optical precision with hand-finished craftsmanship to shape mood, accentuate texture, and elevate extraordinary residential and hospitality spaces worldwide.
               </p>
               <Link className="text-link-gold" to="/collections">
                 VIEW OUR COLLECTIONS <ArrowRight size={16} />
@@ -280,7 +280,7 @@ export default function Home() {
               return (
                 <Reveal key={collectionKey} delay={idx * 0.15}>
                   <Link className="collection-card-luxury" to={`/collections/${item.slug}`}>
-                    <img src={item.heroImage || item.image} alt={`Veloura ${item.title || item.name} Collection`} loading="lazy" decoding="async" />
+                    <img src={item.heroImage || item.image} alt={`${item.title || item.name} Collection`} loading="lazy" decoding="async" />
                     <div className="card-overlay-luxury">
                       <span className="card-number">0{idx + 1}</span>
                       <h3 className="card-title">{item.title || item.name}</h3>
@@ -320,7 +320,7 @@ export default function Home() {
                   <div className="product-card-luxury">
                     <Link to={`/collections/${prod.collectionSlug}`}>
                       <div className="product-image-frame">
-                        <img src={prod.image} alt={`Veloura ${prod.name} ${prod.category}`} loading="lazy" decoding="async" />
+                        <img src={prod.image} alt={`${prod.name} ${prod.category}`} loading="lazy" decoding="async" />
                         <button
                           className={`product-save-heart ${isSaved ? 'saved' : ''}`}
                           onClick={(e) => handleToggleHeart(e, prodId)}
@@ -329,13 +329,14 @@ export default function Home() {
                         >
                           <Heart size={16} fill={isSaved ? 'var(--gold)' : 'none'} color={isSaved ? 'var(--gold)' : '#ffffff'} />
                         </button>
-                        <span className="product-action-badge">
-                          <ArrowUpRight size={14} />
-                        </span>
                       </div>
-                      <div className="product-info">
-                        <small className="product-category">{prod.category}</small>
-                        <h3 className="product-name">{prod.name}</h3>
+                      <div className="product-card-body">
+                        <small className="product-category-eyebrow">{prod.category?.toUpperCase()}</small>
+                        <h4>{prod.name}</h4>
+                        <p className="product-finish-label">{prod.finish || prod.materials}</p>
+                        <span className="product-view-action">
+                          DISCOVER PIECE <ArrowRight size={13} />
+                        </span>
                       </div>
                     </Link>
                   </div>
@@ -369,7 +370,7 @@ export default function Home() {
               <em>Defining Luxury</em>
             </h2>
             <p>
-              At Veloura, lighting is more than illumination — it is an art form. We combine craftsmanship, innovation and thoughtful design to create ambience that transforms and enriches every space.
+              At {settings?.brandName || 'LUX BASED INDUSTRY'}, lighting is more than illumination — it is an art form. We combine craftsmanship, innovation and thoughtful design to create ambience that transforms and enriches every space.
             </p>
             <Link className="btn btn-gold-outline" to="/about">
               DISCOVER OUR STORY <ArrowRight size={16} />
@@ -378,16 +379,16 @@ export default function Home() {
         </div>
       </section>
 
-      {/* 7. WHY VELOURA */}
+      {/* 7. WHY LUX BASED INDUSTRY */}
       <section className="section why-section">
         <div className="container">
           <SectionTitle
-            eyebrow="WHY VELOURA"
+            eyebrow={`WHY ${settings?.brandName || 'LUX BASED INDUSTRY'}`}
             title="The Standards of Luxury Illumination"
             align="center"
           />
           <div className="why-grid">
-            {whyVelouraItems.map((item, idx) => {
+            {whyCompanyItems.map((item, idx) => {
               const whyKey = item.id || item.title || `why-${idx}`;
               return (
                 <Reveal key={whyKey} delay={idx * 0.1}>
@@ -423,7 +424,7 @@ export default function Home() {
                 <Reveal key={projectKey} delay={idx * 0.12}>
                   <Link className="project-card-luxury" to="/portfolio">
                     <div className="project-image-box">
-                      <img src={proj.coverImage || proj.image} alt={`Veloura Lighting Project - ${proj.title} in ${proj.location}`} loading="lazy" decoding="async" />
+                      <img src={proj.coverImage || proj.image} alt={`${settings?.brandName || 'LUX BASED INDUSTRY'} Project - ${proj.title} in ${proj.location}`} loading="lazy" decoding="async" />
                       <div className="project-overlay-content">
                         <small>{proj.location}</small>
                         <h3>{proj.title}</h3>

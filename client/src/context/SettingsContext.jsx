@@ -7,8 +7,10 @@ const SettingsContext = createContext(null);
 
 export function SettingsProvider({ children }) {
   const [settings, setSettings] = useState({
-    brandName: 'Veloura Lighting',
+    brandName: 'LUX BASED INDUSTRY',
     tagline: 'Illuminating Luxury Spaces',
+    logo: '',
+    logoPublicId: '',
     email: companyContact?.email || 'concierge@veloura-lighting.com',
     phone: companyContact?.phone || '+971 4 340 8899',
     whatsapp: companyContact?.whatsapp || '+971 50 892 4411',
@@ -16,6 +18,7 @@ export function SettingsProvider({ children }) {
     address: companyContact?.address || 'Alserkal Avenue, Building 42, Al Quoz 1, Dubai, United Arab Emirates',
     hours: companyContact?.hours || 'Monday – Saturday: 09:00 AM – 07:00 PM GST',
     catalogueUrl: '',
+    locations: [],
     socialLinks: {
       instagram: 'https://instagram.com/veloura.lighting',
       linkedin: 'https://linkedin.com/company/veloura-lighting',

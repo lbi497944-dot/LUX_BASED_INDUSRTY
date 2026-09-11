@@ -60,7 +60,7 @@ export default function Footer() {
       setToast({
         type: 'success',
         title: 'Subscribed Successfully',
-        message: res.message || 'Thank you for subscribing to Veloura Lighting updates.'
+        message: res.message || `Thank you for subscribing to ${settings?.brandName || 'LUX BASED INDUSTRY'} updates.`
       });
       setEmail('');
     } catch (err) {
@@ -81,11 +81,21 @@ export default function Footer() {
         <div className="footer-main">
           {/* Brand Col */}
           <div className="footer-brand">
-            <Link className="logo footer-logo" to="/">
-              <span className="logo-main">VELOURA</span>
-              <small className="logo-sub">LIGHTING</small>
+            <Link className="logo footer-logo" to="/" aria-label={`${settings?.brandName || 'LUX BASED INDUSTRY'} Home`}>
+              {settings?.logo ? (
+                <img
+                  src={settings.logo}
+                  alt={settings.brandName || 'LUX BASED INDUSTRY'}
+                  className="logo-img footer-logo-img"
+                />
+              ) : (
+                <>
+                  <span className="logo-main">{settings?.brandName || 'LUX BASED INDUSTRY'}</span>
+                  <small className="logo-sub">{settings?.tagline || 'ARCHITECTURAL LIGHTING'}</small>
+                </>
+              )}
             </Link>
-            <p className="footer-tagline">Illuminating Luxury Spaces.</p>
+            <p className="footer-tagline">{settings?.tagline || 'Illuminating Luxury Spaces.'}</p>
             <p className="footer-desc">
               Bespoke architectural lighting solutions for spaces that command extraordinary detail and timeless elegance.
             </p>

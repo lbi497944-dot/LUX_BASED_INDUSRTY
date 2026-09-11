@@ -102,7 +102,7 @@ export default function FaqsManager() {
 
   return (
     <div className="admin-page">
-      <SEO title="FAQ Management | Veloura CMS" />
+      <SEO title="FAQ Management | LUX CMS" />
       <Toast toast={toast} onClose={() => setToast(null)} />
 
       <ModalConfirm

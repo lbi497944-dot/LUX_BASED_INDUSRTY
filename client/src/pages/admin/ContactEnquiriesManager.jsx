@@ -86,7 +86,7 @@ export default function ContactEnquiriesManager() {
 
   return (
     <div className="admin-page">
-      <SEO title="Contact Enquiries | Veloura CMS" />
+      <SEO title="Contact Enquiries | LUX CMS" />
       <Toast toast={toast} onClose={() => setToast(null)} />
 
       <ModalConfirm

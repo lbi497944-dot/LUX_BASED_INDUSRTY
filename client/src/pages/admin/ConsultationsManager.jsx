@@ -87,7 +87,7 @@ export default function ConsultationsManager() {
 
   return (
     <div className="admin-page">
-      <SEO title="Consultation Leads | Veloura CMS" />
+      <SEO title="Consultation Leads | LUX CMS" />
       <Toast toast={toast} onClose={() => setToast(null)} />
 
       <ModalConfirm

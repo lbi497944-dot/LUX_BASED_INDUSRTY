@@ -1,5 +1,6 @@
 import { useEffect } from 'react';
 import { siteConfig } from '../../seo/seoConfig';
+import { useSettings } from '../../context/SettingsContext';
 
 export default function SEO({
   title,
@@ -9,12 +10,21 @@ export default function SEO({
   type = 'website',
   schemaData = null
 }) {
-  const metaTitle = title ? `${title}` : siteConfig.defaultTitle;
-  const metaDesc = description || siteConfig.defaultDescription;
+  let settings = null;
+  try {
+    const context = useSettings();
+    settings = context?.settings;
+  } catch {
+    // Fallback if rendered outside SettingsProvider
+  }
+
+  const siteName = settings?.brandName || siteConfig.siteName;
+  const metaTitle = title ? `${title}` : (settings?.defaultSeo?.title || siteConfig.defaultTitle);
+  const metaDesc = description || (settings?.defaultSeo?.description || siteConfig.defaultDescription);
   const canonicalUrl = canonical
     ? `${siteConfig.siteUrl}${canonical}`
     : `${siteConfig.siteUrl}${window.location.pathname}`;
-  const ogImage = image || siteConfig.defaultImage;
+  const ogImage = image || (settings?.defaultSeo?.ogImage || siteConfig.defaultImage);
 
   useEffect(() => {
     // 1. Update Title
@@ -52,7 +62,7 @@ export default function SEO({
     setMetaTag('property', 'og:url', canonicalUrl);
     setMetaTag('property', 'og:type', type);
     setMetaTag('property', 'og:image', ogImage);
-    setMetaTag('property', 'og:site_name', siteConfig.siteName);
+    setMetaTag('property', 'og:site_name', siteName);
 
     // 4. Twitter Card Meta Tags
     setMetaTag('name', 'twitter:card', 'summary_large_image');
@@ -73,7 +83,7 @@ export default function SEO({
     } else if (scriptEl) {
       scriptEl.remove();
     }
-  }, [metaTitle, metaDesc, canonicalUrl, ogImage, type, schemaData]);
+  }, [metaTitle, metaDesc, canonicalUrl, ogImage, type, schemaData, siteName]);
 
   return null;
 }

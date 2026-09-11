@@ -6,8 +6,12 @@ import SectionTitle from '../../components/sections/SectionTitle';
 import Reveal from '../../components/sections/Reveal';
 import SEO from '../../components/common/SEO';
 import { pageSeoData, siteConfig } from '../../seo/seoConfig';
+import { useSettings } from '../../context/SettingsContext';
 
 export default function About() {
+  const { settings } = useSettings();
+  const brand = settings?.brandName || 'LUX BASED INDUSTRY';
+
   const principles = [
     {
       num: '01',
@@ -38,9 +42,9 @@ export default function About() {
   const aboutSchema = {
     '@context': 'https://schema.org',
     '@type': 'Organization',
-    name: siteConfig.siteName,
+    name: brand,
     url: siteConfig.siteUrl,
-    logo: `${siteConfig.siteUrl}/favicon.svg`,
+    logo: settings?.logo || `${siteConfig.siteUrl}/favicon.svg`,
     description: siteConfig.defaultDescription,
     address: {
       '@type': 'PostalAddress',
@@ -61,7 +65,7 @@ export default function About() {
       <PageHero
         eyebrow="OUR STORY"
         title="Crafting Light. Defining Luxury."
-        description="Veloura brings together artistic vision, architectural understanding, and technical optical precision to create unforgettable lighting environments."
+        description={`${brand} brings together artistic vision, architectural understanding, and technical optical precision to create unforgettable lighting environments.`}
         image={images.story}
       />
 
@@ -70,7 +74,7 @@ export default function About() {
         <div className="container">
           <div className="editorial-split">
             <div className="editorial-left">
-              <span className="eyebrow gold-label">THE VELOURA STATEMENT</span>
+              <span className="eyebrow gold-label">THE LUX STATEMENT</span>
               <h2 className="editorial-heading">
                 Lighting is the <em>soul</em><br />
                 of an interior.
@@ -78,7 +82,7 @@ export default function About() {
             </div>
             <div className="editorial-right">
               <p className="editorial-body">
-                At Veloura, we believe the best lighting is felt before it is noticed. It reveals raw material, frames architectural symmetry, creates human rhythm, and gives people a compelling reason to linger.
+                At {brand}, we believe the best lighting is felt before it is noticed. It reveals raw material, frames architectural symmetry, creates human rhythm, and gives people a compelling reason to linger.
               </p>
               <p className="editorial-body" style={{ marginTop: '16px' }}>
                 From a private beachfront residence to a landmark destination hotel, every project begins with listening, understanding room proportions, and designing around the distinct character of the space.
@@ -92,7 +96,7 @@ export default function About() {
       <section className="about-photo-banner">
         <div className="container">
           <div className="photo-frame-luxury">
-            <img src={images.living} alt="Veloura Architectural Interior Illumination" loading="lazy" decoding="async" />
+            <img src={images.living} alt={`${brand} Architectural Interior Illumination`} loading="lazy" decoding="async" />
           </div>
         </div>
       </section>
@@ -102,7 +106,7 @@ export default function About() {
         <div className="container">
           <SectionTitle
             eyebrow="WHAT GUIDES US"
-            title="The Five Pillars of Veloura"
+            title={`The Core Pillars of ${brand}`}
             align="center"
           />
 
@@ -152,9 +156,9 @@ export default function About() {
           <div className="cta-text-side">
             <span className="eyebrow">START A CONVERSATION</span>
             <h2>Have a Space Worth Illuminating?</h2>
-            <p>Speak with our studio designers to explore how Veloura can elevate your upcoming architectural project.</p>
+            <p>Speak with our studio designers to explore how {brand} can elevate your upcoming architectural project.</p>
             <Link className="btn btn-gold" to="/consultation">
-              TALK TO VELOURA <ArrowRight size={16} />
+              TALK TO OUR STUDIO <ArrowRight size={16} />
             </Link>
           </div>
           <div className="cta-image-side" style={{ backgroundImage: `url(${images.ambient})` }} />

@@ -1,13 +1,17 @@
 import { Link } from 'react-router-dom';
 import { ArrowLeft } from 'lucide-react';
 import SEO from '../../components/common/SEO';
+import { useSettings } from '../../context/SettingsContext';
 
 export default function NotFound() {
+  const { settings } = useSettings();
+  const brand = settings?.brandName || 'LUX BASED INDUSTRY';
+
   return (
     <main className="not-found-page">
       <SEO
-        title="Page Not Found | Veloura Lighting"
-        description="The requested page could not be found on Veloura Lighting."
+        title={`Page Not Found | ${brand}`}
+        description={`The requested page could not be found on ${brand}.`}
         canonical="/404"
       />
 

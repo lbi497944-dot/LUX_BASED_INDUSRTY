@@ -182,7 +182,7 @@ export default function CollectionsManager() {
 
   return (
     <div className="admin-page">
-      <SEO title="Collections Management | Veloura CMS" />
+      <SEO title="Collections Management | LUX CMS" />
       <Toast toast={toast} onClose={() => setToast(null)} />
 
       <ModalConfirm

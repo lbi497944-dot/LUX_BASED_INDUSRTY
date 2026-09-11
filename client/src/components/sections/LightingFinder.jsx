@@ -3,6 +3,7 @@ import { motion, AnimatePresence } from 'framer-motion';
 import { X, Sparkles, ArrowRight, RotateCcw, MessageCircle } from 'lucide-react';
 import { collections, products } from '../../data/site';
 import { getWhatsAppLink } from '../../seo/seoConfig';
+import { useSettings } from '../../context/SettingsContext';
 
 const questions = [
   {
@@ -32,6 +33,8 @@ const questions = [
 ];
 
 export default function LightingFinder({ isOpen, onClose }) {
+  const { settings } = useSettings();
+  const brand = settings?.brandName || 'LUX BASED INDUSTRY';
   const [currentStep, setCurrentStep] = useState(0);
   const [answers, setAnswers] = useState({});
   const [showResults, setShowResults] = useState(false);
@@ -105,7 +108,7 @@ export default function LightingFinder({ isOpen, onClose }) {
 
   const { matchedCollections, matchedProducts } = getRecommendations();
 
-  const finderWhatsAppMessage = `Hello Veloura Lighting, I completed your Lighting Finder wizard with these selections: Space: ${answers.space || 'Villa'}, Style: ${answers.style || 'Luxury'}, Looking for: ${answers.category || 'Chandelier'}, Stage: ${answers.stage || 'Planning'}. I would like to discuss recommendations.`;
+  const finderWhatsAppMessage = `Hello ${brand}, I completed your Lighting Finder wizard with these selections: Space: ${answers.space || 'Villa'}, Style: ${answers.style || 'Luxury'}, Looking for: ${answers.category || 'Chandelier'}, Stage: ${answers.stage || 'Planning'}. I would like to discuss recommendations.`;
 
   return (
     <AnimatePresence>
@@ -175,7 +178,7 @@ export default function LightingFinder({ isOpen, onClose }) {
 
               <div className="finder-results-actions">
                 <a
-                  href={getWhatsAppLink(finderWhatsAppMessage)}
+                  href={getWhatsAppLink(finderWhatsAppMessage, settings?.whatsappNumberClean || settings?.phone)}
                   target="_blank"
                   rel="noopener noreferrer"
                   className="btn btn-whatsapp"

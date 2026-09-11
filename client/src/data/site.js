@@ -240,7 +240,7 @@ export const testimonials = [
     name: 'Tariq Al-Mansoor',
     role: 'Principal Architect',
     company: 'Mansoor Design Studio, Dubai',
-    content: 'Veloura transformed our double-height private residence in Emirates Hills. The bespoke chandelier commands the atrium with magnificent optical clarity while preserving perfect ambient warmth.',
+    content: 'LUX BASED INDUSTRY transformed our double-height private residence in Emirates Hills. The bespoke chandelier commands the atrium with magnificent optical clarity while preserving perfect ambient warmth.',
     rating: 5,
   },
   {
@@ -248,7 +248,7 @@ export const testimonials = [
     name: 'Elena Rostova',
     role: 'Design Director',
     company: 'Lumière Interiors, Abu Dhabi',
-    content: 'The architectural precision of Veloura’s concealed ambient systems is unmatched. Their Lutron and DALI integration allowed us to choreograph seamless circadian scenes across a 2,500 sq. m villa.',
+    content: 'The architectural precision of LUX BASED INDUSTRY’s concealed ambient systems is unmatched. Their Lutron and DALI integration allowed us to choreograph seamless circadian scenes across a 2,500 sq. m villa.',
     rating: 5,
   },
   {
@@ -256,7 +256,7 @@ export const testimonials = [
     name: 'Marcus Vance',
     role: 'Hospitality Lead',
     company: 'Vance & Co. Luxury Developments, Doha',
-    content: 'Specifying Veloura’s architectural pendants for our boutique hotel suites elevated the entire guest experience. The hand-finished champagne patinas and glare-controlled optics reflect true luxury craftsmanship.',
+    content: 'Specifying LUX BASED INDUSTRY’s architectural pendants for our boutique hotel suites elevated the entire guest experience. The hand-finished champagne patinas and glare-controlled optics reflect true luxury craftsmanship.',
     rating: 5,
   },
 ];

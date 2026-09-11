@@ -8,10 +8,13 @@ import Reveal from '../../components/sections/Reveal';
 import ProjectModal from '../../components/modals/ProjectModal';
 import SEO from '../../components/common/SEO';
 import { pageSeoData } from '../../seo/seoConfig';
+import { useSettings } from '../../context/SettingsContext';
 
 const categories = ['ALL', 'RESIDENTIAL', 'HOSPITALITY', 'RESTAURANT', 'COMMERCIAL'];
 
 export default function Portfolio() {
+  const { settings } = useSettings();
+  const brand = settings?.brandName || 'LUX BASED INDUSTRY';
   const [projects, setProjects] = useState(fallbackProjects);
   const [activeFilter, setActiveFilter] = useState('ALL');
   const [selectedProject, setSelectedProject] = useState(null);
@@ -64,7 +67,7 @@ export default function Portfolio() {
       <PageHero
         eyebrow="OUR PROJECTS"
         title="Lighting That Defines Spaces."
-        description="Explore a curated showcase of Veloura architectural lighting installations across luxury villas, destination hotels, fine dining establishments, and corporate headquarters."
+        description={`Explore a curated showcase of ${brand} architectural lighting installations across luxury villas, destination hotels, fine dining establishments, and corporate headquarters.`}
         image={images.hotel}
       />
 
@@ -107,7 +110,7 @@ export default function Portfolio() {
                     }}
                     aria-label={`View project details for ${proj.title}`}
                   >
-                    <img src={projectImg} alt={`Veloura Lighting ${proj.title} - ${proj.category} in ${proj.location}`} loading="lazy" decoding="async" />
+                    <img src={projectImg} alt={`${brand} ${proj.title} - ${proj.category} in ${proj.location}`} loading="lazy" decoding="async" />
                     <div className="portfolio-caption-overlay">
                       <div className="caption-top">
                         <small className="project-meta">

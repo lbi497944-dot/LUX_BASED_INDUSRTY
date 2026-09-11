@@ -9,8 +9,11 @@ import SectionTitle from '../../components/sections/SectionTitle';
 import Reveal from '../../components/sections/Reveal';
 import SEO from '../../components/common/SEO';
 import { getWhatsAppLink, getCollectionWhatsAppMessage, getProductWhatsAppMessage } from '../../seo/seoConfig';
+import { useSettings } from '../../context/SettingsContext';
 
 export default function CollectionDetail() {
+  const { settings } = useSettings();
+  const brand = settings?.brandName || 'LUX BASED INDUSTRY';
   const { slug } = useReactParams();
   const fallbackCol = fallbackCollections.find((c) => c.slug === slug) || fallbackCollections[0];
   const [collection, setCollection] = useState(fallbackCol);
@@ -40,12 +43,15 @@ export default function CollectionDetail() {
 
   const collectionTitle = collection.name || collection.title;
   const collectionImage = collection.heroImage || collection.image;
-  const collectionWhatsAppUrl = getWhatsAppLink(getCollectionWhatsAppMessage(collectionTitle));
+  const collectionWhatsAppUrl = getWhatsAppLink(
+    getCollectionWhatsAppMessage(collectionTitle, brand),
+    settings?.whatsappNumberClean || settings?.phone
+  );
 
   return (
     <main className="collection-detail-page">
       <SEO
-        title={`${collectionTitle} | Veloura Lighting Dubai`}
+        title={`${collectionTitle} | ${brand}`}
         description={`${collectionTitle} — ${collection.description}`}
         canonical={`/collections/${collection.slug}`}
       />
@@ -131,12 +137,15 @@ export default function CollectionDetail() {
 
           <div className="product-grid-luxury">
             {relatedProducts.map((prod, idx) => {
-              const productWhatsAppUrl = getWhatsAppLink(getProductWhatsAppMessage(prod.name));
+              const productWhatsAppUrl = getWhatsAppLink(
+                getProductWhatsAppMessage(prod.name, brand),
+                settings?.whatsappNumberClean || settings?.phone
+              );
               return (
                 <Reveal key={prod._id || prod.id || prod.slug || `prod-${idx}`} delay={idx * 0.1}>
                   <div className="product-card-luxury detail-product-card">
                     <div className="product-image-frame">
-                      <img src={prod.image} alt={`Veloura ${prod.name} ${prod.category}`} loading="lazy" decoding="async" />
+                      <img src={prod.image} alt={`${brand} ${prod.name} ${prod.category}`} loading="lazy" decoding="async" />
                     </div>
                     <div className="product-info">
                       <small className="product-category">{prod.category}</small>

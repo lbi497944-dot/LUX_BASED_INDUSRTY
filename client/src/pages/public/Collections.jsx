@@ -8,8 +8,11 @@ import Reveal from '../../components/sections/Reveal';
 import SectionTitle from '../../components/sections/SectionTitle';
 import SEO from '../../components/common/SEO';
 import { pageSeoData } from '../../seo/seoConfig';
+import { useSettings } from '../../context/SettingsContext';
 
 export default function Collections() {
+  const { settings } = useSettings();
+  const brand = settings?.brandName || 'LUX BASED INDUSTRY';
   const [collections, setCollections] = useState(fallbackCollections);
 
   useEffect(() => {
@@ -47,7 +50,7 @@ export default function Collections() {
           <SectionTitle
             eyebrow="PORTFOLIO CATEGORIES"
             title="Curated Architectural Collections"
-            description="From statement centerpiece chandeliers to quiet plaster-in cove details, every Veloura collection balances proportion, materiality, and light quality."
+            description={`From statement centerpiece chandeliers to quiet plaster-in cove details, every ${brand} collection balances proportion, materiality, and light quality.`}
           />
 
           <div className="collections-editorial-list">
@@ -59,7 +62,7 @@ export default function Collections() {
                   <Link to={`/collections/${item.slug}`} className="collection-editorial-row">
                     <div className="row-index">0{idx + 1}</div>
                     <div className="row-image-frame">
-                      <img src={img} alt={`Veloura ${title} Collection`} loading="lazy" decoding="async" />
+                      <img src={img} alt={`${brand} ${title} Collection`} loading="lazy" decoding="async" />
                     </div>
                     <div className="row-copy-frame">
                       <span className="eyebrow">{item.eyebrow}</span>

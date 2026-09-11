@@ -4,8 +4,11 @@ import { X, MapPin, Calendar, Layers, ArrowUpRight, MessageCircle, ChevronLeft, 
 import { Link } from 'react-router-dom';
 import { projects } from '../../data/site';
 import { getWhatsAppLink, getProjectWhatsAppMessage } from '../../seo/seoConfig';
+import { useSettings } from '../../context/SettingsContext';
 
 export default function ProjectModal({ project, onClose, onSelectProject, projectList }) {
+  const { settings } = useSettings();
+  const brand = settings?.brandName || 'LUX BASED INDUSTRY';
   const [selectedImage, setSelectedImage] = useState(null);
 
   useEffect(() => {
@@ -58,8 +61,8 @@ export default function ProjectModal({ project, onClose, onSelectProject, projec
   const activeImage = selectedImage || primaryCover;
   const hasGallery = Array.isArray(project.gallery) && project.gallery.length > 0;
 
-  const whatsappMsg = getProjectWhatsAppMessage(project.title);
-  const whatsappUrl = getWhatsAppLink(whatsappMsg);
+  const whatsappMsg = getProjectWhatsAppMessage(project.title, brand);
+  const whatsappUrl = getWhatsAppLink(whatsappMsg, settings?.whatsappNumberClean || settings?.phone);
 
   return (
     <AnimatePresence>

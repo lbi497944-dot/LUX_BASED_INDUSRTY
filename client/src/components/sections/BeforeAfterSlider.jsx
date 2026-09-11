@@ -36,7 +36,7 @@ export default function BeforeAfterSlider() {
         <div className="section-title center">
           <span className="eyebrow gold-label">THE TRANSFORMATION</span>
           <h2>See the Difference Light Makes</h2>
-          <p>Drag the slider to experience how Veloura layered architectural lighting transforms an interior from dull shadows into warm elegance.</p>
+          <p>Drag the slider to experience how layered architectural lighting transforms an interior from dull shadows into warm elegance.</p>
         </div>
 
         <div
@@ -59,12 +59,12 @@ export default function BeforeAfterSlider() {
           {/* AFTER IMAGE (Warm Illuminated Interior) */}
           <img
             src={images.hero}
-            alt="Interior with Veloura Architectural Lighting (After)"
+            alt="Interior with Lux Architectural Lighting (After)"
             className="ba-image image-after"
             loading="lazy"
             decoding="async"
           />
-          <span className="ba-label label-after">WITH VELOURA LIGHTING</span>
+          <span className="ba-label label-after">WITH LUX ARCHITECTURAL LIGHTING</span>
 
           {/* BEFORE IMAGE (Dim / Unlit Interior Clip) */}
           <div

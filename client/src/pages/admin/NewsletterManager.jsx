@@ -55,7 +55,7 @@ export default function NewsletterManager() {
 
   return (
     <div className="admin-page">
-      <SEO title="Newsletter Readership | Veloura CMS" />
+      <SEO title="Newsletter Readership | LUX CMS" />
       <Toast toast={toast} onClose={() => setToast(null)} />
 
       <ModalConfirm

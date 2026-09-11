@@ -4,11 +4,21 @@ const siteSettingSchema = new mongoose.Schema(
   {
     brandName: {
       type: String,
-      default: 'Veloura Lighting',
+      default: 'LUX BASED INDUSTRY',
     },
     tagline: {
       type: String,
       default: 'Illuminating Luxury Spaces',
+    },
+    logo: {
+      type: String,
+      default: '',
+      trim: true,
+    },
+    logoPublicId: {
+      type: String,
+      default: '',
+      trim: true,
     },
     email: {
       type: String,
@@ -38,6 +48,57 @@ const siteSettingSchema = new mongoose.Schema(
       type: String,
       default: 'United Arab Emirates',
     },
+    locations: [
+      {
+        name: {
+          type: String,
+          required: true,
+          trim: true,
+        },
+        address: {
+          type: String,
+          required: true,
+          trim: true,
+        },
+        city: {
+          type: String,
+          default: '',
+          trim: true,
+        },
+        country: {
+          type: String,
+          default: '',
+          trim: true,
+        },
+        phone: {
+          type: String,
+          default: '',
+          trim: true,
+        },
+        email: {
+          type: String,
+          default: '',
+          trim: true,
+        },
+        mapUrl: {
+          type: String,
+          default: '',
+          trim: true,
+        },
+        isPrimary: {
+          type: Boolean,
+          default: false,
+        },
+        isActive: {
+          type: Boolean,
+          default: true,
+        },
+        order: {
+          type: Number,
+          default: 0,
+        },
+      },
+    ],
     businessHours: {
       type: String,
       default: 'Monday – Saturday: 09:00 AM – 07:00 PM GST',
@@ -67,11 +128,11 @@ const siteSettingSchema = new mongoose.Schema(
     defaultSeo: {
       title: {
         type: String,
-        default: 'Veloura Lighting | Luxury Architectural Lighting in Dubai',
+        default: 'LUX BASED INDUSTRY | Luxury Architectural Lighting in Dubai',
       },
       description: {
         type: String,
-        default: 'Veloura Lighting creates bespoke architectural lighting, luxury chandeliers, and premium illumination for luxury villas, destination hotels, restaurants, and commercial spaces in Dubai and the UAE.',
+        default: 'LUX BASED INDUSTRY creates bespoke architectural lighting, luxury chandeliers, and premium illumination for luxury villas, destination hotels, restaurants, and commercial spaces in Dubai and the UAE.',
       },
       keywords: [
         {

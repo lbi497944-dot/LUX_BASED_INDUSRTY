@@ -9,7 +9,7 @@ export default function ProtectedRoute() {
     return (
       <div className="admin-loading-screen">
         <Loader2 className="spin-icon" size={36} />
-        <p>Verifying Veloura Admin Session...</p>
+        <p>Verifying LUX CMS Session...</p>
       </div>
     );
   }

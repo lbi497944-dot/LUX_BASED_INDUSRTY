@@ -15,7 +15,7 @@ export default function AdminHeader({ onToggleSidebar }) {
         >
           <Menu size={22} />
         </button>
-        <span className="admin-breadcrumb">VELOURA CMS</span>
+        <span className="admin-breadcrumb">LBI CMS</span>
       </div>
 
       <div className="admin-header-right">

@@ -107,7 +107,7 @@ export default function TestimonialsManager() {
 
   return (
     <div className="admin-page">
-      <SEO title="Testimonials | Veloura CMS" />
+      <SEO title="Testimonials | LUX CMS" />
       <Toast toast={toast} onClose={() => setToast(null)} />
 
       <ModalConfirm

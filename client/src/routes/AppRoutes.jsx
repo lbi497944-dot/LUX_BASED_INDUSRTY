@@ -50,13 +50,13 @@ function BrandedLoadingFallback() {
         <span
           style={{
             fontFamily: 'Cormorant Garamond, serif',
-            fontSize: '28px',
+            fontSize: '24px',
             letterSpacing: '0.2em',
             color: '#e6c77a',
             display: 'block',
           }}
         >
-          VELOURA
+          LUX BASED INDUSTRY
         </span>
         <span
           style={{
@@ -66,7 +66,7 @@ function BrandedLoadingFallback() {
             textTransform: 'uppercase',
           }}
         >
-          LIGHTING CMS
+          ARCHITECTURAL LIGHTING
         </span>
       </div>
       <div

@@ -46,7 +46,7 @@ export default function AdminSidebar({ isOpen, onClose }) {
       <aside className={`admin-sidebar ${isOpen ? 'open' : ''}`}>
         <div className="admin-sidebar-header">
           <NavLink to="/" className="admin-brand-link">
-            <span className="logo-main">VELOURA</span>
+            <span className="logo-main">LUX</span>
             <small className="logo-sub">CMS PORTAL</small>
           </NavLink>
           <button className="admin-sidebar-close" onClick={onClose} aria-label="Close sidebar">

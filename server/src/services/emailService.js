@@ -37,12 +37,12 @@ export const sendContactNotification = async (enquiry) => {
     const htmlContent = `
       <div style="font-family: 'Cormorant Garamond', Georgia, serif; max-width: 600px; margin: 0 auto; background-color: #FAF8F1; padding: 32px; border: 1px solid #e0d8c3; color: #1a1a1a;">
         <div style="text-align: center; border-bottom: 2px solid #C9A227; padding-bottom: 16px; margin-bottom: 24px;">
-          <h1 style="color: #15391d; letter-spacing: 0.15em; font-size: 24px; margin: 0;">VELOURA LIGHTING</h1>
+          <h1 style="color: #15391d; letter-spacing: 0.15em; font-size: 24px; margin: 0;">LUX BASED INDUSTRY</h1>
           <p style="color: #C9A227; font-size: 11px; letter-spacing: 0.25em; text-transform: uppercase; margin: 4px 0 0;">New Contact Enquiry</p>
         </div>
         
         <div style="font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; font-size: 14px; line-height: 1.6;">
-          <p>A new architectural enquiry has been submitted through the Veloura web platform.</p>
+          <p>A new architectural enquiry has been submitted through the web platform.</p>
           
           <table style="width: 100%; border-collapse: collapse; margin: 20px 0; background: #ffffff; border: 1px solid #e8e3d5;">
             <tr style="border-bottom: 1px solid #f0ecdf;">
@@ -72,7 +72,7 @@ export const sendContactNotification = async (enquiry) => {
           </table>
 
           <p style="font-size: 12px; color: #777; margin-top: 24px; text-align: center;">
-            This is an automated notification from the Veloura Lighting administration engine.
+            This is an automated notification from the LUX BASED INDUSTRY administration engine.
           </p>
         </div>
       </div>
@@ -81,7 +81,7 @@ export const sendContactNotification = async (enquiry) => {
     const response = await resend.emails.send({
       from: sender,
       to: recipient,
-      subject: `[Veloura Lead] New Contact Enquiry: ${clientName}`,
+      subject: `[LUX BASED INDUSTRY Lead] New Contact Enquiry: ${clientName}`,
       html: htmlContent,
     });
 
@@ -133,7 +133,7 @@ export const sendConsultationNotification = async (consultation) => {
     const htmlContent = `
       <div style="font-family: 'Cormorant Garamond', Georgia, serif; max-width: 600px; margin: 0 auto; background-color: #FAF8F1; padding: 32px; border: 1px solid #e0d8c3; color: #1a1a1a;">
         <div style="text-align: center; border-bottom: 2px solid #C9A227; padding-bottom: 16px; margin-bottom: 24px;">
-          <h1 style="color: #15391d; letter-spacing: 0.15em; font-size: 24px; margin: 0;">VELOURA LIGHTING</h1>
+          <h1 style="color: #15391d; letter-spacing: 0.15em; font-size: 24px; margin: 0;">LUX BASED INDUSTRY</h1>
           <p style="color: #C9A227; font-size: 11px; letter-spacing: 0.25em; text-transform: uppercase; margin: 4px 0 0;">VIP Consultation Booking</p>
         </div>
         
@@ -180,7 +180,7 @@ export const sendConsultationNotification = async (consultation) => {
           </table>
 
           <p style="font-size: 12px; color: #777; margin-top: 24px; text-align: center;">
-            This is an automated notification from the Veloura Lighting administration engine.
+            This is an automated notification from the LUX BASED INDUSTRY administration engine.
           </p>
         </div>
       </div>
@@ -189,7 +189,7 @@ export const sendConsultationNotification = async (consultation) => {
     const response = await resend.emails.send({
       from: sender,
       to: recipient,
-      subject: `[Veloura Consultation] Booking from ${fullName}`,
+      subject: `[LUX BASED INDUSTRY Consultation] Booking from ${fullName}`,
       html: htmlContent,
     });
 

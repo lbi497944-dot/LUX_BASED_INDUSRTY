@@ -262,7 +262,7 @@ export default function ProjectsManager() {
 
   return (
     <div className="admin-page">
-      <SEO title="Portfolio Management | Veloura CMS" />
+      <SEO title="Portfolio Management | LUX CMS" />
       <Toast toast={toast} onClose={() => setToast(null)} />
 
       <ModalConfirm

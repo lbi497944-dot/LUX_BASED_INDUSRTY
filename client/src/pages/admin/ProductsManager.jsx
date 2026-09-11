@@ -198,7 +198,7 @@ export default function ProductsManager() {
 
   return (
     <div className="admin-page">
-      <SEO title="Products Management | Veloura CMS" />
+      <SEO title="Products Management | LUX CMS" />
       <Toast toast={toast} onClose={() => setToast(null)} />
 
       <ModalConfirm

@@ -1,9 +1,11 @@
 import { useState, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { X, ArrowRight } from 'lucide-react';
-import { siteConfig, getWhatsAppLink } from '../../seo/seoConfig';
+import { siteConfig } from '../../seo/seoConfig';
+import { useSettings } from '../../context/SettingsContext';
 
 export default function WhatsAppButton() {
+  const { settings } = useSettings();
   const [showTooltip, setShowTooltip] = useState(false);
 
   useEffect(() => {
@@ -23,7 +25,10 @@ export default function WhatsAppButton() {
     sessionStorage.setItem('veloura_wa_tooltip_dismissed', 'true');
   };
 
-  const whatsappUrl = getWhatsAppLink();
+  const cleanNumber = (settings?.whatsappNumberClean || settings?.whatsapp || siteConfig.whatsAppNumber || '').replace(/[^0-9]/g, '');
+  const companyName = settings?.brandName || 'LUX BASED INDUSTRY';
+  const message = `Hello ${companyName}, I'm interested in your lighting solutions and would like to discuss my project.`;
+  const whatsappUrl = cleanNumber ? `https://wa.me/${cleanNumber}?text=${encodeURIComponent(message)}` : '#';
 
   return (
     <div className="whatsapp-floating-container">
@@ -64,7 +69,7 @@ export default function WhatsAppButton() {
         target="_blank"
         rel="noopener noreferrer"
         className="whatsapp-float-btn"
-        aria-label="Chat with Veloura Lighting on WhatsApp for private consultation"
+        aria-label={`Chat with ${companyName} on WhatsApp for private consultation`}
       >
         <svg
           className="whatsapp-icon-svg"

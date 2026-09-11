@@ -3,6 +3,7 @@ import { Link, NavLink, useLocation } from 'react-router-dom';
 import { Menu, X, Sparkles, Heart } from 'lucide-react';
 import LightingFinder from '../sections/LightingFinder';
 import { getSavedProductIds } from '../../utils/savedProducts';
+import { useSettings } from '../../context/SettingsContext';
 
 const navLinks = [
   { label: 'HOME', path: '/' },
@@ -13,6 +14,7 @@ const navLinks = [
 ];
 
 export default function Header() {
+  const { settings } = useSettings();
   const [open, setOpen] = useState(false);
   const [scrolled, setScrolled] = useState(false);
   const [isFinderOpen, setIsFinderOpen] = useState(false);
@@ -75,9 +77,19 @@ export default function Header() {
 
       <header className={`header ${scrolled ? 'header-scrolled' : ''}`}>
         <div className="nav-wrap">
-          <Link className="logo" to="/" aria-label="Veloura Lighting Home">
-            <span className="logo-main">VELOURA</span>
-            <small className="logo-sub">LIGHTING</small>
+          <Link className="logo" to="/" aria-label={`${settings?.brandName || 'LUX BASED INDUSTRY'} Home`}>
+            {settings?.logo ? (
+              <img
+                src={settings.logo}
+                alt={settings.brandName || 'LUX BASED INDUSTRY'}
+                className="logo-img"
+              />
+            ) : (
+              <>
+                <span className="logo-main">{settings?.brandName || 'LUX BASED INDUSTRY'}</span>
+                <small className="logo-sub">{settings?.tagline || 'ARCHITECTURAL LIGHTING'}</small>
+              </>
+            )}
           </Link>
 
           <nav className="desktop-nav" aria-label="Main Navigation">

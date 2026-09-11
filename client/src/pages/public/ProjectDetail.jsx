@@ -8,8 +8,11 @@ import SectionTitle from '../../components/sections/SectionTitle';
 import Reveal from '../../components/sections/Reveal';
 import SEO from '../../components/common/SEO';
 import { getWhatsAppLink, getProjectWhatsAppMessage } from '../../seo/seoConfig';
+import { useSettings } from '../../context/SettingsContext';
 
 export default function ProjectDetail() {
+  const { settings } = useSettings();
+  const brand = settings?.brandName || 'LUX BASED INDUSTRY';
   const { slug } = useParams();
   const [project, setProject] = useState(null);
   const [loading, setLoading] = useState(true);
@@ -36,12 +39,15 @@ export default function ProjectDetail() {
 
   const projectTitle = project.title || 'Architectural Lighting Project';
   const projectImage = project.coverImage || project.image || images.hotel;
-  const whatsappUrl = getWhatsAppLink(getProjectWhatsAppMessage(projectTitle));
+  const whatsappUrl = getWhatsAppLink(
+    getProjectWhatsAppMessage(projectTitle, brand),
+    settings?.whatsappNumberClean || settings?.phone
+  );
 
   return (
     <main className="project-detail-page">
       <SEO
-        title={`${projectTitle} | Veloura Lighting Portfolio`}
+        title={`${projectTitle} | ${brand} Portfolio`}
         description={project.description}
         canonical={`/portfolio/${project.slug || project.id}`}
         image={projectImage}

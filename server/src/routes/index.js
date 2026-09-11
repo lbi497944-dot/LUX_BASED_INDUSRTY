@@ -27,8 +27,8 @@ router.get('/health', (req, res) => {
     status: isDbConnected ? 'ok' : 'degraded',
     success: true,
     message: isDbConnected
-      ? 'Veloura Lighting REST API is operational'
-      : 'Veloura Lighting REST API is operational (database disconnected)',
+      ? 'LUX BASED INDUSTRY REST API is operational'
+      : 'LUX BASED INDUSTRY REST API is operational (database disconnected)',
     database: {
       connected: isDbConnected,
     },

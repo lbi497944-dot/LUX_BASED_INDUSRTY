@@ -35,7 +35,7 @@ export default function Contact() {
       setToast({
         type: 'success',
         title: 'Enquiry Received',
-        message: res.message || 'Thank you for reaching out to Veloura Lighting. Our architectural team will respond within 24 hours.'
+        message: res.message || `Thank you for reaching out to ${settings?.brandName || 'LUX BASED INDUSTRY'}. Our architectural team will respond within 24 hours.`
       });
       setFormData({
         name: '',
@@ -56,20 +56,29 @@ export default function Contact() {
     }
   };
 
+  const activeLocations = Array.isArray(settings?.locations)
+    ? settings.locations.filter((loc) => loc.isActive)
+    : [];
+
+  const primaryLocation = activeLocations.find((l) => l.isPrimary) || activeLocations[0];
+
   const contactSchema = {
     '@context': 'https://schema.org',
     '@type': 'LocalBusiness',
     name: settings.brandName || siteConfig.siteName,
     url: `${siteConfig.siteUrl}/contact`,
-    telephone: settings.phone,
-    email: settings.email,
+    telephone: primaryLocation?.phone || settings.phone,
+    email: primaryLocation?.email || settings.email,
     address: {
       '@type': 'PostalAddress',
-      streetAddress: settings.address,
-      addressLocality: settings.city || 'Dubai',
-      addressCountry: 'AE'
+      streetAddress: primaryLocation?.address || settings.address,
+      addressLocality: primaryLocation?.city || settings.city || 'Dubai',
+      addressCountry: primaryLocation?.country || 'AE'
     }
   };
+
+  const cleanWhatsapp = (settings.whatsappNumberClean || settings.whatsapp || '').replace(/[^0-9]/g, '');
+  const waContactMessage = encodeURIComponent(`Hello ${settings.brandName || 'LUX BASED INDUSTRY'}, I'm interested in discussing an architectural lighting project.`);
 
   return (
     <main className="contact-page">
@@ -99,58 +108,94 @@ export default function Contact() {
               <em>conversation.</em>
             </h2>
             <p className="contact-intro-text">
-              Reach out to our Dubai studio to discuss fixture specifications, arrange a private lighting demonstration, or request sample finish boxes.
+              Reach out to our lighting studio to discuss fixture specifications, arrange a private lighting demonstration, or request sample finish boxes.
             </p>
 
-            <div className="contact-details-list">
-              <div className="contact-detail-item">
-                <div className="icon-box">
-                  <MapPin size={18} />
+            {/* Showrooms & Locations Directory */}
+            {activeLocations.length > 0 ? (
+              <div className="contact-locations-directory">
+                {activeLocations.map((loc, idx) => (
+                  <div key={loc._id || `loc-${idx}`} className="contact-location-entry">
+                    <div className="icon-box">
+                      <MapPin size={18} />
+                    </div>
+                    <div className="location-entry-content">
+                      <small className="gold-label">
+                        {loc.name.toUpperCase()} {loc.isPrimary && '• PRIMARY STUDIO'}
+                      </small>
+                      <p className="entry-address">{loc.address}{loc.city && `, ${loc.city}`}{loc.country && `, ${loc.country}`}</p>
+                      {loc.phone && (
+                        <p className="entry-phone">
+                          <a href={`tel:${loc.phone}`}>{loc.phone}</a>
+                        </p>
+                      )}
+                      {loc.email && (
+                        <p className="entry-email">
+                          <a href={`mailto:${loc.email}`}>{loc.email}</a>
+                        </p>
+                      )}
+                      {loc.mapUrl && (
+                        <p className="entry-map">
+                          <a href={loc.mapUrl} target="_blank" rel="noopener noreferrer" className="text-link-gold">
+                            View on Google Maps <ArrowUpRight size={13} />
+                          </a>
+                        </p>
+                      )}
+                    </div>
+                  </div>
+                ))}
+              </div>
+            ) : (
+              <div className="contact-details-list">
+                <div className="contact-detail-item">
+                  <div className="icon-box">
+                    <MapPin size={18} />
+                  </div>
+                  <div>
+                    <small>STUDIO LOCATION</small>
+                    <p>{settings.address}</p>
+                  </div>
                 </div>
-                <div>
-                  <small>STUDIO LOCATION</small>
-                  <p>{settings.address}</p>
+
+                <div className="contact-detail-item">
+                  <div className="icon-box">
+                    <Mail size={18} />
+                  </div>
+                  <div>
+                    <small>EMAIL ENQUIRIES</small>
+                    <p>
+                      <a href={`mailto:${settings.email}`}>{settings.email}</a>
+                    </p>
+                  </div>
+                </div>
+
+                <div className="contact-detail-item">
+                  <div className="icon-box">
+                    <Phone size={18} />
+                  </div>
+                  <div>
+                    <small>TELEPHONE</small>
+                    <p>
+                      <a href={`tel:${settings.phone}`}>{settings.phone}</a>
+                    </p>
+                  </div>
                 </div>
               </div>
+            )}
 
-              <div className="contact-detail-item">
-                <div className="icon-box">
-                  <Mail size={18} />
-                </div>
-                <div>
-                  <small>EMAIL ENQUIRIES</small>
-                  <p>
-                    <a href={`mailto:${settings.email}`}>{settings.email}</a>
-                  </p>
-                </div>
+            <div className="contact-detail-item" style={{ marginTop: '16px' }}>
+              <div className="icon-box">
+                <Clock size={18} />
               </div>
-
-              <div className="contact-detail-item">
-                <div className="icon-box">
-                  <Phone size={18} />
-                </div>
-                <div>
-                  <small>TELEPHONE</small>
-                  <p>
-                    <a href={`tel:${settings.phone}`}>{settings.phone}</a>
-                  </p>
-                </div>
-              </div>
-
-              <div className="contact-detail-item">
-                <div className="icon-box">
-                  <Clock size={18} />
-                </div>
-                <div>
-                  <small>STUDIO HOURS</small>
-                  <p>{settings.businessHours || settings.hours}</p>
-                </div>
+              <div>
+                <small>STUDIO HOURS</small>
+                <p>{settings.businessHours || settings.hours}</p>
               </div>
             </div>
 
             <div className="whatsapp-cta-box">
               <a
-                href={`https://wa.me/${(settings.whatsappNumberClean || settings.whatsapp || '').replace(/[^0-9]/g, '')}`}
+                href={cleanWhatsapp ? `https://wa.me/${cleanWhatsapp}?text=${waContactMessage}` : '#'}
                 target="_blank"
                 rel="noopener noreferrer"
                 className="btn btn-whatsapp"

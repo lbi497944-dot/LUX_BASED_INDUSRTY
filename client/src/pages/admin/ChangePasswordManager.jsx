@@ -1,4 +1,4 @@
-﻿import { useState } from 'react';
+import { useState } from 'react';
 import { KeyRound, Eye, EyeOff, Loader2, ShieldCheck } from 'lucide-react';
 import { authService } from '../../services/authService';
 import Toast from '../../components/common/Toast';
@@ -80,7 +80,7 @@ export default function ChangePasswordManager() {
 
   return (
     <div className="admin-page">
-      <SEO title="Account Security | Veloura CMS" />
+      <SEO title="Account Security | LUX CMS" />
       <Toast toast={toast} onClose={() => setToast(null)} />
 
       <div className="admin-page-header">
