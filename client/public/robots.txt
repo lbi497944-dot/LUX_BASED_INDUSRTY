@@ -3,4 +3,4 @@ Disallow: /admin
 Disallow: /admin/
 Allow: /
 
-Sitemap: https://veloura-lighting.onrender.com/sitemap.xml
+Sitemap: https://lux-based-indusrty.vercel.app/sitemap.xml

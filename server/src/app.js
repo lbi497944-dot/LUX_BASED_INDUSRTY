@@ -78,6 +78,11 @@ if (process.env.NODE_ENV !== 'test') {
 // Serve uploaded static files
 app.use('/uploads', express.static(localUploadsDir));
 
+// Root sitemap redirect for search crawlers
+app.get('/sitemap.xml', (req, res) => {
+  res.redirect(301, '/api/sitemap.xml');
+});
+
 // API Entry Route
 app.use('/api', apiRoutes);
 

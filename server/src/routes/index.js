@@ -50,7 +50,12 @@ router.get('/health', (req, res) => {
  */
 router.get('/sitemap.xml', async (req, res) => {
   try {
-    const siteUrl = process.env.CLIENT_URL || 'https://veloura-lighting.onrender.com';
+    const siteUrl =
+      (process.env.CLIENT_URL || '')
+        .split(',')[0]
+        .trim()
+        .replace(/\/+$/, '') ||
+      'https://lux-based-indusrty.vercel.app';
     const [collections, projects] = await Promise.all([
       Collection.find({ isActive: true }).select('slug updatedAt'),
       Project.find({ isActive: true }).select('slug updatedAt'),

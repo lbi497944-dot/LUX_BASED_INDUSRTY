@@ -1,6 +1,6 @@
 export const siteConfig = {
   siteName: 'Veloura Lighting',
-  siteUrl: 'https://veloura-lighting.onrender.com',
+  siteUrl: 'https://lux-based-indusrty.vercel.app',
   defaultTitle: 'Veloura Lighting | Luxury Architectural Lighting in Dubai',
   defaultDescription: 'Veloura Lighting creates bespoke architectural lighting, luxury chandeliers, and premium illumination for luxury villas, destination hotels, restaurants, and commercial spaces in Dubai and the UAE.',
   defaultImage: 'https://images.unsplash.com/photo-1600210492486-724fe5c67fb0?auto=format&fit=crop&w=1200&h=630&q=90',
