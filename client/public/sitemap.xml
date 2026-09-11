@@ -1,75 +1,88 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">
   <url>
-    <loc>https://veloura-lighting.onrender.com/</loc>
-    <lastmod>2026-08-22</lastmod>
+    <loc>https://lux-based-indusrty.vercel.app/</loc>
     <changefreq>weekly</changefreq>
     <priority>1.0</priority>
   </url>
   <url>
-    <loc>https://veloura-lighting.onrender.com/collections</loc>
-    <lastmod>2026-08-22</lastmod>
+    <loc>https://lux-based-indusrty.vercel.app/collections</loc>
     <changefreq>weekly</changefreq>
     <priority>0.9</priority>
   </url>
   <url>
-    <loc>https://veloura-lighting.onrender.com/collections/grand-chandeliers</loc>
-    <lastmod>2026-08-22</lastmod>
-    <changefreq>monthly</changefreq>
-    <priority>0.8</priority>
-  </url>
-  <url>
-    <loc>https://veloura-lighting.onrender.com/collections/architectural-pendants</loc>
-    <lastmod>2026-08-22</lastmod>
-    <changefreq>monthly</changefreq>
-    <priority>0.8</priority>
-  </url>
-  <url>
-    <loc>https://veloura-lighting.onrender.com/collections/smart-ambient-systems</loc>
-    <lastmod>2026-08-22</lastmod>
-    <changefreq>monthly</changefreq>
-    <priority>0.8</priority>
-  </url>
-  <url>
-    <loc>https://veloura-lighting.onrender.com/collections/wall-lighting</loc>
-    <lastmod>2026-08-22</lastmod>
-    <changefreq>monthly</changefreq>
-    <priority>0.8</priority>
-  </url>
-  <url>
-    <loc>https://veloura-lighting.onrender.com/collections/floor-lighting</loc>
-    <lastmod>2026-08-22</lastmod>
-    <changefreq>monthly</changefreq>
-    <priority>0.8</priority>
-  </url>
-  <url>
-    <loc>https://veloura-lighting.onrender.com/collections/custom-solutions</loc>
-    <lastmod>2026-08-22</lastmod>
-    <changefreq>monthly</changefreq>
-    <priority>0.8</priority>
-  </url>
-  <url>
-    <loc>https://veloura-lighting.onrender.com/portfolio</loc>
-    <lastmod>2026-08-22</lastmod>
+    <loc>https://lux-based-indusrty.vercel.app/portfolio</loc>
     <changefreq>weekly</changefreq>
     <priority>0.9</priority>
   </url>
   <url>
-    <loc>https://veloura-lighting.onrender.com/about</loc>
-    <lastmod>2026-08-22</lastmod>
+    <loc>https://lux-based-indusrty.vercel.app/about</loc>
     <changefreq>monthly</changefreq>
     <priority>0.7</priority>
   </url>
   <url>
-    <loc>https://veloura-lighting.onrender.com/contact</loc>
-    <lastmod>2026-08-22</lastmod>
+    <loc>https://lux-based-indusrty.vercel.app/contact</loc>
     <changefreq>monthly</changefreq>
     <priority>0.8</priority>
   </url>
   <url>
-    <loc>https://veloura-lighting.onrender.com/consultation</loc>
-    <lastmod>2026-08-22</lastmod>
+    <loc>https://lux-based-indusrty.vercel.app/consultation</loc>
     <changefreq>weekly</changefreq>
     <priority>0.9</priority>
+  </url>
+  <url>
+    <loc>https://lux-based-indusrty.vercel.app/collections/grand-chandeliers</loc>
+    <changefreq>monthly</changefreq>
+    <priority>0.8</priority>
+  </url>
+  <url>
+    <loc>https://lux-based-indusrty.vercel.app/collections/architectural-pendants</loc>
+    <changefreq>monthly</changefreq>
+    <priority>0.8</priority>
+  </url>
+  <url>
+    <loc>https://lux-based-indusrty.vercel.app/collections/smart-ambient-systems</loc>
+    <changefreq>monthly</changefreq>
+    <priority>0.8</priority>
+  </url>
+  <url>
+    <loc>https://lux-based-indusrty.vercel.app/collections/wall-lighting</loc>
+    <changefreq>monthly</changefreq>
+    <priority>0.8</priority>
+  </url>
+  <url>
+    <loc>https://lux-based-indusrty.vercel.app/collections/floor-lighting</loc>
+    <changefreq>monthly</changefreq>
+    <priority>0.8</priority>
+  </url>
+  <url>
+    <loc>https://lux-based-indusrty.vercel.app/collections/custom-solutions</loc>
+    <changefreq>monthly</changefreq>
+    <priority>0.8</priority>
+  </url>
+  <url>
+    <loc>https://lux-based-indusrty.vercel.app/portfolio/private-residence-dubai</loc>
+    <changefreq>monthly</changefreq>
+    <priority>0.8</priority>
+  </url>
+  <url>
+    <loc>https://lux-based-indusrty.vercel.app/portfolio/the-grand-hotel-doha</loc>
+    <changefreq>monthly</changefreq>
+    <priority>0.8</priority>
+  </url>
+  <url>
+    <loc>https://lux-based-indusrty.vercel.app/portfolio/luxury-villa-abu-dhabi</loc>
+    <changefreq>monthly</changefreq>
+    <priority>0.8</priority>
+  </url>
+  <url>
+    <loc>https://lux-based-indusrty.vercel.app/portfolio/fine-dining-restaurant-dubai</loc>
+    <changefreq>monthly</changefreq>
+    <priority>0.8</priority>
+  </url>
+  <url>
+    <loc>https://lux-based-indusrty.vercel.app/portfolio/royal-commercial-tower-riyadh</loc>
+    <changefreq>monthly</changefreq>
+    <priority>0.8</priority>
   </url>
 </urlset>
