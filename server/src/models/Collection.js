@@ -35,7 +35,16 @@ const collectionSchema = new mongoose.Schema(
       type: String,
       required: [true, 'Hero image URL is required'],
     },
+    heroImagePublicId: {
+      type: String,
+      default: '',
+    },
     gallery: [
+      {
+        type: String,
+      },
+    ],
+    galleryPublicIds: [
       {
         type: String,
       },

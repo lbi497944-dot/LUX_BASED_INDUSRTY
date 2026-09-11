@@ -1,6 +1,7 @@
 import { useState, useEffect } from 'react';
 import { collectionService } from '../../services/collectionService';
-import { Plus, Edit2, Trash2, Loader2, Layers, X } from 'lucide-react';
+import { uploadService } from '../../services/uploadService';
+import { Plus, Edit2, Trash2, Loader2, Layers, X, Upload, Image } from 'lucide-react';
 import ModalConfirm from '../../components/modals/ModalConfirm';
 import Toast from '../../components/common/Toast';
 import SEO from '../../components/common/SEO';
@@ -12,12 +13,17 @@ export default function CollectionsManager() {
 
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [editingCollection, setEditingCollection] = useState(null);
+  const [imageMode, setImageMode] = useState('upload');
+  const [imageUploading, setImageUploading] = useState(false);
+  const [uploadError, setUploadError] = useState(null);
+
   const [formData, setFormData] = useState({
     name: '',
     eyebrow: '',
     tagline: '',
     description: '',
     heroImage: '',
+    heroImagePublicId: '',
     materials: '',
     applications: '',
     featuresText: '',
@@ -45,14 +51,64 @@ export default function CollectionsManager() {
     fetchCollections();
   }, []);
 
+  const handleFileSelect = async (e) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+
+    setUploadError(null);
+
+    const validExtensions = ['.jpg', '.jpeg', '.png', '.webp'];
+    const ext = file.name.substring(file.name.lastIndexOf('.')).toLowerCase();
+    if (!validExtensions.includes(ext)) {
+      setUploadError('Unsupported format. Only JPG, PNG, and WEBP images are allowed.');
+      e.target.value = '';
+      return;
+    }
+
+    if (file.size > 10 * 1024 * 1024) {
+      setUploadError('File size exceeds the 10MB limit.');
+      e.target.value = '';
+      return;
+    }
+
+    try {
+      setImageUploading(true);
+      const res = await uploadService.uploadFile(file);
+      if (res?.data?.url) {
+        setFormData((prev) => ({
+          ...prev,
+          heroImage: res.data.url,
+          heroImagePublicId: res.data.publicId || '',
+        }));
+      }
+    } catch (err) {
+      setUploadError(err?.message || 'Failed to upload image to Cloudinary.');
+    } finally {
+      setImageUploading(false);
+      e.target.value = '';
+    }
+  };
+
+  const handleClearHeroImage = () => {
+    setFormData((prev) => ({
+      ...prev,
+      heroImage: '',
+      heroImagePublicId: '',
+    }));
+    setUploadError(null);
+  };
+
   const handleOpenCreate = () => {
     setEditingCollection(null);
+    setImageMode('upload');
+    setUploadError(null);
     setFormData({
       name: '',
       eyebrow: '01 / STATEMENT ELEGANCE',
       tagline: '',
       description: '',
-      heroImage: 'https://images.unsplash.com/photo-1540932239986-30128078f3c5?auto=format&fit=crop&w=1400&q=85',
+      heroImage: '',
+      heroImagePublicId: '',
       materials: '',
       applications: '',
       featuresText: 'Hand-blown Czech crystal elements\nCustom drop lengths available\nPrecision 2700K warm LED illumination',
@@ -64,12 +120,15 @@ export default function CollectionsManager() {
 
   const handleOpenEdit = (col) => {
     setEditingCollection(col);
+    setImageMode(col.heroImagePublicId ? 'upload' : 'url');
+    setUploadError(null);
     setFormData({
       name: col.name || col.title || '',
       eyebrow: col.eyebrow || '',
       tagline: col.tagline || '',
       description: col.description || '',
       heroImage: col.heroImage || col.image || '',
+      heroImagePublicId: col.heroImagePublicId || '',
       materials: col.materials || '',
       applications: col.applications || '',
       featuresText: Array.isArray(col.features) ? col.features.join('\n') : '',
@@ -245,27 +304,142 @@ export default function CollectionsManager() {
                 </label>
               </div>
 
-              <div className="form-row">
-                <label>
-                  TAGLINE *
-                  <input
-                    type="text"
-                    required
-                    value={formData.tagline}
-                    onChange={(e) => setFormData({ ...formData, tagline: e.target.value })}
-                    placeholder="Timeless elegance in every crystal."
-                  />
-                </label>
-                <label>
-                  HERO IMAGE URL *
-                  <input
-                    type="url"
-                    required
-                    value={formData.heroImage}
-                    onChange={(e) => setFormData({ ...formData, heroImage: e.target.value })}
-                    placeholder="https://..."
-                  />
-                </label>
+              <label>
+                TAGLINE *
+                <input
+                  type="text"
+                  required
+                  value={formData.tagline}
+                  onChange={(e) => setFormData({ ...formData, tagline: e.target.value })}
+                  placeholder="Timeless elegance in every crystal."
+                />
+              </label>
+
+              {/* Hero Image Upload / URL */}
+              <div className="admin-media-upload-section" style={{ marginBottom: '16px' }}>
+                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '8px' }}>
+                  <span style={{ fontSize: '11px', fontWeight: 600, letterSpacing: '0.05em', color: 'rgba(243, 243, 235, 0.55)', textTransform: 'uppercase' }}>
+                    HERO IMAGE *
+                  </span>
+                  <div style={{ display: 'flex', gap: '6px' }}>
+                    <button
+                      type="button"
+                      className={`btn btn-sm ${imageMode === 'upload' ? 'btn-gold' : 'btn-outline'}`}
+                      style={{ padding: '2px 10px', fontSize: '11px' }}
+                      onClick={() => { setImageMode('upload'); setUploadError(null); }}
+                    >
+                      <Upload size={12} style={{ marginRight: '4px' }} /> Upload
+                    </button>
+                    <button
+                      type="button"
+                      className={`btn btn-sm ${imageMode === 'url' ? 'btn-gold' : 'btn-outline'}`}
+                      style={{ padding: '2px 10px', fontSize: '11px' }}
+                      onClick={() => { setImageMode('url'); setUploadError(null); }}
+                    >
+                      URL
+                    </button>
+                  </div>
+                </div>
+
+                {imageMode === 'upload' ? (
+                  <label
+                    className="file-upload-box"
+                    style={{
+                      display: 'block',
+                      padding: '16px',
+                      borderRadius: '4px',
+                      cursor: imageUploading ? 'wait' : 'pointer',
+                      border: '1px dashed rgba(230, 199, 122, 0.3)',
+                      backgroundColor: 'rgba(255, 255, 255, 0.02)',
+                    }}
+                  >
+                    <input
+                      type="file"
+                      accept=".jpg,.jpeg,.png,.webp"
+                      onChange={handleFileSelect}
+                      disabled={imageUploading}
+                      className="file-input-hidden"
+                    />
+                    <div className="file-upload-label" style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '8px' }}>
+                      {imageUploading ? (
+                        <>
+                          <Loader2 size={16} className="spin-icon" style={{ color: 'var(--gold)' }} />
+                          <span style={{ color: 'var(--gold)' }}>Uploading to Cloudinary...</span>
+                        </>
+                      ) : (
+                        <>
+                          <Upload size={16} style={{ color: 'var(--gold)' }} />
+                          <span>Click to upload image (JPG, PNG, WEBP · Max 10MB)</span>
+                        </>
+                      )}
+                    </div>
+                  </label>
+                ) : (
+                  <div>
+                    <input
+                      type="url"
+                      value={formData.heroImage}
+                      onChange={(e) => setFormData({ ...formData, heroImage: e.target.value, heroImagePublicId: '' })}
+                      placeholder="https://images.unsplash.com/... or external image URL"
+                    />
+                  </div>
+                )}
+
+                {uploadError && (
+                  <p style={{ color: '#f87171', fontSize: '12px', marginTop: '6px', marginBottom: 0 }}>
+                    {uploadError}
+                  </p>
+                )}
+
+                {/* Thumbnail Preview Card */}
+                {formData.heroImage && (
+                  <div
+                    style={{
+                      display: 'flex',
+                      alignItems: 'center',
+                      gap: '12px',
+                      marginTop: '10px',
+                      padding: '8px 12px',
+                      background: 'rgba(255, 255, 255, 0.03)',
+                      border: '1px solid rgba(230, 199, 122, 0.2)',
+                      borderRadius: '4px',
+                    }}
+                  >
+                    <img
+                      src={formData.heroImage}
+                      alt="Collection Hero Preview"
+                      style={{ width: '48px', height: '48px', objectFit: 'cover', borderRadius: '4px' }}
+                      onError={(e) => { e.target.style.display = 'none'; }}
+                    />
+                    <div style={{ flex: 1, minWidth: 0 }}>
+                      <p style={{ fontSize: '12px', margin: 0, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
+                        {formData.heroImage}
+                      </p>
+                      <small style={{ fontSize: '10px', color: formData.heroImagePublicId ? '#4ade80' : 'rgba(243, 243, 235, 0.55)' }}>
+                        {formData.heroImagePublicId ? '✓ Cloudinary Hosted' : 'External Image Link'}
+                      </small>
+                    </div>
+                    <button
+                      type="button"
+                      className="admin-action-btn danger"
+                      onClick={handleClearHeroImage}
+                      title="Clear image"
+                      style={{ flexShrink: 0 }}
+                    >
+                      <X size={14} />
+                    </button>
+                  </div>
+                )}
+
+                {/* Hidden input to ensure HTML5 required validation passes only when heroImage is non-empty */}
+                <input
+                  type="text"
+                  required
+                  value={formData.heroImage}
+                  onChange={() => {}}
+                  style={{ position: 'absolute', opacity: 0, pointerEvents: 'none', height: 0, width: 0 }}
+                  tabIndex={-1}
+                />
               </div>
 
               <label>
