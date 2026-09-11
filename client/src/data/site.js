@@ -233,3 +233,30 @@ export const companyContact = {
   whatsapp: '+971 50 892 4411',
   hours: 'Monday – Saturday: 09:00 AM – 07:00 PM GST'
 };
+
+export const testimonials = [
+  {
+    id: 'tariq-al-mansoor',
+    name: 'Tariq Al-Mansoor',
+    role: 'Principal Architect',
+    company: 'Mansoor Design Studio, Dubai',
+    content: 'Veloura transformed our double-height private residence in Emirates Hills. The bespoke chandelier commands the atrium with magnificent optical clarity while preserving perfect ambient warmth.',
+    rating: 5,
+  },
+  {
+    id: 'elena-rostova',
+    name: 'Elena Rostova',
+    role: 'Design Director',
+    company: 'Lumière Interiors, Abu Dhabi',
+    content: 'The architectural precision of Veloura’s concealed ambient systems is unmatched. Their Lutron and DALI integration allowed us to choreograph seamless circadian scenes across a 2,500 sq. m villa.',
+    rating: 5,
+  },
+  {
+    id: 'marcus-vance',
+    name: 'Marcus Vance',
+    role: 'Hospitality Lead',
+    company: 'Vance & Co. Luxury Developments, Doha',
+    content: 'Specifying Veloura’s architectural pendants for our boutique hotel suites elevated the entire guest experience. The hand-finished champagne patinas and glare-controlled optics reflect true luxury craftsmanship.',
+    rating: 5,
+  },
+];

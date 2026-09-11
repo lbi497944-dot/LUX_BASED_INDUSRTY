@@ -2,16 +2,18 @@ import { useState, useEffect } from 'react';
 import { Link } from 'react-router-dom';
 import { ArrowUpRight, ArrowRight, Sparkles, Ruler, Lightbulb, ShieldCheck, ChevronDown, Heart, Plus } from 'lucide-react';
 import { motion } from 'framer-motion';
-import { images, collections as fallbackCollections, projects as fallbackProjects, products as fallbackProducts, processSteps } from '../../data/site';
+import { images, collections as fallbackCollections, projects as fallbackProjects, products as fallbackProducts, processSteps, testimonials as fallbackTestimonials } from '../../data/site';
 import { collectionService } from '../../services/collectionService';
 import { productService } from '../../services/productService';
 import { projectService } from '../../services/projectService';
 import { faqService } from '../../services/faqService';
+import { testimonialService } from '../../services/testimonialService';
 import { useSettings } from '../../context/SettingsContext';
 import Reveal from '../../components/sections/Reveal';
 import SectionTitle from '../../components/sections/SectionTitle';
 import BeforeAfterSlider from '../../components/sections/BeforeAfterSlider';
 import CatalogueCTA from '../../components/sections/CatalogueCTA';
+import TestimonialsSection from '../../components/sections/TestimonialsSection';
 import SEO from '../../components/common/SEO';
 import { pageSeoData, siteConfig } from '../../seo/seoConfig';
 import { getSavedProductIds, toggleSaveProduct } from '../../utils/savedProducts';
@@ -41,17 +43,19 @@ export default function Home() {
   const [products, setProducts] = useState(fallbackProducts);
   const [projects, setProjects] = useState(fallbackProjects);
   const [faqItems, setFaqItems] = useState(fallbackFaqs);
+  const [testimonials, setTestimonials] = useState(fallbackTestimonials);
   const [savedIds, setSavedIds] = useState(getSavedProductIds());
   const [openFaq, setOpenFaq] = useState(null);
 
   useEffect(() => {
     const fetchHomeData = async () => {
       try {
-        const [colRes, prodRes, projRes, faqRes] = await Promise.allSettled([
+        const [colRes, prodRes, projRes, faqRes, testRes] = await Promise.allSettled([
           collectionService.getCollections({ featured: true }),
           productService.getProducts({ featured: true }),
           projectService.getProjects({ featured: true }),
           faqService.getFaqs(),
+          testimonialService.getTestimonials(),
         ]);
 
         if (colRes.status === 'fulfilled' && colRes.value.data?.length) {
@@ -65,6 +69,9 @@ export default function Home() {
         }
         if (faqRes.status === 'fulfilled' && faqRes.value.data?.length) {
           setFaqItems(faqRes.value.data);
+        }
+        if (testRes.status === 'fulfilled' && testRes.value.data?.length) {
+          setTestimonials(testRes.value.data);
         }
       } catch {
         // Retain fallback data gracefully
@@ -461,7 +468,10 @@ export default function Home() {
         </div>
       </section>
 
-      {/* 11. FREQUENTLY ASKED QUESTIONS (SEO FAQ) */}
+      {/* 11. CLIENT ENDORSEMENTS / TESTIMONIALS */}
+      <TestimonialsSection testimonials={testimonials} />
+
+      {/* 12. FREQUENTLY ASKED QUESTIONS (SEO FAQ) */}
       <section className="section faq-section">
         <div className="container">
           <SectionTitle
@@ -495,7 +505,7 @@ export default function Home() {
         </div>
       </section>
 
-      {/* 12. CONSULTATION CTA */}
+      {/* 13. CONSULTATION CTA */}
       <section className="cta-section-dark">
         <div className="container cta-container-split">
           <div className="cta-text-side">
