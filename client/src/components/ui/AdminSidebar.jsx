@@ -12,11 +12,13 @@ import {
   MessageSquareQuote,
   Settings,
   KeyRound,
+  PanelsTopLeft,
   X,
 } from 'lucide-react';
 
 const links = [
   { label: 'Overview', path: '/admin', icon: LayoutDashboard, end: true },
+  { label: 'Page Builder', path: '/admin/pages', icon: PanelsTopLeft },
   { label: 'Products', path: '/admin/products', icon: Sparkles },
   { label: 'Collections', path: '/admin/collections', icon: Layers },
   { label: 'Portfolio', path: '/admin/projects', icon: Building2 },

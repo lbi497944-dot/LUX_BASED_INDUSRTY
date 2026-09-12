@@ -19,6 +19,7 @@ import ProtectedRoute from './ProtectedRoute';
 const AdminLayout = lazy(() => import('../layouts/AdminLayout'));
 const AdminLogin = lazy(() => import('../pages/admin/AdminLogin'));
 const DashboardOverview = lazy(() => import('../pages/admin/DashboardOverview'));
+const PageBuilderManager = lazy(() => import('../pages/admin/PageBuilderManager'));
 const ProductsManager = lazy(() => import('../pages/admin/ProductsManager'));
 const CollectionsManager = lazy(() => import('../pages/admin/CollectionsManager'));
 const ProjectsManager = lazy(() => import('../pages/admin/ProjectsManager'));
@@ -102,6 +103,8 @@ export default function AppRoutes() {
         <Route path="/admin" element={<ProtectedRoute />}>
           <Route element={<AdminLayout />}>
             <Route index element={<DashboardOverview />} />
+            <Route path="pages" element={<PageBuilderManager />} />
+            <Route path="pages/:slug" element={<PageBuilderManager />} />
             <Route path="products" element={<ProductsManager />} />
             <Route path="collections" element={<CollectionsManager />} />
             <Route path="projects" element={<ProjectsManager />} />
