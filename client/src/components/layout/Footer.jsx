@@ -3,6 +3,7 @@ import { Link, useNavigate } from 'react-router-dom';
 import { ArrowRight, MessageCircle, Loader2 } from 'lucide-react';
 import { useSettings } from '../../context/SettingsContext';
 import { newsletterService } from '../../services/newsletterService';
+import { companyContact } from '../../data/site';
 import Toast from '../common/Toast';
 
 export default function Footer() {
@@ -11,6 +12,11 @@ export default function Footer() {
   const [email, setEmail] = useState('');
   const [loading, setLoading] = useState(false);
   const [toast, setToast] = useState(null);
+  const [logoError, setLogoError] = useState(false);
+
+  useEffect(() => {
+    setLogoError(false);
+  }, [settings?.logo]);
 
   const luxTapCount = useRef(0);
   const luxTapTimer = useRef(null);
@@ -82,11 +88,12 @@ export default function Footer() {
           {/* Brand Col */}
           <div className="footer-brand">
             <Link className="logo footer-logo" to="/" aria-label={`${settings?.brandName || 'LUX BASED INDUSTRY'} Home`}>
-              {settings?.logo ? (
+              {!logoError && settings?.logo ? (
                 <img
                   src={settings.logo}
                   alt={settings.brandName || 'LUX BASED INDUSTRY'}
                   className="logo-img footer-logo-img"
+                  onError={() => setLogoError(true)}
                 />
               ) : (
                 <>
@@ -124,12 +131,12 @@ export default function Footer() {
           {/* Contact & Socials */}
           <div className="footer-col">
             <h4>CONTACT</h4>
-            <p className="contact-address">{settings.address}</p>
-            <a href={`mailto:${settings.email}`} className="footer-contact-link">
-              {settings.email}
+            <p className="contact-address">{(settings?.address && settings.address.trim()) || companyContact.address}</p>
+            <a href={`mailto:${(settings?.email && settings.email.trim()) || companyContact.email}`} className="footer-contact-link">
+              {(settings?.email && settings.email.trim()) || companyContact.email}
             </a>
-            <a href={`tel:${settings.phone}`} className="footer-contact-link">
-              {settings.phone}
+            <a href={`tel:${(settings?.phone && settings.phone.trim()) || companyContact.phone}`} className="footer-contact-link">
+              {(settings?.phone && settings.phone.trim()) || companyContact.phone}
             </a>
             <a 
               href={`https://wa.me/${(settings.whatsappNumberClean || settings.whatsapp || '').replace(/[^0-9]/g, '')}`} 
@@ -189,8 +196,16 @@ export default function Footer() {
                 required
                 aria-label="Email address for newsletter"
               />
-              <button type="submit" className="newsletter-btn">
-                SUBSCRIBE <ArrowRight size={16} />
+              <button type="submit" className="newsletter-btn" disabled={loading}>
+                {loading ? (
+                  <>
+                    <Loader2 size={16} className="spin-icon" /> SUBSCRIBING...
+                  </>
+                ) : (
+                  <>
+                    SUBSCRIBE <ArrowRight size={16} />
+                  </>
+                )}
               </button>
             </form>
           </div>

@@ -30,6 +30,16 @@ export default function BeforeAfterSlider() {
     }
   };
 
+  const handleKeyDown = (e) => {
+    if (e.key === 'ArrowLeft') {
+      e.preventDefault();
+      setSliderPosition((prev) => Math.max(0, prev - 5));
+    } else if (e.key === 'ArrowRight') {
+      e.preventDefault();
+      setSliderPosition((prev) => Math.min(100, prev + 5));
+    }
+  };
+
   return (
     <section className="section before-after-section">
       <div className="container">
@@ -47,6 +57,8 @@ export default function BeforeAfterSlider() {
           aria-valuenow={Math.round(sliderPosition)}
           aria-valuemin={0}
           aria-valuemax={100}
+          tabIndex={0}
+          onKeyDown={handleKeyDown}
           onMouseDown={handleMouseDown}
           onMouseUp={handleMouseUp}
           onMouseLeave={handleMouseUp}

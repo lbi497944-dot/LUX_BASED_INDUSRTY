@@ -145,7 +145,17 @@ export default function CollectionDetail() {
                 <Reveal key={prod._id || prod.id || prod.slug || `prod-${idx}`} delay={idx * 0.1}>
                   <div className="product-card-luxury detail-product-card">
                     <div className="product-image-frame">
-                      <img src={prod.image} alt={`${brand} ${prod.name} ${prod.category}`} loading="lazy" decoding="async" />
+                      <img
+                        src={prod.image}
+                        alt={`${brand} ${prod.name} ${prod.category}`}
+                        loading="lazy"
+                        decoding="async"
+                        onError={(e) => {
+                          if (e.target.src !== images.chandelier) {
+                            e.target.src = images.chandelier;
+                          }
+                        }}
+                      />
                     </div>
                     <div className="product-info">
                       <small className="product-category">{prod.category}</small>

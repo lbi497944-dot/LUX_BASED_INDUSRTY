@@ -35,7 +35,36 @@ export default function ProjectDetail() {
     fetchProject();
   }, [slug]);
 
-  if (!project) return null;
+  if (loading) {
+    return (
+      <main className="project-detail-page" style={{ minHeight: '60vh', display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', gap: '16px' }}>
+        <SEO title={`Loading Project | ${brand}`} />
+        <div style={{ textAlign: 'center' }}>
+          <span className="eyebrow gold-label" style={{ letterSpacing: '0.25em' }}>{brand}</span>
+          <h2 style={{ fontSize: '18px', letterSpacing: '0.15em', marginTop: '8px', color: 'var(--text-light, #f3f3eb)' }}>
+            LOADING COMMISSION...
+          </h2>
+        </div>
+        <div style={{ width: '40px', height: '2px', backgroundColor: 'var(--gold, #e6c77a)' }} />
+      </main>
+    );
+  }
+
+  if (!project) {
+    return (
+      <main className="project-detail-page" style={{ minHeight: '60vh', display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', gap: '16px' }}>
+        <SEO title={`Project Not Found | ${brand}`} />
+        <div style={{ textAlign: 'center' }}>
+          <span className="eyebrow gold-label">PORTFOLIO</span>
+          <h2>Project Not Found</h2>
+          <p style={{ marginTop: '8px', color: 'rgba(243, 243, 235, 0.65)' }}>The requested architectural project could not be located.</p>
+        </div>
+        <Link to="/portfolio" className="btn btn-gold" style={{ marginTop: '16px' }}>
+          <ArrowLeft size={16} /> RETURN TO PORTFOLIO
+        </Link>
+      </main>
+    );
+  }
 
   const projectTitle = project.title || 'Architectural Lighting Project';
   const projectImage = project.coverImage || project.image || images.hotel;
@@ -124,7 +153,17 @@ export default function ProjectDetail() {
       <section className="about-photo-banner">
         <div className="container">
           <div className="photo-frame-luxury">
-            <img src={projectImage} alt={projectTitle} loading="lazy" decoding="async" />
+            <img
+              src={projectImage}
+              alt={projectTitle}
+              loading="lazy"
+              decoding="async"
+              onError={(e) => {
+                if (e.target.src !== images.hotel) {
+                  e.target.src = images.hotel;
+                }
+              }}
+            />
           </div>
         </div>
       </section>

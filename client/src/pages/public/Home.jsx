@@ -280,7 +280,17 @@ export default function Home() {
               return (
                 <Reveal key={collectionKey} delay={idx * 0.15}>
                   <Link className="collection-card-luxury" to={`/collections/${item.slug}`}>
-                    <img src={item.heroImage || item.image} alt={`${item.title || item.name} Collection`} loading="lazy" decoding="async" />
+                    <img
+                      src={item.heroImage || item.image}
+                      alt={`${item.title || item.name} Collection`}
+                      loading="lazy"
+                      decoding="async"
+                      onError={(e) => {
+                        if (e.target.src !== images.chandelier) {
+                          e.target.src = images.chandelier;
+                        }
+                      }}
+                    />
                     <div className="card-overlay-luxury">
                       <span className="card-number">0{idx + 1}</span>
                       <h3 className="card-title">{item.title || item.name}</h3>
@@ -320,7 +330,17 @@ export default function Home() {
                   <div className="product-card-luxury">
                     <Link to={`/collections/${prod.collectionSlug}`}>
                       <div className="product-image-frame">
-                        <img src={prod.image} alt={`${prod.name} ${prod.category}`} loading="lazy" decoding="async" />
+                        <img
+                          src={prod.image}
+                          alt={`${prod.name} ${prod.category}`}
+                          loading="lazy"
+                          decoding="async"
+                          onError={(e) => {
+                            if (e.target.src !== images.chandelier) {
+                              e.target.src = images.chandelier;
+                            }
+                          }}
+                        />
                         <button
                           className={`product-save-heart ${isSaved ? 'saved' : ''}`}
                           onClick={(e) => handleToggleHeart(e, prodId)}
@@ -424,7 +444,17 @@ export default function Home() {
                 <Reveal key={projectKey} delay={idx * 0.12}>
                   <Link className="project-card-luxury" to="/portfolio">
                     <div className="project-image-box">
-                      <img src={proj.coverImage || proj.image} alt={`${settings?.brandName || 'LUX BASED INDUSTRY'} Project - ${proj.title} in ${proj.location}`} loading="lazy" decoding="async" />
+                      <img
+                        src={proj.coverImage || proj.image}
+                        alt={`${settings?.brandName || 'LUX BASED INDUSTRY'} Project - ${proj.title} in ${proj.location}`}
+                        loading="lazy"
+                        decoding="async"
+                        onError={(e) => {
+                          if (e.target.src !== images.hotel) {
+                            e.target.src = images.hotel;
+                          }
+                        }}
+                      />
                       <div className="project-overlay-content">
                         <small>{proj.location}</small>
                         <h3>{proj.title}</h3>

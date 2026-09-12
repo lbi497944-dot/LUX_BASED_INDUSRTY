@@ -62,7 +62,17 @@ export default function Collections() {
                   <Link to={`/collections/${item.slug}`} className="collection-editorial-row">
                     <div className="row-index">0{idx + 1}</div>
                     <div className="row-image-frame">
-                      <img src={img} alt={`${brand} ${title} Collection`} loading="lazy" decoding="async" />
+                      <img
+                        src={img}
+                        alt={`${brand} ${title} Collection`}
+                        loading="lazy"
+                        decoding="async"
+                        onError={(e) => {
+                          if (e.target.src !== images.chandelier) {
+                            e.target.src = images.chandelier;
+                          }
+                        }}
+                      />
                     </div>
                     <div className="row-copy-frame">
                       <span className="eyebrow">{item.eyebrow}</span>

@@ -19,7 +19,12 @@ export default function Header() {
   const [scrolled, setScrolled] = useState(false);
   const [isFinderOpen, setIsFinderOpen] = useState(false);
   const [savedCount, setSavedCount] = useState(0);
+  const [logoError, setLogoError] = useState(false);
   const location = useLocation();
+
+  useEffect(() => {
+    setLogoError(false);
+  }, [settings?.logo]);
 
   useEffect(() => {
     const handleScroll = () => {
@@ -78,11 +83,12 @@ export default function Header() {
       <header className={`header ${scrolled ? 'header-scrolled' : ''}`}>
         <div className="nav-wrap">
           <Link className="logo" to="/" aria-label={`${settings?.brandName || 'LUX BASED INDUSTRY'} Home`}>
-            {settings?.logo ? (
+            {!logoError && settings?.logo ? (
               <img
                 src={settings.logo}
                 alt={settings.brandName || 'LUX BASED INDUSTRY'}
                 className="logo-img"
+                onError={() => setLogoError(true)}
               />
             ) : (
               <>

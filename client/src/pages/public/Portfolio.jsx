@@ -110,7 +110,17 @@ export default function Portfolio() {
                     }}
                     aria-label={`View project details for ${proj.title}`}
                   >
-                    <img src={projectImg} alt={`${brand} ${proj.title} - ${proj.category} in ${proj.location}`} loading="lazy" decoding="async" />
+                    <img
+                      src={projectImg}
+                      alt={`${brand} ${proj.title} - ${proj.category} in ${proj.location}`}
+                      loading="lazy"
+                      decoding="async"
+                      onError={(e) => {
+                        if (e.target.src !== images.hotel) {
+                          e.target.src = images.hotel;
+                        }
+                      }}
+                    />
                     <div className="portfolio-caption-overlay">
                       <div className="caption-top">
                         <small className="project-meta">
