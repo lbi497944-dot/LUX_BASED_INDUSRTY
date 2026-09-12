@@ -20,9 +20,9 @@ const storage = (isProduction || isCloudinaryConfigured)
       },
     });
 
-// File filter: Whitelist safe image & document formats (excluding raw active SVG from public uploads)
+// File filter: Whitelist safe image, document & video formats (excluding raw active SVG from public uploads)
 const fileFilter = (req, file, cb) => {
-  const allowedExtensions = ['.jpg', '.jpeg', '.png', '.webp', '.pdf'];
+  const allowedExtensions = ['.jpg', '.jpeg', '.png', '.webp', '.pdf', '.mp4', '.webm'];
   const ext = path.extname(file.originalname).toLowerCase();
 
   if (allowedExtensions.includes(ext)) {
@@ -30,7 +30,7 @@ const fileFilter = (req, file, cb) => {
   } else {
     cb(
       new Error(
-        `Unsupported file type (${ext}). Only JPG, PNG, WEBP and PDF files are permitted for architectural submissions.`
+        `Unsupported file type (${ext}). Only JPG, PNG, WEBP, PDF, MP4 and WEBM files are permitted for architectural submissions.`
       ),
       false
     );
@@ -136,10 +136,11 @@ export const processUploadedFile = async (file) => {
 /**
  * Helper to delete Cloudinary asset if replaced or deleted
  */
-export const deleteCloudinaryAsset = async (publicId) => {
+export const deleteCloudinaryAsset = async (publicId, options = {}) => {
   if (!publicId || !isCloudinaryConfigured) return;
   try {
-    await cloudinary.uploader.destroy(publicId);
+    const opts = typeof options === 'string' ? { resource_type: options } : (options || {});
+    await cloudinary.uploader.destroy(publicId, opts);
   } catch (err) {
     console.error(`[Cloudinary Cleanup Error] Failed to destroy ${publicId}:`, err.message);
   }

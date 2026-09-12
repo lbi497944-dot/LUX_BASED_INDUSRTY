@@ -11,6 +11,7 @@ import testimonialRoutes from './testimonialRoutes.js';
 import settingRoutes from './settingRoutes.js';
 import statsRoutes from './statsRoutes.js';
 import uploadRoutes from './uploadRoutes.js';
+import pageRoutes from './pageRoutes.js';
 
 import mongoose from 'mongoose';
 import Collection from '../models/Collection.js';
@@ -123,5 +124,6 @@ router.use('/testimonials', testimonialRoutes);
 router.use('/settings', settingRoutes);
 router.use('/stats', statsRoutes);
 router.use('/upload', uploadRoutes);
+router.use('/pages', pageRoutes);
 
 export default router;
