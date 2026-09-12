@@ -1,4 +1,5 @@
 import Collection from '../models/Collection.js';
+import Product from '../models/Product.js';
 import { slugify } from '../utils/slugify.js';
 import { deleteCloudinaryAsset } from '../middleware/uploadMiddleware.js';
 
@@ -92,6 +93,8 @@ export const updateCollection = async (id, updateData) => {
     throw error;
   }
 
+  const isSlugChanging = Boolean(updateData.slug && updateData.slug !== existingCollection.slug);
+
   // Determine if hero image is being replaced or removed, and identify old Cloudinary asset to clean up
   let oldHeroPublicIdToDelete = null;
   const isHeroChanging = updateData.heroImage !== undefined && updateData.heroImage !== existingCollection.heroImage;
@@ -174,6 +177,14 @@ export const updateCollection = async (id, updateData) => {
     }
   }
 
+  // Cascade slug update to associated products if collection slug was renamed
+  if (isSlugChanging) {
+    await Product.updateMany(
+      { collectionSlug: existingCollection.slug },
+      { $set: { collectionSlug: collection?.slug || updateData.slug } }
+    );
+  }
+
   return collection;
 };
 
@@ -182,6 +193,16 @@ export const deleteCollection = async (id) => {
   if (!collection) {
     const error = new Error(`Collection not found with id: ${id}`);
     error.statusCode = 404;
+    throw error;
+  }
+
+  const productCount = await Product.countDocuments({
+    collectionSlug: collection.slug,
+  });
+
+  if (productCount > 0) {
+    const error = new Error('Cannot delete collection with assigned products. Please reassign or delete products first.');
+    error.statusCode = 400;
     throw error;
   }
 
