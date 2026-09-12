@@ -4,7 +4,7 @@ export const siteConfig = {
   defaultTitle: 'LUX BASED INDUSTRY | Luxury Architectural Lighting in Dubai',
   defaultDescription: 'LUX BASED INDUSTRY creates bespoke architectural lighting, luxury chandeliers, and premium illumination for luxury villas, destination hotels, restaurants, and commercial spaces in Dubai and the UAE.',
   defaultImage: 'https://images.unsplash.com/photo-1600210492486-724fe5c67fb0?auto=format&fit=crop&w=1200&h=630&q=90',
-  twitterHandle: '@velouralighting',
+  twitterHandle: '',
   whatsAppNumber: '+971508924411', // Default fallback WhatsApp phone number
   whatsappFormatted: '+971 50 892 4411',
   contact: {

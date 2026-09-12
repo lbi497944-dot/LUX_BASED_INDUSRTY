@@ -6,7 +6,7 @@ export const createContact = async (req, res, next) => {
     const enquiry = await contactService.createContactEnquiry(req.body);
     return successResponse(
       res,
-      'Thank you for reaching out to Veloura Lighting. Our architectural team will respond within 24 hours.',
+      'Thank you for reaching out to LUX BASED INDUSTRY. Our architectural team will respond within 24 hours.',
       { enquiry },
       201
     );

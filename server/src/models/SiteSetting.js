@@ -105,7 +105,7 @@ const siteSettingSchema = new mongoose.Schema(
     },
     catalogueUrl: {
       type: String,
-      default: '/downloads/Veloura_Lighting_2026_Catalogue.pdf',
+      default: '',
     },
     socialLinks: {
       instagram: {

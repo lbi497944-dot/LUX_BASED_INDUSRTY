@@ -26,7 +26,7 @@ const startServer = async () => {
     // Step 3 — HTTP server (bind immediately on 0.0.0.0 for cloud port detection)
     const server = app.listen(PORT, '0.0.0.0', () => {
       console.log(`\n======================================================`);
-      console.log(`  VELOURA LIGHTING BACKEND API`);
+      console.log(`  LUX BASED INDUSTRY REST API`);
       console.log(`  Environment: ${process.env.NODE_ENV || 'development'}`);
       console.log(`  Server Port: ${PORT}`);
       console.log(`  Listening on: http://0.0.0.0:${PORT}`);

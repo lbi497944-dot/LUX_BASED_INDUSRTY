@@ -8,7 +8,7 @@ export const subscribeNewsletter = async (email, source = 'footer') => {
       await existing.save();
       return { subscriber: existing, message: 'Welcome back! You have been re-subscribed.' };
     }
-    return { subscriber: existing, message: 'You are already subscribed to Veloura Lighting insights.' };
+    return { subscriber: existing, message: 'You are already subscribed to LUX BASED INDUSTRY insights.' };
   }
 
   const subscriber = await NewsletterSubscriber.create({
@@ -16,7 +16,7 @@ export const subscribeNewsletter = async (email, source = 'footer') => {
     source,
   });
 
-  return { subscriber, message: 'Thank you for subscribing to Veloura Lighting updates.' };
+  return { subscriber, message: 'Thank you for subscribing to LUX BASED INDUSTRY updates.' };
 };
 
 export const getAllSubscribers = async (queryParams) => {
