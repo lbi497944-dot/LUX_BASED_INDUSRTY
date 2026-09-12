@@ -1,8 +1,12 @@
-﻿import { Quote, Star } from 'lucide-react';
+import { Quote, Star } from 'lucide-react';
 import SectionTitle from './SectionTitle';
 import Reveal from './Reveal';
 
-export default function TestimonialsSection({ testimonials = [] }) {
+export default function TestimonialsSection({
+  testimonials = [],
+  eyebrow = 'CLIENT ENDORSEMENTS',
+  title = 'Trusted by Leading Architects & Designers',
+}) {
   if (!Array.isArray(testimonials) || testimonials.length === 0) {
     return null;
   }
@@ -11,8 +15,8 @@ export default function TestimonialsSection({ testimonials = [] }) {
     <section className="section dark-section testimonials-section" id="testimonials">
       <div className="container">
         <SectionTitle
-          eyebrow="CLIENT ENDORSEMENTS"
-          title="Trusted by Leading Architects & Designers"
+          eyebrow={eyebrow}
+          title={title}
           align="center"
         />
 

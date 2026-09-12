@@ -8,6 +8,8 @@ import { productService } from '../../services/productService';
 import { projectService } from '../../services/projectService';
 import { faqService } from '../../services/faqService';
 import { testimonialService } from '../../services/testimonialService';
+import { pageService } from '../../services/pageService';
+import DynamicPageRenderer from '../../components/page-builder/DynamicPageRenderer';
 import { useSettings } from '../../context/SettingsContext';
 import Reveal from '../../components/sections/Reveal';
 import SectionTitle from '../../components/sections/SectionTitle';
@@ -46,16 +48,18 @@ export default function Home() {
   const [testimonials, setTestimonials] = useState(fallbackTestimonials);
   const [savedIds, setSavedIds] = useState(getSavedProductIds());
   const [openFaq, setOpenFaq] = useState(null);
+  const [pageData, setPageData] = useState(null);
 
   useEffect(() => {
     const fetchHomeData = async () => {
       try {
-        const [colRes, prodRes, projRes, faqRes, testRes] = await Promise.allSettled([
+        const [colRes, prodRes, projRes, faqRes, testRes, pageRes] = await Promise.allSettled([
           collectionService.getCollections({ featured: true }),
           productService.getProducts({ featured: true }),
           projectService.getProjects({ featured: true }),
           faqService.getFaqs(),
           testimonialService.getTestimonials(),
+          pageService.getPageBySlug('home'),
         ]);
 
         if (colRes.status === 'fulfilled' && colRes.value.data?.length) {
@@ -72,6 +76,14 @@ export default function Home() {
         }
         if (testRes.status === 'fulfilled' && testRes.value.data?.length) {
           setTestimonials(testRes.value.data);
+        }
+        if (
+          pageRes.status === 'fulfilled' &&
+          pageRes.value?.data &&
+          Array.isArray(pageRes.value.data.publishedSections) &&
+          pageRes.value.data.publishedSections.length > 0
+        ) {
+          setPageData(pageRes.value.data);
         }
       } catch {
         // Retain fallback data gracefully
@@ -168,12 +180,57 @@ export default function Home() {
     }
   ];
 
+  const pageSeo = pageData?.seo;
+  const pageSeoTitle = (pageSeo?.title && pageSeo.title.trim()) || pageSeoData.home.title;
+  const pageSeoDescription = (pageSeo?.description && pageSeo.description.trim()) || pageSeoData.home.description;
+  const rawCanonical = (pageSeo?.canonical && pageSeo.canonical.trim()) || '/';
+  const pageSeoCanonical = rawCanonical.startsWith('http')
+    ? (new URL(rawCanonical).pathname || '/')
+    : rawCanonical;
+  const pageSeoImage = (pageSeo?.ogImage && pageSeo.ogImage.trim()) || undefined;
+
+  const hasValidDynamicContent =
+    pageData &&
+    typeof pageData === 'object' &&
+    Array.isArray(pageData.publishedSections) &&
+    pageData.publishedSections.some((s) => s && typeof s === 'object' && s.enabled !== false && s.type);
+
+  if (hasValidDynamicContent) {
+    return (
+      <main className="home-page">
+        <SEO
+          title={pageSeoTitle}
+          description={pageSeoDescription}
+          canonical={pageSeoCanonical}
+          image={pageSeoImage}
+          schemaData={homeSchema}
+        />
+        <DynamicPageRenderer
+          page={pageData}
+          context={{
+            collections,
+            products,
+            projects,
+            faqItems,
+            testimonials,
+            settings,
+            savedIds,
+            handleToggleHeart,
+            openFaq,
+            setOpenFaq,
+          }}
+        />
+      </main>
+    );
+  }
+
   return (
     <main className="home-page">
       <SEO
-        title={pageSeoData.home.title}
-        description={pageSeoData.home.description}
-        canonical="/"
+        title={pageSeoTitle}
+        description={pageSeoDescription}
+        canonical={pageSeoCanonical}
+        image={pageSeoImage}
         schemaData={homeSchema}
       />
 

@@ -7,10 +7,13 @@ export const pageService = {
     });
   },
 
-  getPageBySlug: async (slug, adminView = true) => {
-    return await api.get(`/pages/${slug}`, {
-      params: { adminView },
-    });
+  getPageBySlug: async (slug, adminView = false) => {
+    const config = adminView ? { params: { adminView: true } } : {};
+    return await api.get(`/pages/${slug}`, config);
+  },
+
+  getPublishedPage: async (slug) => {
+    return await api.get(`/pages/${slug}`);
   },
 
   createPage: async (data) => {
