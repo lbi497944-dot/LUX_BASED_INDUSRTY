@@ -72,7 +72,7 @@ export default function DashboardOverview() {
 
   return (
     <div className="admin-page">
-      <SEO title="Dashboard Overview | Veloura CMS" />
+      <SEO title="Dashboard Overview | LUX BASED INDUSTRY CMS" />
 
       <div className="admin-page-header">
         <div>

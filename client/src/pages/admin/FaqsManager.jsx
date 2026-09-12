@@ -200,7 +200,7 @@ export default function FaqsManager() {
                   required
                   value={formData.question}
                   onChange={(e) => setFormData({ ...formData, question: e.target.value })}
-                  placeholder="e.g. What types of architectural lighting does Veloura offer?"
+                  placeholder="e.g. What types of architectural lighting does LUX BASED INDUSTRY offer?"
                 />
               </label>
 

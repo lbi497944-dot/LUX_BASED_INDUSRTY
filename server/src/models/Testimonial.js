@@ -32,6 +32,7 @@ const testimonialSchema = new mongoose.Schema(
     featured: {
       type: Boolean,
       default: false,
+      index: true,
     },
     isActive: {
       type: Boolean,

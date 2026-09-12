@@ -1,7 +1,7 @@
 {
   "name": "veloura-lighting-server",
   "version": "1.0.0",
-  "description": "Veloura Lighting MERN MVC Backend REST API",
+  "description": "LUX BASED INDUSTRY MERN MVC Backend REST API",
   "main": "server.js",
   "type": "module",
   "scripts": {

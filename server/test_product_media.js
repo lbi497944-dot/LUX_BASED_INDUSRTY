@@ -472,6 +472,45 @@ async function runProductMediaTests() {
       record('TEST 12: DB save failure rolls back newly uploaded Cloudinary asset preventing orphan', pass, `rolledBack: ${JSON.stringify(rolledBackAssets)}, threw: ${createThrew}`);
     }
 
+    // -------------------------------------------------------------------------
+    // TEST 13: DB save failure rolls back newly uploaded cover AND gallery assets
+    // -------------------------------------------------------------------------
+    {
+      const rolledBackAssets = [];
+      let createThrew = false;
+
+      Product.findOne = async () => null;
+      Product.create = async () => {
+        throw new Error('Database validation failed');
+      };
+
+      cloudinary.uploader.destroy = async (publicId) => {
+        rolledBackAssets.push(publicId);
+        return { result: 'ok' };
+      };
+
+      try {
+        await createProduct({
+          name: 'Failed Product Gallery Creation',
+          image: 'https://res.cloudinary.com/demo/image/upload/v1/prod_cover.jpg',
+          imagePublicId: 'veloura_lighting/prod_cover',
+          gallery: ['https://res.cloudinary.com/demo/image/upload/v1/pg1.jpg', 'https://res.cloudinary.com/demo/image/upload/v1/pg2.jpg'],
+          galleryPublicIds: ['veloura_lighting/pg1', 'veloura_lighting/pg2'],
+        });
+      } catch (err) {
+        createThrew = err.message === 'Database validation failed';
+      }
+
+      const pass = (
+        createThrew === true &&
+        rolledBackAssets.length === 3 &&
+        rolledBackAssets.includes('veloura_lighting/prod_cover') &&
+        rolledBackAssets.includes('veloura_lighting/pg1') &&
+        rolledBackAssets.includes('veloura_lighting/pg2')
+      );
+      record('TEST 13: DB save failure rolls back newly uploaded cover AND gallery assets', pass, `rolledBack: ${JSON.stringify(rolledBackAssets)}, threw: ${createThrew}`);
+    }
+
   } finally {
     // Restore original methods
     Product.findById = originalFindById;

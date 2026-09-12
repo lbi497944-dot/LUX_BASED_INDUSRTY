@@ -91,7 +91,7 @@ export const createProduct = async (productData) => {
     const product = await Product.create(productData);
     return product;
   } catch (createErr) {
-    // Rollback newly uploaded Cloudinary asset if creation failed
+    // Rollback newly uploaded Cloudinary cover asset if creation failed
     if (productData.imagePublicId && typeof productData.imagePublicId === 'string' && productData.imagePublicId.trim()) {
       try {
         await deleteCloudinaryAsset(productData.imagePublicId.trim());
@@ -99,6 +99,20 @@ export const createProduct = async (productData) => {
         console.error(`[Product Creation Cleanup Error] Failed to rollback ${productData.imagePublicId}:`, cleanupErr.message);
       }
     }
+
+    // Rollback newly uploaded Cloudinary gallery assets if creation failed
+    if (Array.isArray(productData.galleryPublicIds) && productData.galleryPublicIds.length > 0) {
+      for (const gid of productData.galleryPublicIds) {
+        if (gid && typeof gid === 'string' && gid.trim()) {
+          try {
+            await deleteCloudinaryAsset(gid.trim());
+          } catch (cleanupErr) {
+            console.error(`[Product Creation Cleanup Error] Failed to rollback gallery asset ${gid}:`, cleanupErr.message);
+          }
+        }
+      }
+    }
+
     throw createErr;
   }
 };
