@@ -57,7 +57,7 @@ export default function AdminLogin() {
               <Mail size={18} className="input-icon" />
               <input
                 type="email"
-                placeholder="admin@veloura-lighting.com"
+                placeholder="admin@luxbasedindustry.com"
                 value={email}
                 onChange={(e) => setEmail(e.target.value)}
                 required

@@ -91,6 +91,12 @@ const sectionMediaSchema = new mongoose.Schema(
       max: 1,
       default: 0.75,
     },
+    slideInterval: {
+      type: Number,
+      min: 2,
+      max: 30,
+      default: 5,
+    },
     slides: [mediaSlideSchema],
   },
   { _id: false }

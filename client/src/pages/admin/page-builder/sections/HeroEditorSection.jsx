@@ -1,5 +1,6 @@
+import { useState, useEffect, useRef } from 'react';
 import EditableBox from '../EditableBox';
-import { ArrowRight, Play } from 'lucide-react';
+import { ArrowRight, ChevronLeft, ChevronRight } from 'lucide-react';
 
 export default function HeroEditorSection({ section, mode, selectedElement, onSelect }) {
   const content = section.content || {};
@@ -11,6 +12,41 @@ export default function HeroEditorSection({ section, mode, selectedElement, onSe
 
   const bgImage = media.url || 'https://images.unsplash.com/photo-1600210492486-724fe5c67fb0?auto=format&fit=crop&w=2200&q=90';
   const overlayOpacity = media.overlayOpacity !== undefined ? media.overlayOpacity : 0.85;
+
+  const validSlides = media.mediaType === 'slideshow' && Array.isArray(media.slides)
+    ? media.slides.filter((s) => s && typeof s.url === 'string' && s.url.trim() !== '')
+    : [];
+  const slideInterval = typeof media.slideInterval === 'number' && media.slideInterval >= 2 && media.slideInterval <= 30
+    ? media.slideInterval
+    : 5;
+
+  const [activeSlideIndex, setActiveSlideIndex] = useState(0);
+  const timerRef = useRef(null);
+
+  const startTimer = () => {
+    if (timerRef.current) clearInterval(timerRef.current);
+    if (validSlides.length > 1) {
+      timerRef.current = setInterval(() => {
+        setActiveSlideIndex((prev) => (prev + 1) % validSlides.length);
+      }, slideInterval * 1000);
+    }
+  };
+
+  useEffect(() => {
+    if (validSlides.length <= 1) return;
+
+    startTimer();
+    return () => {
+      if (timerRef.current) clearInterval(timerRef.current);
+    };
+  }, [validSlides.length, slideInterval]);
+
+  const handleManualSlide = (newIndex) => {
+    setActiveSlideIndex(newIndex);
+    startTimer();
+  };
+
+  const safeIndex = validSlides.length > 0 ? activeSlideIndex % validSlides.length : 0;
 
   return (
     <section
@@ -72,9 +108,116 @@ export default function HeroEditorSection({ section, mode, selectedElement, onSe
                 pointerEvents: 'none',
               }}
             />
+          ) : media.mediaType === 'slideshow' && validSlides.length > 0 ? (
+            <div style={{ position: 'absolute', inset: 0, width: '100%', height: '100%' }}>
+              {validSlides.map((slide, idx) => (
+                <img
+                  key={idx}
+                  src={slide.url}
+                  alt={slide.title || content.heading || `Slide ${idx + 1}`}
+                  style={{
+                    position: 'absolute',
+                    inset: 0,
+                    width: '100%',
+                    height: '100%',
+                    objectFit: 'cover',
+                    opacity: idx === safeIndex ? 1 : 0,
+                    transition: 'opacity 0.8s ease-in-out',
+                    pointerEvents: 'none',
+                  }}
+                />
+              ))}
+              {validSlides.length > 1 && (
+                <div
+                  className="pb-hero-slideshow-nav"
+                  style={{
+                    position: 'absolute',
+                    bottom: '20px',
+                    left: '50%',
+                    transform: 'translateX(-50%)',
+                    display: 'flex',
+                    alignItems: 'center',
+                    gap: '8px',
+                    zIndex: 3,
+                    backgroundColor: 'rgba(13, 38, 19, 0.85)',
+                    padding: '6px 14px',
+                    borderRadius: '24px',
+                    backdropFilter: 'blur(6px)',
+                    border: '1px solid rgba(230, 199, 122, 0.4)',
+                    pointerEvents: 'auto',
+                  }}
+                  onClick={(e) => e.stopPropagation()}
+                >
+                  <button
+                    type="button"
+                    onClick={() => handleManualSlide(safeIndex === 0 ? validSlides.length - 1 : safeIndex - 1)}
+                    style={{
+                      background: 'none',
+                      border: 'none',
+                      color: 'var(--gold)',
+                      cursor: 'pointer',
+                      padding: '2px 4px',
+                      display: 'flex',
+                      alignItems: 'center',
+                    }}
+                    title="Previous slide"
+                    aria-label="Previous slide"
+                  >
+                    <ChevronLeft size={14} />
+                  </button>
+                  {validSlides.map((_, i) => (
+                    <button
+                      key={i}
+                      type="button"
+                      onClick={() => handleManualSlide(i)}
+                      style={{
+                        width: i === safeIndex ? '20px' : '8px',
+                        height: '8px',
+                        borderRadius: '4px',
+                        border: 'none',
+                        backgroundColor: i === safeIndex ? 'var(--gold)' : 'rgba(255,255,255,0.4)',
+                        cursor: 'pointer',
+                        transition: 'all 0.3s ease',
+                        padding: 0,
+                      }}
+                      title={`Slide ${i + 1}`}
+                      aria-label={`Go to slide ${i + 1}`}
+                    />
+                  ))}
+                  <button
+                    type="button"
+                    onClick={() => handleManualSlide((safeIndex + 1) % validSlides.length)}
+                    style={{
+                      background: 'none',
+                      border: 'none',
+                      color: 'var(--gold)',
+                      cursor: 'pointer',
+                      padding: '2px 4px',
+                      display: 'flex',
+                      alignItems: 'center',
+                    }}
+                    title="Next slide"
+                    aria-label="Next slide"
+                  >
+                    <ChevronRight size={14} />
+                  </button>
+                  <span
+                    style={{
+                      fontSize: '10px',
+                      color: 'var(--gold)',
+                      marginLeft: '6px',
+                      fontFamily: 'monospace',
+                      letterSpacing: '0.05em',
+                    }}
+                  >
+                    {slideInterval}s
+                  </span>
+                </div>
+              )}
+            </div>
           ) : (
             <img
-              src={media.mediaType === 'slideshow' && media.slides?.[0]?.url ? media.slides[0].url : bgImage}
+              src={bgImage}
               alt={content.heading || 'Hero Background'}
               style={{
                 position: 'absolute',

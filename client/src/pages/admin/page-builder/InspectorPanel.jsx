@@ -700,7 +700,47 @@ export default function InspectorPanel({
             {/* SLIDESHOW MODE */}
             {media.mediaType === 'slideshow' && (
               <div className="pb-media-editor-subpanel">
-                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                <div className="pb-field-group">
+                  <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                    <label htmlFor="slide-interval-input">
+                      Slide Duration ({media.slideInterval || 5}s)
+                    </label>
+                  </div>
+                  <input
+                    id="slide-interval-input"
+                    type="range"
+                    min="2"
+                    max="30"
+                    step="1"
+                    value={media.slideInterval || 5}
+                    onChange={(e) => handleMediaChange('slideInterval', parseInt(e.target.value, 10))}
+                    aria-label="Slide Duration"
+                  />
+                  <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '10px', color: 'rgba(255,255,255,0.4)', marginTop: '2px' }}>
+                    <span>2s</span>
+                    <span>5s (default)</span>
+                    <span>30s</span>
+                  </div>
+                </div>
+
+                {media.overlay !== false && (
+                  <div className="pb-field-group">
+                    <label>
+                      Overlay Opacity ({Math.round((media.overlayOpacity ?? 0.85) * 100)}%)
+                    </label>
+                    <input
+                      type="range"
+                      min="0"
+                      max="1"
+                      step="0.05"
+                      value={media.overlayOpacity ?? 0.85}
+                      onChange={(e) => handleMediaChange('overlayOpacity', parseFloat(e.target.value))}
+                      aria-label="Overlay Opacity"
+                    />
+                  </div>
+                )}
+
+                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginTop: '12px' }}>
                   <label>Slides ({(media.slides || []).length})</label>
                   <button type="button" className="pb-add-item-btn" onClick={handleAddSlide}>
                     <Plus size={12} /> Add Slide

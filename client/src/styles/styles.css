@@ -867,7 +867,7 @@ h1 em, h2 em, h3 em {
   margin-bottom: 32px;
 }
 
-/* WHY VELOURA GRID */
+/* WHY LUX BASED INDUSTRY GRID */
 .why-grid {
   display: grid;
   grid-template-columns: repeat(4, 1fr);
@@ -1684,22 +1684,50 @@ h1 em, h2 em, h3 em {
   gap: 12px;
 }
 
-.social-icons a {
+.social-icons a,
+.footer-social-btn {
   width: 36px;
   height: 36px;
-  border: 1px solid rgba(255, 255, 255, 0.2);
+  border: 1px solid rgba(230, 199, 122, 0.35);
+  background-color: rgba(13, 38, 19, 0.6);
   border-radius: 50%;
   display: flex;
   align-items: center;
   justify-content: center;
   color: var(--gold);
   font-size: 13px;
+  text-decoration: none;
+  transition: all 0.3s cubic-bezier(0.16, 1, 0.3, 1), transform 0.2s ease;
 }
 
-.social-icons a:hover {
-  border-color: var(--gold);
-  background-color: var(--gold);
-  color: var(--dark-green);
+.social-icons a:hover,
+.footer-social-btn:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.35);
+}
+
+.footer-social-btn.social-instagram:hover {
+  background: radial-gradient(circle at 30% 107%, #fdf497 0%, #fdf497 5%, #fd5949 45%, #d6249f 60%, #285AEB 90%);
+  border-color: transparent;
+  color: #ffffff;
+}
+
+.footer-social-btn.social-linkedin:hover {
+  background-color: #0077b5;
+  border-color: #0077b5;
+  color: #ffffff;
+}
+
+.footer-social-btn.social-pinterest:hover {
+  background-color: #bd081c;
+  border-color: #bd081c;
+  color: #ffffff;
+}
+
+.footer-social-btn.social-facebook:hover {
+  background-color: #1877f2;
+  border-color: #1877f2;
+  color: #ffffff;
 }
 
 /* NEWSLETTER BAR */
@@ -3160,7 +3188,7 @@ h1 em, h2 em, h3 em {
 }
 
 /* ==========================================================================
-   VELOURA ADMIN / CMS STYLES
+   LUX BASED INDUSTRY ADMIN / CMS STYLES
    ========================================================================== */
 
 .admin-app-wrapper {

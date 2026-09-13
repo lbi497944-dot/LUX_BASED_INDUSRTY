@@ -49,6 +49,7 @@ export const ALLOWED_MEDIA_FIELDS = [
   'videoPublicId',
   'overlay',
   'overlayOpacity',
+  'slideInterval',
   'slides',
 ];
 

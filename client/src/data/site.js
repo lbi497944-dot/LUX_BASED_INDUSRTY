@@ -228,7 +228,7 @@ export const valuesData = [
 
 export const companyContact = {
   address: 'Alserkal Avenue, Building 42, Al Quoz 1, Dubai, United Arab Emirates',
-  email: 'concierge@veloura-lighting.com',
+  email: 'concierge@luxbasedindustry.com',
   phone: '+971 4 340 8899',
   whatsapp: '+971 50 892 4411',
   hours: 'Monday – Saturday: 09:00 AM – 07:00 PM GST'

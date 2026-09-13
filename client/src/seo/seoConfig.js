@@ -9,7 +9,7 @@ export const siteConfig = {
   whatsappFormatted: '+971 50 892 4411',
   contact: {
     address: 'Alserkal Avenue, Building 42, Al Quoz 1, Dubai, United Arab Emirates',
-    email: 'concierge@veloura-lighting.com',
+    email: 'concierge@luxbasedindustry.com',
     phone: '+971 4 340 8899',
     hours: 'Monday – Saturday: 09:00 AM – 07:00 PM GST',
     city: 'Dubai',
@@ -20,10 +20,10 @@ export const siteConfig = {
     }
   },
   socialLinks: {
-    instagram: 'https://instagram.com/veloura.lighting',
-    linkedin: 'https://linkedin.com/company/veloura-lighting',
-    pinterest: 'https://pinterest.com/velouralighting',
-    facebook: 'https://facebook.com/velouralighting'
+    instagram: '',
+    linkedin: '',
+    pinterest: '',
+    facebook: ''
   },
   catalogueUrl: '' // Configurable catalogue path
 };

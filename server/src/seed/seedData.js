@@ -1,5 +1,5 @@
 export const adminSeed = {
-  username: 'Veloura Admin',
+  username: 'LUX Admin',
   email: 'admin@veloura-lighting.com',
   password: 'VelouraAdmin2026!',
   role: 'admin',
@@ -278,8 +278,8 @@ export const projectsSeed = [
 
 export const faqsSeed = [
   {
-    question: 'What types of architectural lighting does Veloura offer?',
-    answer: 'Veloura specializes in luxury chandeliers, architectural pendants, concealed smart ambient cove systems, low-profile wall sconces, and fully bespoke custom lighting concepts for high-end residential and commercial spaces.',
+    question: 'What types of architectural lighting does LUX BASED INDUSTRY offer?',
+    answer: 'LUX BASED INDUSTRY specializes in luxury chandeliers, architectural pendants, concealed smart ambient cove systems, low-profile wall sconces, and fully bespoke custom lighting concepts for high-end residential and commercial spaces.',
     category: 'General',
     order: 1,
     isActive: true,
@@ -292,7 +292,7 @@ export const faqsSeed = [
     isActive: true,
   },
   {
-    question: 'Does Veloura provide lighting consultation services in Dubai & UAE?',
+    question: 'Does LUX BASED INDUSTRY provide lighting consultation services in Dubai & UAE?',
     answer: 'We provide end-to-end lighting consultations in Dubai and the UAE. Our team reviews room blueprints, natural light orientation, material finishes, photometrics, and smart lighting scene controls.',
     category: 'Consultation',
     order: 3,
@@ -300,7 +300,7 @@ export const faqsSeed = [
   },
   {
     question: 'Are your lighting systems compatible with Lutron, KNX, or DALI controls?',
-    answer: 'All Veloura fixtures and ambient systems integrate seamlessly with major smart automation standards including DALI-2, Lutron HomeWorks, Control4, and KNX digital dimming controllers.',
+    answer: 'All LUX BASED INDUSTRY fixtures and ambient systems integrate seamlessly with major smart automation standards including DALI-2, Lutron HomeWorks, Control4, and KNX digital dimming controllers.',
     category: 'Smart Systems',
     order: 4,
     isActive: true,

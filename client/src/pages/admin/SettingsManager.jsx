@@ -92,7 +92,7 @@ export default function SettingsManager() {
         tagline: settings.tagline || 'Illuminating Luxury Spaces',
         logo: settings.logo || '',
         logoPublicId: settings.logoPublicId || '',
-        email: settings.email || 'concierge@veloura-lighting.com',
+        email: settings.email || 'concierge@luxbasedindustry.com',
         phone: settings.phone || '+971 4 340 8899',
         whatsapp: settings.whatsapp || '+971 50 892 4411',
         address: settings.address || 'Alserkal Avenue, Building 42, Al Quoz 1, Dubai, UAE',
@@ -102,10 +102,10 @@ export default function SettingsManager() {
         catalogueUrl: settings.catalogueUrl || '',
         locations: Array.isArray(settings.locations) ? settings.locations : [],
         socialLinks: {
-          instagram: settings.socialLinks?.instagram || 'https://instagram.com/veloura.lighting',
-          linkedin: settings.socialLinks?.linkedin || 'https://linkedin.com/company/veloura-lighting',
-          pinterest: settings.socialLinks?.pinterest || 'https://pinterest.com/velouralighting',
-          facebook: settings.socialLinks?.facebook || 'https://facebook.com/velouralighting',
+          instagram: settings.socialLinks?.instagram || '',
+          linkedin: settings.socialLinks?.linkedin || '',
+          pinterest: settings.socialLinks?.pinterest || '',
+          facebook: settings.socialLinks?.facebook || '',
         },
         defaultSeo: {
           title: settings.defaultSeo?.title || 'LUX BASED INDUSTRY | Luxury Architectural Lighting in Dubai',
@@ -598,7 +598,7 @@ export default function SettingsManager() {
                   type="email"
                   value={formData.email}
                   onChange={(e) => setFormData({ ...formData, email: e.target.value })}
-                  placeholder="concierge@veloura-lighting.com"
+                  placeholder="concierge@luxbasedindustry.com"
                 />
               </label>
               <label>

@@ -3,6 +3,7 @@ import { Link, useNavigate } from 'react-router-dom';
 import { ArrowRight, MessageCircle, Loader2 } from 'lucide-react';
 import { useSettings } from '../../context/SettingsContext';
 import { newsletterService } from '../../services/newsletterService';
+import { collectionService } from '../../services/collectionService';
 import { companyContact } from '../../data/site';
 import Toast from '../common/Toast';
 
@@ -13,6 +14,30 @@ export default function Footer() {
   const [loading, setLoading] = useState(false);
   const [toast, setToast] = useState(null);
   const [logoError, setLogoError] = useState(false);
+  const [dbCollections, setDbCollections] = useState([]);
+  const [collectionsLoading, setCollectionsLoading] = useState(true);
+
+  useEffect(() => {
+    let isMounted = true;
+    const fetchCollections = async () => {
+      try {
+        const res = await collectionService.getCollections();
+        if (isMounted && Array.isArray(res?.data) && res.data.length > 0) {
+          setDbCollections(res.data.slice(0, 5));
+        }
+      } catch {
+        // Safe neutral handling on API error
+      } finally {
+        if (isMounted) {
+          setCollectionsLoading(false);
+        }
+      }
+    };
+    fetchCollections();
+    return () => {
+      isMounted = false;
+    };
+  }, []);
 
   useEffect(() => {
     setLogoError(false);
@@ -80,6 +105,58 @@ export default function Footer() {
     }
   };
 
+  const activeSocials = [
+    {
+      key: 'instagram',
+      label: 'Instagram',
+      url: settings?.socialLinks?.instagram,
+      className: 'social-instagram',
+      icon: (
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+          <rect x="2" y="2" width="20" height="20" rx="5" ry="5" />
+          <path d="M16 11.37A4 4 0 1 1 12.63 8 4 4 0 0 1 16 11.37z" />
+          <line x1="17.5" y1="6.5" x2="17.51" y2="6.5" />
+        </svg>
+      ),
+    },
+    {
+      key: 'linkedin',
+      label: 'LinkedIn',
+      url: settings?.socialLinks?.linkedin,
+      className: 'social-linkedin',
+      icon: (
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+          <path d="M16 8a6 6 0 0 1 6 6v7h-4v-7a2 2 0 0 0-2-2 2 2 0 0 0-2 2v7h-4v-7a6 6 0 0 1 6-6z" />
+          <rect x="2" y="9" width="4" height="12" />
+          <circle cx="4" cy="4" r="2" />
+        </svg>
+      ),
+    },
+    {
+      key: 'pinterest',
+      label: 'Pinterest',
+      url: settings?.socialLinks?.pinterest,
+      className: 'social-pinterest',
+      icon: (
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+          <line x1="12" y1="2" x2="12" y2="22" />
+          <path d="M12 2a9 9 0 0 0-9 9c0 3.8 2.3 7 5.5 8.3-.1-.7-.2-1.8 0-2.6l1-4.2s-.3-.6-.3-1.5c0-1.4.8-2.5 1.8-2.5.9 0 1.3.7 1.3 1.5 0 .9-.6 2.2-.9 3.4-.2 1.1.5 2 1.6 2 2 0 3.5-2.1 3.5-5.1 0-2.7-1.9-4.6-4.7-4.6-3.2 0-5.1 2.4-5.1 4.9 0 1 .4 2 1 2.6.1.1.1.2.1.3l-.3 1.4c0 .2-.2.3-.4.2-1.4-.7-2.3-2.8-2.3-4.5 0-3.7 2.7-7.1 7.8-7.1 4.1 0 7.3 2.9 7.3 6.8 0 4.1-2.6 7.4-6.2 7.4-1.2 0-2.3-.6-2.7-1.4l-.7 2.8c-.3 1.1-1.1 2.5-1.6 3.4" />
+        </svg>
+      ),
+    },
+    {
+      key: 'facebook',
+      label: 'Facebook',
+      url: settings?.socialLinks?.facebook,
+      className: 'social-facebook',
+      icon: (
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+          <path d="M18 2h-3a5 5 0 0 0-5 5v3H7v4h3v8h4v-8h3l1-4h-4V7a1 1 0 0 1 1-1h3z" />
+        </svg>
+      ),
+    },
+  ].filter((item) => typeof item.url === 'string' && item.url.trim().length > 0);
+
   return (
     <>
       <Toast toast={toast} onClose={() => setToast(null)} />
@@ -121,11 +198,15 @@ export default function Footer() {
           {/* Collections */}
           <div className="footer-col">
             <h4>COLLECTIONS</h4>
-            <Link to="/collections/grand-chandeliers">Grand Chandelier</Link>
-            <Link to="/collections/architectural-pendants">Architectural Pendants</Link>
-            <Link to="/collections/smart-ambient-systems">Smart Ambient Systems</Link>
-            <Link to="/collections/wall-lighting">Wall Lighting</Link>
-            <Link to="/collections/custom-solutions">Custom Solutions</Link>
+            {collectionsLoading ? null : dbCollections.length > 0 ? (
+              dbCollections.map((col) => (
+                <Link key={col._id || col.slug} to={`/collections/${col.slug}`}>
+                  {col.name || col.title}
+                </Link>
+              ))
+            ) : (
+              <Link to="/collections">View All Collections</Link>
+            )}
           </div>
 
           {/* Contact & Socials */}
@@ -147,36 +228,25 @@ export default function Footer() {
               <MessageCircle size={14} /> WhatsApp Consultation
             </a>
 
-            <div className="footer-socials">
-              <span className="social-label">FOLLOW US</span>
-              <div className="social-icons">
-                <a href={settings.socialLinks?.instagram || 'https://instagram.com'} target="_blank" rel="noopener noreferrer" aria-label="Instagram">
-                  <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                    <rect x="2" y="2" width="20" height="20" rx="5" ry="5"/>
-                    <path d="M16 11.37A4 4 0 1 1 12.63 8 4 4 0 0 1 16 11.37z"/>
-                    <line x1="17.5" y1="6.5" x2="17.51" y2="6.5"/>
-                  </svg>
-                </a>
-                <a href={settings.socialLinks?.linkedin || 'https://linkedin.com'} target="_blank" rel="noopener noreferrer" aria-label="LinkedIn">
-                  <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                    <path d="M16 8a6 6 0 0 1 6 6v7h-4v-7a2 2 0 0 0-2-2 2 2 0 0 0-2 2v7h-4v-7a6 6 0 0 1 6-6z"/>
-                    <rect x="2" y="9" width="4" height="12"/>
-                    <circle cx="4" cy="4" r="2"/>
-                  </svg>
-                </a>
-                <a href={settings.socialLinks?.pinterest || 'https://pinterest.com'} target="_blank" rel="noopener noreferrer" aria-label="Pinterest">
-                  <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                    <line x1="12" y1="2" x2="12" y2="22"/>
-                    <path d="M12 2a9 9 0 0 0-9 9c0 3.8 2.3 7 5.5 8.3-.1-.7-.2-1.8 0-2.6l1-4.2s-.3-.6-.3-1.5c0-1.4.8-2.5 1.8-2.5.9 0 1.3.7 1.3 1.5 0 .9-.6 2.2-.9 3.4-.2 1.1.5 2 1.6 2 2 0 3.5-2.1 3.5-5.1 0-2.7-1.9-4.6-4.7-4.6-3.2 0-5.1 2.4-5.1 4.9 0 1 .4 2 1 2.6.1.1.1.2.1.3l-.3 1.4c0 .2-.2.3-.4.2-1.4-.7-2.3-2.8-2.3-4.5 0-3.7 2.7-7.1 7.8-7.1 4.1 0 7.3 2.9 7.3 6.8 0 4.1-2.6 7.4-6.2 7.4-1.2 0-2.3-.6-2.7-1.4l-.7 2.8c-.3 1.1-1.1 2.5-1.6 3.4"/>
-                  </svg>
-                </a>
-                <a href={settings.socialLinks?.facebook || 'https://facebook.com'} target="_blank" rel="noopener noreferrer" aria-label="Facebook">
-                  <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                    <path d="M18 2h-3a5 5 0 0 0-5 5v3H7v4h3v8h4v-8h3l1-4h-4V7a1 1 0 0 1 1-1h3z"/>
-                  </svg>
-                </a>
+            {activeSocials.length > 0 && (
+              <div className="footer-socials">
+                <span className="social-label">FOLLOW US</span>
+                <div className="social-icons">
+                  {activeSocials.map((social) => (
+                    <a
+                      key={social.key}
+                      href={social.url}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      aria-label={social.label}
+                      className={`footer-social-btn ${social.className}`}
+                    >
+                      {social.icon}
+                    </a>
+                  ))}
+                </div>
               </div>
-            </div>
+            )}
           </div>
         </div>
 

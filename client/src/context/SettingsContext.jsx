@@ -11,7 +11,7 @@ export function SettingsProvider({ children }) {
     tagline: 'Illuminating Luxury Spaces',
     logo: '',
     logoPublicId: '',
-    email: companyContact?.email || 'concierge@veloura-lighting.com',
+    email: companyContact?.email || 'concierge@luxbasedindustry.com',
     phone: companyContact?.phone || '+971 4 340 8899',
     whatsapp: companyContact?.whatsapp || '+971 50 892 4411',
     whatsappNumberClean: '971508924411',
@@ -20,10 +20,10 @@ export function SettingsProvider({ children }) {
     catalogueUrl: '',
     locations: [],
     socialLinks: {
-      instagram: 'https://instagram.com/veloura.lighting',
-      linkedin: 'https://linkedin.com/company/veloura-lighting',
-      pinterest: 'https://pinterest.com/velouralighting',
-      facebook: 'https://facebook.com/velouralighting',
+      instagram: '',
+      linkedin: '',
+      pinterest: '',
+      facebook: '',
     },
   });
 

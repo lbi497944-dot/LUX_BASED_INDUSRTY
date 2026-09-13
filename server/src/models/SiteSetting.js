@@ -22,7 +22,7 @@ const siteSettingSchema = new mongoose.Schema(
     },
     email: {
       type: String,
-      default: 'concierge@veloura-lighting.com',
+      default: 'concierge@luxbasedindustry.com',
     },
     phone: {
       type: String,
@@ -110,19 +110,19 @@ const siteSettingSchema = new mongoose.Schema(
     socialLinks: {
       instagram: {
         type: String,
-        default: 'https://instagram.com/veloura.lighting',
+        default: '',
       },
       linkedin: {
         type: String,
-        default: 'https://linkedin.com/company/veloura-lighting',
+        default: '',
       },
       pinterest: {
         type: String,
-        default: 'https://pinterest.com/velouralighting',
+        default: '',
       },
       facebook: {
         type: String,
-        default: 'https://facebook.com/velouralighting',
+        default: '',
       },
     },
     defaultSeo: {
