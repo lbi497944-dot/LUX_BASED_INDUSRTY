@@ -116,18 +116,18 @@ export default function BeforeAfterEditorSection({ section, mode, selectedElemen
           <div
             style={{
               position: 'absolute',
-              top: 0,
-              left: 0,
-              bottom: 0,
-              width: `${sliderPos}%`,
+              inset: 0,
+              width: '100%',
+              height: '100%',
               overflow: 'hidden',
-              borderRight: '2px solid var(--gold)',
+              clipPath: `inset(0 ${100 - sliderPos}% 0 0)`,
+              pointerEvents: 'none',
             }}
           >
             <img
               src="https://images.unsplash.com/photo-1600585154340-be6161a56a0c?auto=format&fit=crop&w=1200&q=80"
               alt="Before lighting design"
-              style={{ width: '900px', height: '100%', objectFit: 'cover', filter: 'brightness(0.6) grayscale(0.4)' }}
+              style={{ width: '100%', height: '100%', objectFit: 'cover', filter: 'brightness(0.6) grayscale(0.4)' }}
             />
             <span
               style={{
@@ -145,6 +145,18 @@ export default function BeforeAfterEditorSection({ section, mode, selectedElemen
               BEFORE
             </span>
           </div>
+          <div
+            style={{
+              position: 'absolute',
+              top: 0,
+              bottom: 0,
+              left: `${sliderPos}%`,
+              width: '2px',
+              backgroundColor: 'var(--gold)',
+              pointerEvents: 'none',
+              zIndex: 3,
+            }}
+          />
           <span
             style={{
               position: 'absolute',
