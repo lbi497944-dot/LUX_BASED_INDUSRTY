@@ -8,6 +8,7 @@ import { productService } from '../../services/productService';
 import { projectService } from '../../services/projectService';
 import { faqService } from '../../services/faqService';
 import { testimonialService } from '../../services/testimonialService';
+import { partnerService } from '../../services/partnerService';
 import { pageService } from '../../services/pageService';
 import DynamicPageRenderer from '../../components/page-builder/DynamicPageRenderer';
 import { useSettings } from '../../context/SettingsContext';
@@ -15,6 +16,7 @@ import Reveal from '../../components/sections/Reveal';
 import SectionTitle from '../../components/sections/SectionTitle';
 import BeforeAfterSlider from '../../components/sections/BeforeAfterSlider';
 import CatalogueCTA from '../../components/sections/CatalogueCTA';
+import ClientPartnersMarquee from '../../components/sections/ClientPartnersMarquee';
 import TestimonialsSection from '../../components/sections/TestimonialsSection';
 import SEO from '../../components/common/SEO';
 import { pageSeoData, siteConfig } from '../../seo/seoConfig';
@@ -46,6 +48,7 @@ export default function Home() {
   const [projects, setProjects] = useState(fallbackProjects);
   const [faqItems, setFaqItems] = useState(fallbackFaqs);
   const [testimonials, setTestimonials] = useState(fallbackTestimonials);
+  const [partners, setPartners] = useState([]);
   const [savedIds, setSavedIds] = useState(getSavedProductIds());
   const [openFaq, setOpenFaq] = useState(null);
   const [pageData, setPageData] = useState(null);
@@ -56,13 +59,14 @@ export default function Home() {
 
     const fetchHomeData = async () => {
       try {
-        const [colRes, prodRes, projRes, faqRes, testRes, pageRes] = await Promise.allSettled([
+        const [colRes, prodRes, projRes, faqRes, testRes, pageRes, partnerRes] = await Promise.allSettled([
           collectionService.getCollections({ featured: true }),
           productService.getProducts({ featured: true }),
           projectService.getProjects({ featured: true }),
           faqService.getFaqs(),
           testimonialService.getTestimonials(),
           pageService.getPageBySlug('home'),
+          partnerService.getPartners(),
         ]);
 
         if (!isMounted) return;
@@ -81,6 +85,9 @@ export default function Home() {
         }
         if (testRes.status === 'fulfilled' && testRes.value.data?.length) {
           setTestimonials(testRes.value.data);
+        }
+        if (partnerRes.status === 'fulfilled' && partnerRes.value?.data) {
+          setPartners(partnerRes.value.data);
         }
         if (
           pageRes.status === 'fulfilled' &&
@@ -262,6 +269,7 @@ export default function Home() {
             projects,
             faqItems,
             testimonials,
+            partners,
             settings,
             savedIds,
             handleToggleHeart,
@@ -604,6 +612,9 @@ export default function Home() {
           </div>
         </div>
       </section>
+
+      {/* 10.5 CLIENT PARTNERS MARQUEE (IMMEDIATELY ABOVE TESTIMONIALS) */}
+      <ClientPartnersMarquee partners={partners} />
 
       {/* 11. CLIENT ENDORSEMENTS / TESTIMONIALS */}
       <TestimonialsSection testimonials={testimonials} />

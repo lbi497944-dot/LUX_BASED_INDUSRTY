@@ -6544,3 +6544,515 @@ h1 em, h2 em, h3 em {
     display: flex;
   }
 }
+
+/* ==========================================================================
+   PHASE 3: PUBLIC REVIEW SUBMISSION, CLIENT PARTNERS & MARQUEE
+   ========================================================================== */
+
+/* 1. PUBLIC REVIEW FORM PAGE (/review) */
+.review-us-page {
+  background-color: var(--primary-dark, #0d2613);
+  color: var(--text-light, #f3f3eb);
+  min-height: 100vh;
+}
+
+.review-form-section {
+  padding: 60px 0 100px;
+}
+
+.review-form-wrapper {
+  max-width: 840px;
+  margin: 0 auto;
+}
+
+.review-form {
+  background-color: #112e17;
+  border: 1px solid rgba(230, 199, 122, 0.2);
+  border-radius: 8px;
+  padding: 44px;
+}
+
+.review-rating-group {
+  margin-bottom: 24px;
+}
+
+.review-star-selector {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin-top: 8px;
+  flex-wrap: wrap;
+}
+
+.star-btn {
+  background: none;
+  border: none;
+  cursor: pointer;
+  padding: 4px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 4px;
+  transition: transform 0.15s ease, filter 0.15s ease;
+}
+
+.star-btn:hover {
+  transform: scale(1.15);
+}
+
+.star-btn:focus-visible {
+  outline: 2px solid var(--gold, #e6c77a);
+  outline-offset: 2px;
+}
+
+.rating-descriptor {
+  font-size: 13px;
+  font-weight: 500;
+  color: var(--gold, #e6c77a);
+  letter-spacing: 0.05em;
+  margin-left: 8px;
+}
+
+.field-label-row {
+  display: flex;
+  justify-content: space-between;
+  align-items: baseline;
+  margin-bottom: 6px;
+}
+
+.character-counter {
+  font-size: 11px;
+  color: rgba(243, 243, 235, 0.5);
+  letter-spacing: 0.04em;
+}
+
+.counter-overflow {
+  color: #ef4444;
+  font-weight: 600;
+}
+
+.optional-tag {
+  font-size: 10px;
+  color: rgba(243, 243, 235, 0.45);
+  font-weight: 400;
+  letter-spacing: 0.05em;
+}
+
+.review-dropzone {
+  margin-top: 8px;
+  border: 1px dashed rgba(230, 199, 122, 0.35);
+  border-radius: 6px;
+  background-color: rgba(13, 38, 19, 0.4);
+  transition: border-color 0.2s ease, background-color 0.2s ease;
+}
+
+.review-dropzone:hover {
+  border-color: var(--gold, #e6c77a);
+  background-color: rgba(230, 199, 122, 0.04);
+}
+
+.dropzone-label {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  padding: 22px;
+  cursor: pointer;
+  width: 100%;
+}
+
+.dropzone-label.disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+.dropzone-icon {
+  color: var(--gold, #e6c77a);
+  flex-shrink: 0;
+}
+
+.dropzone-sub {
+  font-size: 11px;
+  color: rgba(243, 243, 235, 0.5);
+  margin: 4px 0 0;
+}
+
+.review-thumbnails-grid {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 14px;
+  margin-top: 16px;
+}
+
+.review-thumbnail-card {
+  position: relative;
+  aspect-ratio: 1 / 1;
+  border-radius: 6px;
+  overflow: hidden;
+  border: 1px solid rgba(230, 199, 122, 0.25);
+  background-color: rgba(0, 0, 0, 0.3);
+}
+
+.thumbnail-img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  display: block;
+}
+
+.thumbnail-remove-btn {
+  position: absolute;
+  top: 6px;
+  right: 6px;
+  width: 24px;
+  height: 24px;
+  border-radius: 50%;
+  background-color: rgba(0, 0, 0, 0.75);
+  border: 1px solid rgba(255, 255, 255, 0.2);
+  color: #ffffff;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  transition: background-color 0.2s ease, transform 0.15s ease;
+}
+
+.thumbnail-remove-btn:hover {
+  background-color: #ef4444;
+  transform: scale(1.1);
+}
+
+.thumbnail-size {
+  position: absolute;
+  bottom: 6px;
+  left: 6px;
+  background-color: rgba(0, 0, 0, 0.7);
+  font-size: 10px;
+  color: rgba(243, 243, 235, 0.85);
+  padding: 2px 6px;
+  border-radius: 3px;
+  letter-spacing: 0.04em;
+}
+
+.review-privacy-note {
+  display: flex;
+  align-items: flex-start;
+  gap: 12px;
+  padding: 14px 18px;
+  background-color: rgba(230, 199, 122, 0.05);
+  border: 1px solid rgba(230, 199, 122, 0.15);
+  border-radius: 6px;
+  margin: 24px 0 28px;
+  font-size: 12px;
+  line-height: 1.5;
+  color: rgba(243, 243, 235, 0.75);
+}
+
+.review-privacy-note .shield-icon {
+  color: var(--gold, #e6c77a);
+  flex-shrink: 0;
+  margin-top: 1px;
+}
+
+.btn-submit-review {
+  width: 100%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 10px;
+  padding: 16px 24px;
+  font-size: 12px;
+  letter-spacing: 0.18em;
+}
+
+/* Review Success Confirmation Panel */
+.review-success-panel {
+  background-color: #112e17;
+  border: 1px solid rgba(230, 199, 122, 0.25);
+  border-radius: 8px;
+  padding: 56px 36px;
+  text-align: center;
+  max-width: 720px;
+  margin: 0 auto;
+}
+
+.review-success-icon-box {
+  width: 80px;
+  height: 80px;
+  border-radius: 50%;
+  background-color: rgba(230, 199, 122, 0.1);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  margin: 0 auto 24px;
+  border: 1px solid rgba(230, 199, 122, 0.3);
+}
+
+.review-gold-icon {
+  color: var(--gold, #e6c77a);
+}
+
+.review-success-panel h2 {
+  font-family: 'Cormorant Garamond', serif;
+  font-size: 32px;
+  color: var(--text-light, #f3f3eb);
+  margin-bottom: 8px;
+}
+
+.review-success-subheading {
+  font-size: 16px;
+  color: var(--gold, #e6c77a);
+  font-weight: 500;
+  letter-spacing: 0.05em;
+  margin-bottom: 18px;
+}
+
+.review-success-description {
+  font-size: 14px;
+  line-height: 1.7;
+  color: rgba(243, 243, 235, 0.75);
+  max-width: 540px;
+  margin: 0 auto 36px;
+}
+
+.review-success-actions {
+  display: flex;
+  justify-content: center;
+  gap: 16px;
+  flex-wrap: wrap;
+}
+
+/* 2. TESTIMONIALS SECTION CTA BUTTON */
+.testimonials-cta-container {
+  display: flex;
+  justify-content: center;
+  margin-top: 48px;
+}
+
+.testimonials-share-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  padding: 14px 32px;
+  font-size: 11px;
+  letter-spacing: 0.2em;
+  text-transform: uppercase;
+}
+
+/* 3. PUBLIC CLIENT PARTNERS PRESENTATION */
+.client-partners-section {
+  padding: 40px 0 44px;
+  background-color: transparent;
+  position: relative;
+  overflow: hidden;
+  width: 100%;
+}
+
+.client-partners-eyebrow {
+  display: block;
+  text-align: center;
+  font-size: 10px;
+  font-weight: 600;
+  letter-spacing: 0.25em;
+  color: var(--gold-text, #e6c77a);
+  text-transform: uppercase;
+  margin-bottom: 24px;
+}
+
+.partner-logo-item {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  padding: 6px 16px;
+  transition: transform 0.3s ease;
+  flex-shrink: 0;
+}
+
+.partner-logo-img {
+  max-height: 48px;
+  max-width: 160px;
+  width: auto;
+  height: auto;
+  object-fit: contain;
+  filter: grayscale(100%) opacity(0.65);
+  transition: filter 0.35s ease, transform 0.35s ease, opacity 0.35s ease;
+}
+
+.partner-logo-item:hover .partner-logo-img,
+.partner-logo-item:focus-within .partner-logo-img {
+  filter: grayscale(0%) opacity(1) drop-shadow(0 2px 10px rgba(230, 199, 122, 0.35));
+  transform: scale(1.05);
+}
+
+.partner-single-container {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  padding: 12px 0;
+}
+
+.partner-dual-container {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  gap: 60px;
+  flex-wrap: wrap;
+  padding: 12px 0;
+}
+
+/* 4. MARQUEE CONTINUOUS SCROLL */
+.marquee-wrapper {
+  width: 100%;
+  overflow: hidden;
+  position: relative;
+  mask-image: linear-gradient(to right, transparent, black 12%, black 88%, transparent);
+  -webkit-mask-image: linear-gradient(to right, transparent, black 12%, black 88%, transparent);
+}
+
+.marquee-track {
+  display: flex;
+  width: max-content;
+  animation: marquee-scroll 32s linear infinite;
+  will-change: transform;
+}
+
+.marquee-group {
+  display: flex;
+  align-items: center;
+  gap: 64px;
+  padding-right: 64px;
+  flex-shrink: 0;
+}
+
+@keyframes marquee-scroll {
+  0% {
+    transform: translateX(0);
+  }
+  100% {
+    transform: translateX(-50%);
+  }
+}
+
+.marquee-wrapper:hover .marquee-track,
+.marquee-wrapper:focus-within .marquee-track {
+  animation-play-state: paused;
+}
+
+/* Reduced Motion Accessibility */
+@media (prefers-reduced-motion: reduce) {
+  .marquee-track {
+    animation: none !important;
+    width: 100% !important;
+    justify-content: center !important;
+  }
+  .marquee-wrapper {
+    mask-image: none !important;
+    -webkit-mask-image: none !important;
+    overflow-x: auto !important;
+  }
+  .marquee-group {
+    flex-wrap: wrap !important;
+    justify-content: center !important;
+    padding-right: 0 !important;
+    gap: 32px !important;
+  }
+}
+
+/* Responsive Marquee & Partner Logos */
+@media (max-width: 1024px) {
+  .marquee-group {
+    gap: 48px;
+    padding-right: 48px;
+  }
+  .partner-logo-img {
+    max-height: 42px;
+    max-width: 140px;
+  }
+  .partner-dual-container {
+    gap: 40px;
+  }
+}
+
+@media (max-width: 640px) {
+  .review-form {
+    padding: 24px 18px;
+  }
+  .review-thumbnails-grid {
+    grid-template-columns: repeat(3, 1fr);
+    gap: 8px;
+  }
+  .marquee-group {
+    gap: 32px;
+    padding-right: 32px;
+  }
+  .partner-logo-img {
+    max-height: 36px;
+    max-width: 120px;
+  }
+  .partner-dual-container {
+    gap: 24px;
+  }
+}
+
+/* 5. ADMIN PARTNERS MANAGER */
+.partner-table-logo-cell {
+  width: 64px;
+  height: 40px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background-color: rgba(255, 255, 255, 0.05);
+  border-radius: 4px;
+  padding: 4px;
+}
+
+.partner-table-img {
+  max-height: 32px;
+  max-width: 56px;
+  width: auto;
+  height: auto;
+  object-fit: contain;
+}
+
+.partner-name-text {
+  font-weight: 500;
+  color: var(--text-light, #f3f3eb);
+}
+
+.partner-table-link {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  font-size: 12px;
+  color: var(--gold, #e6c77a);
+  word-break: break-all;
+}
+
+.partner-table-link:hover {
+  text-decoration: underline;
+}
+
+.partner-order-badge {
+  display: inline-block;
+  font-size: 11px;
+  font-weight: 600;
+  color: rgba(243, 243, 235, 0.7);
+  background-color: rgba(255, 255, 255, 0.06);
+  padding: 2px 8px;
+  border-radius: 4px;
+}
+
+.partner-modal-logo-preview {
+  text-align: center;
+  padding: 16px;
+  background-color: rgba(0, 0, 0, 0.25);
+  border-radius: 6px;
+  border: 1px solid rgba(230, 199, 122, 0.2);
+}
+
+.partner-modal-logo-preview img {
+  max-height: 64px;
+  max-width: 200px;
+  object-fit: contain;
+  display: block;
+  margin: 0 auto;
+}

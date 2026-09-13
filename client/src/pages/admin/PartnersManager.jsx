@@ -1,0 +1,567 @@
+import { useState, useEffect } from 'react';
+import { partnerService } from '../../services/partnerService';
+import { uploadService } from '../../services/uploadService';
+import {
+  Plus,
+  Edit2,
+  Trash2,
+  Handshake,
+  Loader2,
+  X,
+  ExternalLink,
+  Upload,
+  CheckCircle2,
+  XCircle,
+  AlertCircle,
+  ArrowUpDown,
+  Building2,
+} from 'lucide-react';
+import StatusBadge from '../../components/ui/StatusBadge';
+import ModalConfirm from '../../components/modals/ModalConfirm';
+import Toast from '../../components/common/Toast';
+import SEO from '../../components/common/SEO';
+
+const MAX_IMAGE_SIZE_BYTES = 10 * 1024 * 1024; // 10 MB limit for admin logos
+const ALLOWED_EXTENSIONS = ['.jpg', '.jpeg', '.png', '.webp'];
+
+export default function PartnersManager() {
+  const [partners, setPartners] = useState([]);
+  const [loading, setLoading] = useState(true);
+  const [toast, setToast] = useState(null);
+
+  // Modal states for Create/Edit
+  const [isModalOpen, setIsModalOpen] = useState(false);
+  const [editingPartner, setEditingPartner] = useState(null);
+  const [formData, setFormData] = useState({
+    name: '',
+    logo: '',
+    logoPublicId: '',
+    website: '',
+    order: 0,
+    isActive: true,
+  });
+  const [modalLoading, setModalLoading] = useState(false);
+  const [imageUploading, setImageUploading] = useState(false);
+  const [uploadError, setUploadError] = useState(null);
+
+  // Modal state for Delete
+  const [deleteTarget, setDeleteTarget] = useState(null);
+  const [deleteLoading, setDeleteLoading] = useState(false);
+
+  // Inline toggle loading tracking
+  const [togglingId, setTogglingId] = useState(null);
+
+  const fetchPartners = async () => {
+    try {
+      setLoading(true);
+      const res = await partnerService.getPartners({ adminView: true });
+      setPartners(res.data || []);
+    } catch (err) {
+      setToast({
+        type: 'error',
+        title: 'Fetch Error',
+        message: err?.message || 'Failed to load client partners.',
+      });
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  useEffect(() => {
+    fetchPartners();
+  }, []);
+
+  const handleOpenCreate = () => {
+    setEditingPartner(null);
+    setUploadError(null);
+    setFormData({
+      name: '',
+      logo: '',
+      logoPublicId: '',
+      website: '',
+      order: partners.length > 0 ? Math.max(...partners.map((p) => p.order || 0)) + 1 : 1,
+      isActive: true,
+    });
+    setIsModalOpen(true);
+  };
+
+  const handleOpenEdit = (partner) => {
+    setEditingPartner(partner);
+    setUploadError(null);
+    setFormData({
+      name: partner.name || '',
+      logo: partner.logo || '',
+      logoPublicId: partner.logoPublicId || '',
+      website: partner.website || '',
+      order: partner.order !== undefined ? partner.order : 0,
+      isActive: partner.isActive !== false,
+    });
+    setIsModalOpen(true);
+  };
+
+  const handleLogoUpload = async (e) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+
+    const ext = file.name.substring(file.name.lastIndexOf('.')).toLowerCase();
+    if (!ALLOWED_EXTENSIONS.includes(ext)) {
+      setUploadError('Unsupported file format. Only JPG, PNG, and WEBP are permitted.');
+      e.target.value = '';
+      return;
+    }
+
+    if (file.size > MAX_IMAGE_SIZE_BYTES) {
+      setUploadError('File size exceeds the 10MB limit.');
+      e.target.value = '';
+      return;
+    }
+
+    setUploadError(null);
+    setImageUploading(true);
+
+    try {
+      const res = await uploadService.uploadFile(file);
+      if (res?.data?.url) {
+        setFormData((prev) => ({
+          ...prev,
+          logo: res.data.url,
+          logoPublicId: res.data.publicId || '',
+        }));
+      } else {
+        throw new Error('Upload succeeded but no image URL was returned.');
+      }
+    } catch (err) {
+      setUploadError(err?.message || 'Failed to upload logo to Cloudinary.');
+    } finally {
+      setImageUploading(false);
+      e.target.value = '';
+    }
+  };
+
+  const handleClearLogo = () => {
+    setFormData((prev) => ({
+      ...prev,
+      logo: '',
+      logoPublicId: '',
+    }));
+    setUploadError(null);
+  };
+
+  const handleToggleActive = async (partner) => {
+    const newStatus = !partner.isActive;
+    setTogglingId(partner._id);
+
+    // Optimistic UI update
+    setPartners((prev) =>
+      prev.map((p) => (p._id === partner._id ? { ...p, isActive: newStatus } : p))
+    );
+
+    try {
+      await partnerService.updatePartner(partner._id, { isActive: newStatus });
+      setToast({
+        type: 'success',
+        title: 'Status Updated',
+        message: `"${partner.name}" is now ${newStatus ? 'active' : 'hidden'}.`,
+      });
+    } catch (err) {
+      // Revert optimistic update on failure
+      setPartners((prev) =>
+        prev.map((p) => (p._id === partner._id ? { ...p, isActive: partner.isActive } : p))
+      );
+      setToast({
+        type: 'error',
+        title: 'Update Failed',
+        message: err?.message || 'Unable to toggle partner status.',
+      });
+    } finally {
+      setTogglingId(null);
+    }
+  };
+
+  const handleFormSubmit = async (e) => {
+    e.preventDefault();
+
+    if (!formData.name.trim()) {
+      setToast({ type: 'error', title: 'Validation Error', message: 'Company name is required.' });
+      return;
+    }
+
+    if (!formData.logo.trim()) {
+      setToast({ type: 'error', title: 'Validation Error', message: 'Partner logo image is required.' });
+      return;
+    }
+
+    if (formData.website && formData.website.trim()) {
+      const trimmedUrl = formData.website.trim();
+      try {
+        const parsed = new URL(trimmedUrl);
+        if (parsed.protocol !== 'http:' && parsed.protocol !== 'https:') {
+          setToast({ type: 'error', title: 'Validation Error', message: 'Website must start with http:// or https://' });
+          return;
+        }
+      } catch {
+        setToast({ type: 'error', title: 'Validation Error', message: 'Please provide a valid website URL.' });
+        return;
+      }
+    }
+
+    setModalLoading(true);
+
+    try {
+      const payload = {
+        name: formData.name.trim(),
+        logo: formData.logo.trim(),
+        logoPublicId: formData.logoPublicId ? formData.logoPublicId.trim() : '',
+        website: formData.website ? formData.website.trim() : '',
+        order: Number(formData.order) || 0,
+        isActive: Boolean(formData.isActive),
+      };
+
+      if (editingPartner) {
+        await partnerService.updatePartner(editingPartner._id, payload);
+        setToast({
+          type: 'success',
+          title: 'Partner Updated',
+          message: `Updated "${payload.name}" successfully.`,
+        });
+      } else {
+        await partnerService.createPartner(payload);
+        setToast({
+          type: 'success',
+          title: 'Partner Created',
+          message: `Added "${payload.name}" to client partners.`,
+        });
+      }
+
+      setIsModalOpen(false);
+      fetchPartners();
+    } catch (err) {
+      setToast({
+        type: 'error',
+        title: 'Save Failed',
+        message: err?.message || 'Unable to save partner.',
+      });
+    } finally {
+      setModalLoading(false);
+    }
+  };
+
+  const handleDeleteConfirm = async () => {
+    if (!deleteTarget) return;
+
+    setDeleteLoading(true);
+    try {
+      await partnerService.deletePartner(deleteTarget._id);
+      setToast({
+        type: 'success',
+        title: 'Partner Deleted',
+        message: `"${deleteTarget.name}" removed successfully.`,
+      });
+      setDeleteTarget(null);
+      fetchPartners();
+    } catch (err) {
+      setToast({
+        type: 'error',
+        title: 'Delete Failed',
+        message: err?.message || 'Failed to delete partner.',
+      });
+    } finally {
+      setDeleteLoading(false);
+    }
+  };
+
+  return (
+    <div className="admin-page-container">
+      <SEO title="Client Partners CMS | LUX BASED INDUSTRY" robots="noindex, nofollow" />
+      <Toast toast={toast} onClose={() => setToast(null)} />
+
+      <ModalConfirm
+        isOpen={Boolean(deleteTarget)}
+        title="Delete Client Partner"
+        message={`Are you sure you want to permanently delete "${deleteTarget?.name}"? Its associated logo on Cloudinary will also be destroyed.`}
+        onConfirm={handleDeleteConfirm}
+        onCancel={() => setDeleteTarget(null)}
+        loading={deleteLoading}
+      />
+
+      {/* Header */}
+      <div className="admin-page-header">
+        <div>
+          <h2>Client Partners</h2>
+          <p>Manage corporate collaborators, luxury developers, and architectural firm logos displayed on the public Home marquee.</p>
+        </div>
+        <button onClick={handleOpenCreate} className="btn btn-gold btn-sm">
+          <Plus size={16} /> Add Partner
+        </button>
+      </div>
+
+      {/* Partners List Table */}
+      <div className="admin-card">
+        {loading ? (
+          <div className="admin-table-loading">
+            <Loader2 className="animate-spin" size={32} />
+            <p>Loading partners...</p>
+          </div>
+        ) : partners.length === 0 ? (
+          <div className="admin-empty-state">
+            <Handshake size={48} className="empty-icon" />
+            <h3>No Client Partners Configured</h3>
+            <p>Add your first architectural collaborator or client company logo to activate the public marquee.</p>
+            <button onClick={handleOpenCreate} className="btn btn-gold btn-sm mt-4">
+              <Plus size={16} /> Add First Partner
+            </button>
+          </div>
+        ) : (
+          <div className="admin-table-responsive">
+            <table className="admin-table">
+              <thead>
+                <tr>
+                  <th style={{ width: '80px' }}>Logo</th>
+                  <th>Company Name</th>
+                  <th>Website URL</th>
+                  <th style={{ width: '90px' }}>Order</th>
+                  <th style={{ width: '100px' }}>Status</th>
+                  <th style={{ width: '140px', textAlign: 'right' }}>Actions</th>
+                </tr>
+              </thead>
+              <tbody>
+                {partners.map((partner) => (
+                  <tr key={partner._id}>
+                    <td>
+                      <div className="partner-table-logo-cell">
+                        <img
+                          src={partner.logo}
+                          alt={`${partner.name} logo`}
+                          className="partner-table-img"
+                        />
+                      </div>
+                    </td>
+                    <td>
+                      <strong className="partner-name-text">{partner.name}</strong>
+                    </td>
+                    <td>
+                      {partner.website ? (
+                        <a
+                          href={partner.website}
+                          target="_blank"
+                          rel="noopener noreferrer"
+                          className="partner-table-link"
+                        >
+                          <span>{partner.website.replace(/^https?:\/\//, '')}</span>
+                          <ExternalLink size={12} />
+                        </a>
+                      ) : (
+                        <span className="text-muted">—</span>
+                      )}
+                    </td>
+                    <td>
+                      <span className="partner-order-badge">#{partner.order || 0}</span>
+                    </td>
+                    <td>
+                      <button
+                        type="button"
+                        onClick={() => handleToggleActive(partner)}
+                        disabled={togglingId === partner._id}
+                        className="btn-status-toggle"
+                        title="Click to toggle visibility"
+                      >
+                        <StatusBadge status={partner.isActive ? 'approved' : 'rejected'}>
+                          {partner.isActive ? 'Active' : 'Hidden'}
+                        </StatusBadge>
+                      </button>
+                    </td>
+                    <td style={{ textAlign: 'right' }}>
+                      <div className="table-actions">
+                        <button
+                          onClick={() => handleOpenEdit(partner)}
+                          className="btn-icon"
+                          title="Edit Partner"
+                          aria-label={`Edit ${partner.name}`}
+                        >
+                          <Edit2 size={16} />
+                        </button>
+                        <button
+                          onClick={() => setDeleteTarget(partner)}
+                          className="btn-icon text-danger"
+                          title="Delete Partner"
+                          aria-label={`Delete ${partner.name}`}
+                        >
+                          <Trash2 size={16} />
+                        </button>
+                      </div>
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+        )}
+      </div>
+
+      {/* CREATE / EDIT MODAL */}
+      {isModalOpen && (
+        <div className="modal-backdrop" onClick={() => !modalLoading && setIsModalOpen(false)}>
+          <div className="modal-container admin-partner-modal" onClick={(e) => e.stopPropagation()}>
+            <div className="modal-header">
+              <h3>{editingPartner ? 'Edit Client Partner' : 'Add Client Partner'}</h3>
+              <button
+                className="modal-close"
+                onClick={() => setIsModalOpen(false)}
+                disabled={modalLoading}
+                aria-label="Close dialog"
+              >
+                <X size={18} />
+              </button>
+            </div>
+
+            <form onSubmit={handleFormSubmit}>
+              <div className="modal-body">
+                {/* 1. COMPANY NAME */}
+                <div className="form-group">
+                  <label className="field-label">
+                    COMPANY NAME *
+                  </label>
+                  <input
+                    type="text"
+                    required
+                    maxLength={100}
+                    placeholder="e.g. Foster & Partners"
+                    value={formData.name}
+                    onChange={(e) => setFormData((prev) => ({ ...prev, name: e.target.value }))}
+                  />
+                </div>
+
+                {/* 2. LOGO UPLOADER */}
+                <div className="form-group">
+                  <label className="field-label">
+                    COMPANY LOGO * (JPG, PNG, WEBP - MAX 10MB)
+                  </label>
+
+                  {formData.logo ? (
+                    <div className="partner-modal-logo-preview">
+                      <img src={formData.logo} alt="Partner logo preview" />
+                      <button
+                        type="button"
+                        onClick={handleClearLogo}
+                        className="btn btn-outline btn-xs mt-2"
+                        disabled={modalLoading}
+                      >
+                        <X size={12} /> Replace Logo
+                      </button>
+                    </div>
+                  ) : (
+                    <div className="admin-file-dropzone">
+                      <input
+                        type="file"
+                        id="partner-logo-input"
+                        accept=".jpg,.jpeg,.png,.webp"
+                        onChange={handleLogoUpload}
+                        disabled={imageUploading || modalLoading}
+                        style={{ display: 'none' }}
+                      />
+                      <label htmlFor="partner-logo-input" className="admin-dropzone-label">
+                        {imageUploading ? (
+                          <div className="dropzone-uploading">
+                            <Loader2 className="animate-spin" size={24} />
+                            <span>Uploading logo to Cloudinary...</span>
+                          </div>
+                        ) : (
+                          <div className="dropzone-idle">
+                            <Upload size={24} />
+                            <strong>Click to choose logo image</strong>
+                            <small>Recommended: Transparent PNG or SVG-styled WEBP</small>
+                          </div>
+                        )}
+                      </label>
+                    </div>
+                  )}
+
+                  {uploadError && (
+                    <div className="field-error mt-2">
+                      <AlertCircle size={14} />
+                      <span>{uploadError}</span>
+                    </div>
+                  )}
+                </div>
+
+                {/* 3. WEBSITE URL */}
+                <div className="form-group">
+                  <label className="field-label">
+                    WEBSITE URL <span className="optional-tag">(OPTIONAL)</span>
+                  </label>
+                  <input
+                    type="url"
+                    maxLength={500}
+                    placeholder="https://www.company.com"
+                    value={formData.website}
+                    onChange={(e) => setFormData((prev) => ({ ...prev, website: e.target.value }))}
+                  />
+                  <small className="field-hint">
+                    Include http:// or https://. Clicking the logo on the public website will direct users here safely.
+                  </small>
+                </div>
+
+                {/* 4. ORDER & ACTIVE TOGGLE */}
+                <div className="form-row">
+                  <div className="form-group">
+                    <label className="field-label">
+                      DISPLAY ORDER
+                    </label>
+                    <input
+                      type="number"
+                      value={formData.order}
+                      onChange={(e) => setFormData((prev) => ({ ...prev, order: parseInt(e.target.value, 10) || 0 }))}
+                    />
+                    <small className="field-hint">
+                      Ascending sort order in the public marquee (1, 2, 3...).
+                    </small>
+                  </div>
+
+                  <div className="form-group">
+                    <label className="field-label">
+                      VISIBILITY STATUS
+                    </label>
+                    <label className="admin-checkbox-label mt-2">
+                      <input
+                        type="checkbox"
+                        checked={formData.isActive}
+                        onChange={(e) => setFormData((prev) => ({ ...prev, isActive: e.target.checked }))}
+                      />
+                      <span>Active on public website</span>
+                    </label>
+                  </div>
+                </div>
+              </div>
+
+              <div className="modal-footer">
+                <button
+                  type="button"
+                  className="btn btn-outline btn-sm"
+                  onClick={() => setIsModalOpen(false)}
+                  disabled={modalLoading}
+                >
+                  Cancel
+                </button>
+                <button
+                  type="submit"
+                  className="btn btn-gold btn-sm"
+                  disabled={modalLoading || imageUploading || !formData.logo}
+                >
+                  {modalLoading ? (
+                    <>
+                      <Loader2 size={14} className="animate-spin" /> Saving...
+                    </>
+                  ) : editingPartner ? (
+                    'Update Partner'
+                  ) : (
+                    'Add Partner'
+                  )}
+                </button>
+              </div>
+            </form>
+          </div>
+        </div>
+      )}
+    </div>
+  );
+}

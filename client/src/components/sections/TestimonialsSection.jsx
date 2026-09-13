@@ -1,4 +1,5 @@
-import { Quote, Star } from 'lucide-react';
+import { Link } from 'react-router-dom';
+import { Quote, Star, ArrowRight } from 'lucide-react';
 import SectionTitle from './SectionTitle';
 import Reveal from './Reveal';
 
@@ -58,6 +59,12 @@ export default function TestimonialsSection({
               </Reveal>
             );
           })}
+        </div>
+
+        <div className="testimonials-cta-container">
+          <Link to="/review" className="btn btn-gold-outline testimonials-share-btn">
+            SHARE YOUR EXPERIENCE <ArrowRight size={16} />
+          </Link>
         </div>
       </div>
     </section>

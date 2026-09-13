@@ -10,6 +10,7 @@ import ProjectDetail from '../pages/public/ProjectDetail';
 import About from '../pages/public/About';
 import Contact from '../pages/public/Contact';
 import Consultation from '../pages/public/Consultation';
+import ReviewUs from '../pages/public/ReviewUs';
 import NotFound from '../pages/public/NotFound';
 
 // Protected Route Guard
@@ -29,6 +30,7 @@ const NewsletterManager = lazy(() => import('../pages/admin/NewsletterManager'))
 const FaqsManager = lazy(() => import('../pages/admin/FaqsManager'));
 const TestimonialsManager = lazy(() => import('../pages/admin/TestimonialsManager'));
 const ReviewsManager = lazy(() => import('../pages/admin/ReviewsManager'));
+const PartnersManager = lazy(() => import('../pages/admin/PartnersManager'));
 const SettingsManager = lazy(() => import('../pages/admin/SettingsManager'));
 const ChangePasswordManager = lazy(() => import('../pages/admin/ChangePasswordManager'));
 
@@ -96,6 +98,7 @@ export default function AppRoutes() {
         <Route path="/about" element={<About />} />
         <Route path="/contact" element={<Contact />} />
         <Route path="/consultation" element={<Consultation />} />
+        <Route path="/review" element={<ReviewUs />} />
 
         {/* Admin Authentication */}
         <Route path="/admin/login" element={<AdminLogin />} />
@@ -115,6 +118,7 @@ export default function AppRoutes() {
             <Route path="faqs" element={<FaqsManager />} />
             <Route path="testimonials" element={<TestimonialsManager />} />
             <Route path="reviews" element={<ReviewsManager />} />
+            <Route path="partners" element={<PartnersManager />} />
             <Route path="account" element={<ChangePasswordManager />} />
             <Route path="settings" element={<SettingsManager />} />
           </Route>

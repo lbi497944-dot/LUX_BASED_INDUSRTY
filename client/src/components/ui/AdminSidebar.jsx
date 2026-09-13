@@ -11,6 +11,7 @@ import {
   HelpCircle,
   MessageSquareQuote,
   Star,
+  Handshake,
   Settings,
   KeyRound,
   PanelsTopLeft,
@@ -29,6 +30,7 @@ const links = [
   { label: 'FAQs', path: '/admin/faqs', icon: HelpCircle },
   { label: 'Testimonials', path: '/admin/testimonials', icon: MessageSquareQuote },
   { label: 'Reviews', path: '/admin/reviews', icon: Star, badgeKey: 'reviews' },
+  { label: 'Client Partners', path: '/admin/partners', icon: Handshake },
   { label: 'Account Security', path: '/admin/account', icon: KeyRound },
   { label: 'Site Settings', path: '/admin/settings', icon: Settings },
 ];

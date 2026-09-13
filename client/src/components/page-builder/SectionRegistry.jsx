@@ -14,6 +14,7 @@ import ConsultationCTASection from './sections/ConsultationCTASection';
 import EditorialTextSection from './sections/EditorialTextSection';
 import PhotoBannerSection from './sections/PhotoBannerSection';
 import ContactDirectorySection from './sections/ContactDirectorySection';
+import ClientPartnersMarquee from '../sections/ClientPartnersMarquee';
 
 // Adapters for existing section components to consume standard Page Builder props
 const BeforeAfterAdapter = ({ content, media }) => (
@@ -25,11 +26,14 @@ const CatalogueCTAAdapter = ({ content }) => (
 );
 
 const TestimonialsFeedAdapter = ({ content, context }) => (
-  <TestimonialsSection
-    testimonials={context?.testimonials}
-    eyebrow={content?.eyebrow}
-    title={content?.heading}
-  />
+  <>
+    <ClientPartnersMarquee partners={context?.partners} />
+    <TestimonialsSection
+      testimonials={context?.testimonials}
+      eyebrow={content?.eyebrow}
+      title={content?.heading}
+    />
+  </>
 );
 
 export const PRODUCTION_SECTION_REGISTRY = {
