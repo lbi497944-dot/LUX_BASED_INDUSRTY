@@ -45,6 +45,33 @@ export const upload = multer({
   fileFilter,
 });
 
+// Strict image-only file filter for customer review photos (strictly excludes SVG, PDF, and video)
+const reviewImageFilter = (req, file, cb) => {
+  const allowedExtensions = ['.jpg', '.jpeg', '.png', '.webp'];
+  const allowedMimeTypes = ['image/jpeg', 'image/png', 'image/webp', 'image/pjpeg'];
+  const ext = path.extname(file.originalname).toLowerCase();
+
+  if (allowedExtensions.includes(ext) && (!file.mimetype || allowedMimeTypes.includes(file.mimetype.toLowerCase()))) {
+    cb(null, true);
+  } else {
+    cb(
+      new Error(
+        `Unsupported review image type (${ext}). Only standard image files (JPG, PNG, WEBP) are permitted.`
+      ),
+      false
+    );
+  }
+};
+
+export const uploadReviewImages = multer({
+  storage,
+  limits: {
+    fileSize: 5 * 1024 * 1024, // 5 MB limit per review image
+    files: 3, // Maximum 3 images per review
+  },
+  fileFilter: reviewImageFilter,
+});
+
 /**
  * Upload a memory buffer stream directly to Cloudinary
  */

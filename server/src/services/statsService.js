@@ -4,6 +4,7 @@ import Project from '../models/Project.js';
 import Consultation from '../models/Consultation.js';
 import ContactEnquiry from '../models/ContactEnquiry.js';
 import NewsletterSubscriber from '../models/NewsletterSubscriber.js';
+import Review from '../models/Review.js';
 
 export const getDashboardStats = async () => {
   const [
@@ -15,6 +16,8 @@ export const getDashboardStats = async () => {
     totalEnquiries,
     newEnquiries,
     totalSubscribers,
+    totalReviews,
+    pendingReviews,
     recentConsultations,
     recentEnquiries,
   ] = await Promise.all([
@@ -26,6 +29,8 @@ export const getDashboardStats = async () => {
     ContactEnquiry.countDocuments(),
     ContactEnquiry.countDocuments({ status: 'New' }),
     NewsletterSubscriber.countDocuments({ status: 'Subscribed' }),
+    Review.countDocuments(),
+    Review.countDocuments({ status: 'Pending' }),
     Consultation.find().sort('-createdAt').limit(5),
     ContactEnquiry.find().sort('-createdAt').limit(5),
   ]);
@@ -40,6 +45,8 @@ export const getDashboardStats = async () => {
       totalEnquiries,
       newEnquiries,
       totalSubscribers,
+      totalReviews,
+      pendingReviews,
     },
     recentConsultations,
     recentEnquiries,
