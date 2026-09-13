@@ -49,8 +49,11 @@ export default function Home() {
   const [savedIds, setSavedIds] = useState(getSavedProductIds());
   const [openFaq, setOpenFaq] = useState(null);
   const [pageData, setPageData] = useState(null);
+  const [pageLoading, setPageLoading] = useState(true);
 
   useEffect(() => {
+    let isMounted = true;
+
     const fetchHomeData = async () => {
       try {
         const [colRes, prodRes, projRes, faqRes, testRes, pageRes] = await Promise.allSettled([
@@ -61,6 +64,8 @@ export default function Home() {
           testimonialService.getTestimonials(),
           pageService.getPageBySlug('home'),
         ]);
+
+        if (!isMounted) return;
 
         if (colRes.status === 'fulfilled' && colRes.value.data?.length) {
           setCollections(colRes.value.data);
@@ -87,10 +92,18 @@ export default function Home() {
         }
       } catch {
         // Retain fallback data gracefully
+      } finally {
+        if (isMounted) {
+          setPageLoading(false);
+        }
       }
     };
 
     fetchHomeData();
+
+    return () => {
+      isMounted = false;
+    };
   }, []);
 
   useEffect(() => {
@@ -195,6 +208,36 @@ export default function Home() {
     Array.isArray(pageData.publishedSections) &&
     pageData.publishedSections.some((s) => s && typeof s === 'object' && s.enabled !== false && s.type);
 
+  // State A: Dynamic Home Page Loading State (eliminates initial fallback images.hero flash)
+  if (pageLoading) {
+    return (
+      <main className="home-page" aria-busy="true" aria-live="polite">
+        <SEO
+          title={pageSeoTitle}
+          description={pageSeoDescription}
+          canonical={pageSeoCanonical}
+          image={pageSeoImage}
+          schemaData={homeSchema}
+        />
+        <section className="hero hero-loading-placeholder" aria-label="Loading LUX BASED INDUSTRY">
+          <div className="container hero-content">
+            <div className="hero-skeleton-wrapper">
+              <div className="hero-skeleton-eyebrow" />
+              <div className="hero-skeleton-title-1" />
+              <div className="hero-skeleton-title-2" />
+              <div className="hero-skeleton-subtitle" />
+              <div className="hero-skeleton-actions">
+                <div className="hero-skeleton-btn-primary" />
+                <div className="hero-skeleton-btn-secondary" />
+              </div>
+            </div>
+          </div>
+        </section>
+      </main>
+    );
+  }
+
+  // State B: Published Page Builder Success State
   if (hasValidDynamicContent) {
     return (
       <main className="home-page">
