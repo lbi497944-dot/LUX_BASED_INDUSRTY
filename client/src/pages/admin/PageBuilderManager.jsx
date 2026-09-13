@@ -622,14 +622,20 @@ export default function PageBuilderManager() {
 
           <button
             type="button"
-            className="pb-toolbar-btn pb-btn-save"
+            className={`pb-toolbar-btn pb-btn-save ${dirty ? 'dirty' : 'clean'}`}
             onClick={handleSaveDraft}
             disabled={!dirty || saving || publishing}
-            title="Save draft without publishing"
-            aria-label="Save Draft"
+            title={dirty ? 'Save draft changes' : 'All changes saved'}
+            aria-label={saving ? 'Saving Changes' : dirty ? 'Save Changes' : 'Saved'}
           >
-            <Save size={14} className={saving ? 'spin-icon' : ''} />
-            <span>{saving ? 'Saving...' : 'Save Draft'}</span>
+            {saving ? (
+              <Loader2 size={14} className="spin-icon" />
+            ) : dirty ? (
+              <Save size={14} />
+            ) : (
+              <CheckCircle2 size={14} />
+            )}
+            <span>{saving ? 'Saving...' : dirty ? 'Save Changes' : 'Saved'}</span>
           </button>
 
           <button

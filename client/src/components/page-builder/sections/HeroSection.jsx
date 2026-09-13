@@ -12,7 +12,8 @@ export default function HeroSection({ content = {}, media = {} }) {
   const primaryBtnUrl = content?.primaryBtnUrl || '/collections';
   const secondaryBtnText = content?.secondaryBtnText || 'BOOK CONSULTATION';
   const secondaryBtnUrl = content?.secondaryBtnUrl || '/consultation';
-  const bgImage = media?.url || images.hero;
+  const slideImg = media?.mediaType === 'slideshow' && media?.slides?.[0]?.url ? media.slides[0].url : null;
+  const bgImage = slideImg || media?.url || images.hero;
   const overlayOpacity = typeof media?.overlayOpacity === 'number' ? media.overlayOpacity : 0.82;
   const showOverlay = media?.overlay !== false;
 
@@ -33,13 +34,48 @@ export default function HeroSection({ content = {}, media = {} }) {
 
   return (
     <section className="hero">
-      <motion.div
-        className="hero-bg-frame"
-        initial={{ opacity: 0, scale: 1.04 }}
-        animate={{ opacity: 1, scale: 1.0 }}
-        transition={{ duration: 1.2, ease: [0.22, 1, 0.36, 1] }}
-        style={bgStyle}
-      />
+      {media?.mediaType === 'none' ? null : media?.mediaType === 'video' && media?.videoUrl ? (
+        <motion.div
+          className="hero-bg-frame"
+          initial={{ opacity: 0 }}
+          animate={{ opacity: 1 }}
+          transition={{ duration: 1.2, ease: [0.22, 1, 0.36, 1] }}
+          style={{ overflow: 'hidden' }}
+        >
+          <video
+            src={media.videoUrl}
+            autoPlay
+            loop
+            muted
+            playsInline
+            style={{
+              position: 'absolute',
+              inset: 0,
+              width: '100%',
+              height: '100%',
+              objectFit: 'cover',
+            }}
+          />
+          {showOverlay && (
+            <div
+              style={{
+                position: 'absolute',
+                inset: 0,
+                background: `linear-gradient(90deg, rgba(21, 57, 29, 0.96) 0%, rgba(21, 57, 29, ${overlayOpacity}) 40%, rgba(21, 57, 29, 0.25) 85%)`,
+                zIndex: 1,
+              }}
+            />
+          )}
+        </motion.div>
+      ) : (
+        <motion.div
+          className="hero-bg-frame"
+          initial={{ opacity: 0, scale: 1.04 }}
+          animate={{ opacity: 1, scale: 1.0 }}
+          transition={{ duration: 1.2, ease: [0.22, 1, 0.36, 1] }}
+          style={bgStyle}
+        />
+      )}
 
       <div className="container hero-content" style={{ textAlign: content?.alignment || 'left' }}>
         {eyebrow && (

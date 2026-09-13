@@ -27,52 +27,78 @@ export default function HeroEditorSection({ section, mode, selectedElement, onSe
         backgroundColor: '#0d2613',
       }}
     >
-      {/* Background Media */}
-      <EditableBox
-        sectionId={section.sectionId}
-        path="media"
-        field="media"
-        type="media"
-        label="Hero Media"
-        value={media}
-        mode={mode}
-        isSelected={isFieldSelected('media')}
-        onSelect={onSelect}
+      {/* Background Media Layer (Full-Bleed) */}
+      <div
+        className="pb-hero-bg-frame"
         style={{
           position: 'absolute',
-          top: 0,
-          left: 0,
-          right: 0,
-          bottom: 0,
-          zIndex: 1,
+          inset: 0,
+          width: '100%',
+          height: '100%',
+          overflow: 'hidden',
+          zIndex: 0,
         }}
       >
-        {media.mediaType === 'video' && media.videoUrl ? (
-          <video
-            src={media.videoUrl}
-            autoPlay
-            loop
-            muted
-            playsInline
-            style={{ width: '100%', height: '100%', objectFit: 'cover' }}
-          />
-        ) : (
-          <img
-            src={bgImage}
-            alt={content.heading || 'Hero Background'}
-            style={{ width: '100%', height: '100%', objectFit: 'cover' }}
-          />
-        )}
-        {media.overlay !== false && (
-          <div
-            style={{
-              position: 'absolute',
-              inset: 0,
-              backgroundColor: `rgba(13, 38, 19, ${overlayOpacity})`,
-            }}
-          />
-        )}
-      </EditableBox>
+        <EditableBox
+          sectionId={section.sectionId}
+          path="media"
+          field="media"
+          type="media"
+          label="Hero Media"
+          value={media}
+          mode={mode}
+          isSelected={isFieldSelected('media')}
+          onSelect={onSelect}
+          style={{
+            position: 'absolute',
+            inset: 0,
+            width: '100%',
+            height: '100%',
+          }}
+        >
+          {media.mediaType === 'none' ? null : media.mediaType === 'video' && media.videoUrl ? (
+            <video
+              src={media.videoUrl}
+              autoPlay
+              loop
+              muted
+              playsInline
+              style={{
+                position: 'absolute',
+                inset: 0,
+                width: '100%',
+                height: '100%',
+                objectFit: 'cover',
+                pointerEvents: 'none',
+              }}
+            />
+          ) : (
+            <img
+              src={media.mediaType === 'slideshow' && media.slides?.[0]?.url ? media.slides[0].url : bgImage}
+              alt={content.heading || 'Hero Background'}
+              style={{
+                position: 'absolute',
+                inset: 0,
+                width: '100%',
+                height: '100%',
+                objectFit: 'cover',
+                pointerEvents: 'none',
+              }}
+            />
+          )}
+          {media.mediaType !== 'none' && media.overlay !== false && (
+            <div
+              style={{
+                position: 'absolute',
+                inset: 0,
+                backgroundColor: `rgba(13, 38, 19, ${overlayOpacity})`,
+                pointerEvents: 'none',
+                zIndex: 1,
+              }}
+            />
+          )}
+        </EditableBox>
+      </div>
 
       {/* Hero Content */}
       <div
