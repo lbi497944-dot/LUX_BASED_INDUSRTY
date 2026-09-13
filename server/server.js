@@ -5,6 +5,7 @@ import app from './src/app.js';
 import { connectDB } from './src/config/db.js';
 import { validateEnvironment } from './src/config/envValidator.js';
 import { initEmailService } from './src/config/email.js';
+import { seedPages } from './src/seeders/pageSeeder.js';
 
 const PORT = process.env.PORT || 5000;
 
@@ -12,6 +13,7 @@ const PORT = process.env.PORT || 5000;
  * Resilient Application Startup Sequence:
  *  1. Validate critical environment variables (JWT_SECRET, MONGODB_URI) — fail fast if missing.
  *  2. Connect to MongoDB — fatal if database connection fails.
+ *  2.5. Initialize Page Builder canonical pages (idempotent, safe).
  *  3. Start HTTP server listening on 0.0.0.0:PORT immediately so cloud platforms (Render) detect open port.
  *  4. Check Resend email service configuration (non-blocking status check).
  */
@@ -22,6 +24,21 @@ const startServer = async () => {
 
     // Step 2 — Database connection
     await connectDB();
+
+    // Step 2.5 — Idempotent Page Builder initialization (creates missing canonical pages)
+    try {
+      console.log('[Startup] LUX BASED INDUSTRY Page Builder initialization...');
+      await seedPages();
+    } catch (seedErr) {
+      console.error('[Startup Warning] LUX BASED INDUSTRY Page Builder initialization failed:', seedErr.message);
+      if (
+        seedErr.name === 'MongooseServerSelectionError' ||
+        seedErr.name === 'MongoNetworkError' ||
+        seedErr.name === 'MongoServerSelectionError'
+      ) {
+        throw seedErr;
+      }
+    }
 
     // Step 3 — HTTP server (bind immediately on 0.0.0.0 for cloud port detection)
     const server = app.listen(PORT, '0.0.0.0', () => {
