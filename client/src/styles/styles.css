@@ -1697,7 +1697,30 @@ h1 em, h2 em, h3 em {
   color: var(--gold);
   font-size: 13px;
   text-decoration: none;
+  cursor: pointer;
   transition: all 0.3s cubic-bezier(0.16, 1, 0.3, 1), transform 0.2s ease;
+}
+
+.social-icons a:visited,
+.footer-social-btn:visited {
+  color: var(--gold);
+}
+
+.social-icons a:focus-visible,
+.footer-social-btn:focus-visible {
+  outline: 2px solid var(--gold);
+  outline-offset: 2px;
+}
+
+/* Explicit non-hovered state ensures no button stays permanently branded */
+.social-icons a:not(:hover):not(:focus-visible),
+.footer-social-btn:not(:hover):not(:focus-visible) {
+  background-color: rgba(13, 38, 19, 0.6);
+  background-image: none;
+  border-color: rgba(230, 199, 122, 0.35);
+  color: var(--gold);
+  box-shadow: none;
+  transform: none;
 }
 
 .social-icons a:hover,
@@ -1706,26 +1729,45 @@ h1 em, h2 em, h3 em {
   box-shadow: 0 4px 12px rgba(0, 0, 0, 0.35);
 }
 
-.footer-social-btn.social-instagram:hover {
+.footer-social-btn svg {
+  display: block;
+  flex-shrink: 0;
+  pointer-events: none;
+  transition: transform 0.2s ease;
+}
+
+.footer-social-btn:hover svg,
+.footer-social-btn:focus-visible svg {
+  transform: scale(1.05);
+}
+
+.footer-social-btn.social-instagram:hover,
+.footer-social-btn.social-instagram:focus-visible {
   background: radial-gradient(circle at 30% 107%, #fdf497 0%, #fdf497 5%, #fd5949 45%, #d6249f 60%, #285AEB 90%);
   border-color: transparent;
   color: #ffffff;
 }
 
-.footer-social-btn.social-linkedin:hover {
-  background-color: #0077b5;
+.footer-social-btn.social-linkedin:hover,
+.footer-social-btn.social-linkedin:focus-visible {
+  background: #0077b5;
+  background-image: none;
   border-color: #0077b5;
   color: #ffffff;
 }
 
-.footer-social-btn.social-pinterest:hover {
-  background-color: #bd081c;
+.footer-social-btn.social-pinterest:hover,
+.footer-social-btn.social-pinterest:focus-visible {
+  background: #bd081c;
+  background-image: none;
   border-color: #bd081c;
   color: #ffffff;
 }
 
-.footer-social-btn.social-facebook:hover {
-  background-color: #1877f2;
+.footer-social-btn.social-facebook:hover,
+.footer-social-btn.social-facebook:focus-visible {
+  background: #1877f2;
+  background-image: none;
   border-color: #1877f2;
   color: #ffffff;
 }
