@@ -1,4 +1,4 @@
-import { createContext, useContext, useState, useEffect } from 'react';
+import { createContext, useContext, useState, useEffect, useCallback } from 'react';
 import { settingService } from '../services/settingService';
 import { companyContact } from '../data/site';
 import { siteConfig } from '../seo/seoConfig';
@@ -24,7 +24,7 @@ export function SettingsProvider({ children }) {
 
   const [loading, setLoading] = useState(true);
 
-  const refreshSettings = async () => {
+  const refreshSettings = useCallback(async () => {
     try {
       const res = await settingService.getSettings();
       if (res.data?.settings) {
@@ -32,17 +32,43 @@ export function SettingsProvider({ children }) {
           ...prev,
           ...res.data.settings,
         }));
+        return res.data.settings;
       }
     } catch {
       // Fallback is already initialized
     } finally {
       setLoading(false);
     }
-  };
+    return null;
+  }, []);
 
   useEffect(() => {
     refreshSettings();
-  }, []);
+
+    // Periodic safe background sync (every 30s when document is visible)
+    const interval = setInterval(() => {
+      if (typeof document !== 'undefined' && document.visibilityState === 'visible') {
+        refreshSettings();
+      }
+    }, 30000);
+
+    // Re-sync when tab becomes visible again
+    const handleVisibilityChange = () => {
+      if (typeof document !== 'undefined' && document.visibilityState === 'visible') {
+        refreshSettings();
+      }
+    };
+    if (typeof document !== 'undefined') {
+      document.addEventListener('visibilitychange', handleVisibilityChange);
+    }
+
+    return () => {
+      clearInterval(interval);
+      if (typeof document !== 'undefined') {
+        document.removeEventListener('visibilitychange', handleVisibilityChange);
+      }
+    };
+  }, [refreshSettings]);
 
   return (
     <SettingsContext.Provider value={{ settings, loading, refreshSettings }}>

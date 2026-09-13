@@ -23,6 +23,11 @@ export const ALLOWED_SETTING_FIELDS = [
 
 export const getSettings = async (req, res, next) => {
   try {
+    // Prevent browser and proxy caching for dynamic site settings
+    res.setHeader('Cache-Control', 'no-store, no-cache, must-revalidate, proxy-revalidate');
+    res.setHeader('Pragma', 'no-cache');
+    res.setHeader('Expires', '0');
+
     const settings = await settingService.getSiteSettings();
     return successResponse(res, 'Site settings retrieved.', { settings });
   } catch (error) {

@@ -72,19 +72,22 @@ export const normalizeSocialLinks = (socialLinks) => {
     ];
 
     const normalized = [];
-    legacyPlatforms.forEach((p, idx) => {
-      const rawUrl = typeof socialLinks[p.platform] === 'string' ? socialLinks[p.platform].trim() : '';
-      const isSafe = rawUrl.length > 0 && validateSafeSocialUrl(rawUrl);
-      const url = isSafe ? rawUrl : '';
-      normalized.push({
-        id: p.platform,
-        platform: p.platform,
-        label: p.label,
-        url,
-        icon: p.platform,
-        active: isSafe,
-        displayOrder: idx,
-      });
+    let orderIndex = 0;
+    legacyPlatforms.forEach((p) => {
+      if (p.platform in socialLinks) {
+        const rawUrl = typeof socialLinks[p.platform] === 'string' ? socialLinks[p.platform].trim() : '';
+        const isSafe = rawUrl.length > 0 && validateSafeSocialUrl(rawUrl);
+        const url = isSafe ? rawUrl : '';
+        normalized.push({
+          id: p.platform,
+          platform: p.platform,
+          label: p.label,
+          url,
+          icon: p.platform,
+          active: isSafe,
+          displayOrder: orderIndex++,
+        });
+      }
     });
 
     return normalized;

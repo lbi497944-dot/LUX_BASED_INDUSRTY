@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import { settingService } from '../../services/settingService';
 import { uploadService } from '../../services/uploadService';
 import { useSettings } from '../../context/SettingsContext';
@@ -48,9 +48,8 @@ const EMPTY_LOCATION = {
 };
 
 const EMPTY_SOCIAL = {
-  id: '',
   platform: 'instagram',
-  label: 'Instagram',
+  label: '',
   url: '',
   icon: 'instagram',
   active: true,
@@ -83,6 +82,7 @@ export default function SettingsManager() {
 
   const [saving, setSaving] = useState(false);
   const [toast, setToast] = useState(null);
+  const [isDirty, setIsDirty] = useState(false);
 
   // Logo state
   const [logoMode, setLogoMode] = useState('upload');
@@ -103,27 +103,33 @@ export default function SettingsManager() {
   const [socialFormError, setSocialFormError] = useState('');
   const [deleteSocialTarget, setDeleteSocialTarget] = useState(null);
 
-  useEffect(() => {
-    if (settings) {
-      let normalizedSocialLinks = [];
-      if (Array.isArray(settings.socialLinks)) {
-        normalizedSocialLinks = settings.socialLinks.map((item, idx) => ({
-          id: item.id || `soc-${idx}`,
-          platform: item.platform || 'custom',
-          label: item.label || getPlatformMetadata(item.platform || 'custom').name,
-          url: item.url || '',
-          icon: item.icon || item.platform || 'custom',
-          active: item.active !== undefined ? Boolean(item.active) : true,
-          displayOrder: Number.isFinite(item.displayOrder) ? item.displayOrder : idx,
-        }));
-      } else if (settings.socialLinks && typeof settings.socialLinks === 'object') {
-        const legacyObject = {
-          instagram: settings.socialLinks?.instagram || '',
-          linkedin: settings.socialLinks?.linkedin || '',
-          pinterest: settings.socialLinks?.pinterest || '',
-          facebook: settings.socialLinks?.facebook || '',
-        };
-        normalizedSocialLinks = DEFAULT_BASELINE_PROFILES.map((p, idx) => ({
+  // Authoritative normalization and application of settings into local form state
+  const applySettingsToFormData = useCallback((sourceSettings) => {
+    if (!sourceSettings) return;
+
+    let normalizedSocialLinks = [];
+    if (Array.isArray(sourceSettings.socialLinks)) {
+      // Intentionally empty array [] is preserved as legitimate zero channels
+      normalizedSocialLinks = sourceSettings.socialLinks.map((item, idx) => ({
+        id: item.id || `soc-${idx}`,
+        platform: item.platform || 'custom',
+        label: item.label || getPlatformMetadata(item.platform || 'custom').name,
+        url: item.url || '',
+        icon: item.icon || item.platform || 'custom',
+        active: item.active !== undefined ? Boolean(item.active) : true,
+        displayOrder: Number.isFinite(item.displayOrder) ? item.displayOrder : idx,
+      }));
+    } else if (sourceSettings.socialLinks && typeof sourceSettings.socialLinks === 'object') {
+      // Backward-compatibility: instagram: settings.socialLinks?.instagram || ''
+      const legacyObject = {
+        instagram: sourceSettings.socialLinks?.instagram || '',
+        linkedin: sourceSettings.socialLinks?.linkedin || '',
+        pinterest: sourceSettings.socialLinks?.pinterest || '',
+        facebook: sourceSettings.socialLinks?.facebook || '',
+      };
+      // Only include legacy platforms that have an actual configured URL
+      normalizedSocialLinks = DEFAULT_BASELINE_PROFILES
+        .map((p, idx) => ({
           id: p.platform,
           platform: p.platform,
           label: p.label,
@@ -131,41 +137,72 @@ export default function SettingsManager() {
           icon: p.platform,
           active: Boolean(legacyObject[p.platform] && legacyObject[p.platform].trim()),
           displayOrder: idx,
-        }));
-      } else {
-        normalizedSocialLinks = DEFAULT_BASELINE_PROFILES.map((p, idx) => ({
-          ...p,
-          displayOrder: idx,
-        }));
-      }
-
-      setFormData({
-        brandName: settings.brandName || 'LUX BASED INDUSTRY',
-        tagline: settings.tagline || 'Illuminating Luxury Spaces',
-        logo: settings.logo || '',
-        logoPublicId: settings.logoPublicId || '',
-        email: settings.email || 'concierge@luxbasedindustry.com',
-        phone: settings.phone || '+971 4 340 8899',
-        whatsapp: settings.whatsapp || '+971 50 892 4411',
-        address: settings.address || 'Alserkal Avenue, Building 42, Al Quoz 1, Dubai, UAE',
-        city: settings.city || 'Dubai',
-        country: settings.country || 'United Arab Emirates',
-        businessHours: settings.businessHours || 'Monday – Saturday: 09:00 AM – 07:00 PM GST',
-        catalogueUrl: settings.catalogueUrl || '',
-        locations: Array.isArray(settings.locations) ? settings.locations : [],
-        socialLinks: normalizedSocialLinks,
-        defaultSeo: {
-          title: settings.defaultSeo?.title || 'LUX BASED INDUSTRY | Luxury Architectural Lighting in Dubai',
-          description: settings.defaultSeo?.description || 'LUX BASED INDUSTRY creates bespoke architectural lighting, luxury chandeliers, and premium illumination for luxury villas, destination hotels, restaurants, and commercial spaces in Dubai and the UAE.',
-          ogImage: settings.defaultSeo?.ogImage || '',
-        },
-      });
-
-      if (settings.logo && !settings.logoPublicId) {
-        setLogoMode('url');
-      }
+        }))
+        .filter((p) => p.url.length > 0);
+    } else {
+      // When null/undefined, do NOT resurrect default baseline profiles
+      normalizedSocialLinks = [];
     }
-  }, [settings]);
+
+    setFormData({
+      brandName: sourceSettings.brandName || 'LUX BASED INDUSTRY',
+      tagline: sourceSettings.tagline || 'Illuminating Luxury Spaces',
+      logo: sourceSettings.logo || '',
+      logoPublicId: sourceSettings.logoPublicId || '',
+      email: sourceSettings.email || 'concierge@luxbasedindustry.com',
+      phone: sourceSettings.phone || '+971 4 340 8899',
+      whatsapp: sourceSettings.whatsapp || '+971 50 892 4411',
+      address: sourceSettings.address || 'Alserkal Avenue, Building 42, Al Quoz 1, Dubai, UAE',
+      city: sourceSettings.city || 'Dubai',
+      country: sourceSettings.country || 'United Arab Emirates',
+      businessHours: sourceSettings.businessHours || 'Monday – Saturday: 09:00 AM – 07:00 PM GST',
+      catalogueUrl: sourceSettings.catalogueUrl || '',
+      locations: Array.isArray(sourceSettings.locations) ? sourceSettings.locations : [],
+      socialLinks: normalizedSocialLinks,
+      defaultSeo: {
+        title: sourceSettings.defaultSeo?.title || 'LUX BASED INDUSTRY | Luxury Architectural Lighting in Dubai',
+        description: sourceSettings.defaultSeo?.description || 'LUX BASED INDUSTRY creates bespoke architectural lighting, luxury chandeliers, and premium illumination for luxury villas, destination hotels, restaurants, and commercial spaces in Dubai and the UAE.',
+        ogImage: sourceSettings.defaultSeo?.ogImage || '',
+      },
+    });
+
+    if (sourceSettings.logo && !sourceSettings.logoPublicId) {
+      setLogoMode('url');
+    }
+  }, []);
+
+  // Dedicated mount synchronization: fetch latest authoritative settings on mount
+  useEffect(() => {
+    refreshSettings();
+  }, [refreshSettings]);
+
+  // Synchronize incoming settings into formData unless the admin has active unsaved edits
+  useEffect(() => {
+    if (settings && !isDirty) {
+      applySettingsToFormData(settings);
+    }
+  }, [settings, isDirty, applySettingsToFormData]);
+
+  // Helper to update top-level form fields and flag dirty state
+  const updateField = (name, value) => {
+    setIsDirty(true);
+    setFormData((prev) => ({
+      ...prev,
+      [name]: value,
+    }));
+  };
+
+  // Helper to update SEO fields and flag dirty state
+  const updateSeoField = (name, value) => {
+    setIsDirty(true);
+    setFormData((prev) => ({
+      ...prev,
+      defaultSeo: {
+        ...prev.defaultSeo,
+        [name]: value,
+      },
+    }));
+  };
 
   // Handle Logo Upload via uploadService
   const handleLogoFileSelect = async (e) => {
@@ -192,6 +229,7 @@ export default function SettingsManager() {
       setLogoUploading(true);
       const res = await uploadService.uploadFile(file);
       if (res?.data?.url) {
+        setIsDirty(true);
         setFormData((prev) => ({
           ...prev,
           logo: res.data.url,
@@ -212,6 +250,7 @@ export default function SettingsManager() {
   };
 
   const handleClearLogo = () => {
+    setIsDirty(true);
     setFormData((prev) => ({
       ...prev,
       logo: '',
@@ -275,6 +314,7 @@ export default function SettingsManager() {
       updatedLocations.push({ ...locationFormData });
     }
 
+    setIsDirty(true);
     setFormData((prev) => ({
       ...prev,
       locations: updatedLocations,
@@ -292,6 +332,7 @@ export default function SettingsManager() {
       updatedLocations[0].isPrimary = true;
     }
 
+    setIsDirty(true);
     setFormData((prev) => ({
       ...prev,
       locations: updatedLocations,
@@ -303,6 +344,7 @@ export default function SettingsManager() {
   const handleToggleLocationActive = (index) => {
     const updated = [...formData.locations];
     updated[index] = { ...updated[index], isActive: !updated[index].isActive };
+    setIsDirty(true);
     setFormData((prev) => ({ ...prev, locations: updated }));
   };
 
@@ -311,6 +353,7 @@ export default function SettingsManager() {
       ...loc,
       isPrimary: idx === index,
     }));
+    setIsDirty(true);
     setFormData((prev) => ({ ...prev, locations: updated }));
   };
 
@@ -328,6 +371,7 @@ export default function SettingsManager() {
       loc.order = idx;
     });
 
+    setIsDirty(true);
     setFormData((prev) => ({ ...prev, locations: updated }));
   };
 
@@ -395,6 +439,7 @@ export default function SettingsManager() {
       item.displayOrder = idx;
     });
 
+    setIsDirty(true);
     setFormData((prev) => ({
       ...prev,
       socialLinks: updatedSocials,
@@ -416,6 +461,7 @@ export default function SettingsManager() {
       item.displayOrder = idx;
     });
 
+    setIsDirty(true);
     setFormData((prev) => ({
       ...prev,
       socialLinks: updated,
@@ -428,6 +474,7 @@ export default function SettingsManager() {
       ...updated[index],
       active: !updated[index].active,
     };
+    setIsDirty(true);
     setFormData((prev) => ({
       ...prev,
       socialLinks: updated,
@@ -436,15 +483,22 @@ export default function SettingsManager() {
 
   const handleDeleteSocialConfirm = () => {
     if (deleteSocialTarget === null) return;
+    const channelName = formData.socialLinks[deleteSocialTarget]?.label || 'Channel';
     const updated = formData.socialLinks.filter((_, idx) => idx !== deleteSocialTarget);
     updated.forEach((item, idx) => {
       item.displayOrder = idx;
     });
+    setIsDirty(true);
     setFormData((prev) => ({
       ...prev,
       socialLinks: updated,
     }));
     setDeleteSocialTarget(null);
+    setToast({
+      type: 'info',
+      title: 'Channel Removed (Unsaved)',
+      message: `"${channelName}" removed. Click "Save Global Settings" below to persist changes to the database.`,
+    });
   };
 
   // Form Submission
@@ -458,8 +512,13 @@ export default function SettingsManager() {
 
     setSaving(true);
     try {
-      await settingService.updateSettings(formData);
+      const res = await settingService.updateSettings(formData);
+      const persistedSettings = res?.data?.settings;
+      if (persistedSettings) {
+        applySettingsToFormData(persistedSettings);
+      }
       await refreshSettings();
+      setIsDirty(false);
       setToast({
         type: 'success',
         title: 'Settings Saved',
@@ -745,7 +804,7 @@ export default function SettingsManager() {
                   type="text"
                   required
                   value={formData.brandName}
-                  onChange={(e) => setFormData({ ...formData, brandName: e.target.value })}
+                  onChange={(e) => updateField('brandName', e.target.value)}
                   placeholder="LUX BASED INDUSTRY"
                 />
               </label>
@@ -754,7 +813,7 @@ export default function SettingsManager() {
                 <input
                   type="text"
                   value={formData.tagline}
-                  onChange={(e) => setFormData({ ...formData, tagline: e.target.value })}
+                  onChange={(e) => updateField('tagline', e.target.value)}
                   placeholder="Illuminating Luxury Spaces"
                 />
               </label>
@@ -815,13 +874,14 @@ export default function SettingsManager() {
                     type="url"
                     placeholder="https://your-domain.com/assets/logo.png"
                     value={formData.logo}
-                    onChange={(e) =>
+                    onChange={(e) => {
+                      setIsDirty(true);
                       setFormData({
                         ...formData,
                         logo: e.target.value,
                         logoPublicId: '', // External URL has no Cloudinary public ID
-                      })
-                    }
+                      });
+                    }}
                   />
                 </div>
               )}
@@ -869,7 +929,7 @@ export default function SettingsManager() {
                 <input
                   type="email"
                   value={formData.email}
-                  onChange={(e) => setFormData({ ...formData, email: e.target.value })}
+                  onChange={(e) => updateField('email', e.target.value)}
                   placeholder="concierge@luxbasedindustry.com"
                 />
               </label>
@@ -878,7 +938,7 @@ export default function SettingsManager() {
                 <input
                   type="text"
                   value={formData.phone}
-                  onChange={(e) => setFormData({ ...formData, phone: e.target.value })}
+                  onChange={(e) => updateField('phone', e.target.value)}
                   placeholder="+971 4 340 8899"
                 />
               </label>
@@ -890,7 +950,7 @@ export default function SettingsManager() {
                 <input
                   type="text"
                   value={formData.whatsapp}
-                  onChange={(e) => setFormData({ ...formData, whatsapp: e.target.value })}
+                  onChange={(e) => updateField('whatsapp', e.target.value)}
                   placeholder="+971 50 892 4411"
                 />
                 {cleanWhatsAppPreview && (
@@ -904,7 +964,7 @@ export default function SettingsManager() {
                 <input
                   type="text"
                   value={formData.businessHours}
-                  onChange={(e) => setFormData({ ...formData, businessHours: e.target.value })}
+                  onChange={(e) => updateField('businessHours', e.target.value)}
                   placeholder="Monday – Saturday: 09:00 AM – 07:00 PM GST"
                 />
               </label>
@@ -915,7 +975,7 @@ export default function SettingsManager() {
               <input
                 type="text"
                 value={formData.catalogueUrl}
-                onChange={(e) => setFormData({ ...formData, catalogueUrl: e.target.value })}
+                onChange={(e) => updateField('catalogueUrl', e.target.value)}
                 placeholder="/downloads/LBI_Catalogue_2026.pdf"
               />
             </label>
@@ -1049,11 +1109,28 @@ export default function SettingsManager() {
         {/* Panel 4: Social Media Channels */}
         <div className="admin-card-panel">
           <div className="panel-head" style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-            <div>
-              <h3>Social Media Channels</h3>
-              <p style={{ fontSize: '12px', color: 'var(--text-muted)', margin: 0 }}>
-                Manage brand social profiles, live public display, ordering, and platform links.
-              </p>
+            <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
+              <div>
+                <h3>Social Media Channels</h3>
+                <p style={{ fontSize: '12px', color: 'var(--text-muted)', margin: 0 }}>
+                  Manage brand social profiles, live public display, ordering, and platform links.
+                </p>
+              </div>
+              {isDirty && (
+                <span
+                  style={{
+                    fontSize: '11px',
+                    color: 'var(--gold)',
+                    backgroundColor: 'rgba(230, 199, 122, 0.12)',
+                    border: '1px solid rgba(230, 199, 122, 0.3)',
+                    padding: '3px 8px',
+                    borderRadius: '4px',
+                    whiteSpace: 'nowrap',
+                  }}
+                >
+                  Unsaved changes staged
+                </span>
+              )}
             </div>
             <button type="button" className="btn btn-gold btn-sm" onClick={handleOpenAddSocial}>
               <Plus size={14} /> ADD SOCIAL CHANNEL
@@ -1174,12 +1251,7 @@ export default function SettingsManager() {
               <input
                 type="text"
                 value={formData.defaultSeo.title}
-                onChange={(e) =>
-                  setFormData({
-                    ...formData,
-                    defaultSeo: { ...formData.defaultSeo, title: e.target.value },
-                  })
-                }
+                onChange={(e) => updateSeoField('title', e.target.value)}
               />
             </label>
 
@@ -1188,12 +1260,7 @@ export default function SettingsManager() {
               <textarea
                 rows="3"
                 value={formData.defaultSeo.description}
-                onChange={(e) =>
-                  setFormData({
-                    ...formData,
-                    defaultSeo: { ...formData.defaultSeo, description: e.target.value },
-                  })
-                }
+                onChange={(e) => updateSeoField('description', e.target.value)}
               ></textarea>
             </label>
 
@@ -1202,18 +1269,13 @@ export default function SettingsManager() {
               <input
                 type="url"
                 value={formData.defaultSeo.ogImage}
-                onChange={(e) =>
-                  setFormData({
-                    ...formData,
-                    defaultSeo: { ...formData.defaultSeo, ogImage: e.target.value },
-                  })
-                }
+                onChange={(e) => updateSeoField('ogImage', e.target.value)}
               />
             </label>
           </div>
         </div>
 
-        <div className="admin-form-submit-row">
+        <div className="admin-form-submit-row" style={{ display: 'flex', alignItems: 'center', gap: '16px', flexWrap: 'wrap' }}>
           <button type="submit" className="btn btn-gold" disabled={saving}>
             {saving ? (
               <>
@@ -1225,6 +1287,23 @@ export default function SettingsManager() {
               </>
             )}
           </button>
+          {isDirty && (
+            <span
+              style={{
+                fontSize: '12px',
+                color: 'var(--gold)',
+                display: 'inline-flex',
+                alignItems: 'center',
+                gap: '6px',
+                backgroundColor: 'rgba(230, 199, 122, 0.1)',
+                padding: '6px 14px',
+                borderRadius: '4px',
+                border: '1px solid rgba(230, 199, 122, 0.25)',
+              }}
+            >
+              Unsaved changes pending save
+            </span>
+          )}
         </div>
       </form>
     </div>

@@ -109,44 +109,7 @@ const siteSettingSchema = new mongoose.Schema(
     },
     socialLinks: {
       type: mongoose.Schema.Types.Mixed,
-      default: () => [
-        {
-          id: 'instagram',
-          platform: 'instagram',
-          label: 'Instagram',
-          url: '',
-          icon: 'instagram',
-          active: false,
-          displayOrder: 0,
-        },
-        {
-          id: 'linkedin',
-          platform: 'linkedin',
-          label: 'LinkedIn',
-          url: '',
-          icon: 'linkedin',
-          active: false,
-          displayOrder: 1,
-        },
-        {
-          id: 'pinterest',
-          platform: 'pinterest',
-          label: 'Pinterest',
-          url: '',
-          icon: 'pinterest',
-          active: false,
-          displayOrder: 2,
-        },
-        {
-          id: 'facebook',
-          platform: 'facebook',
-          label: 'Facebook',
-          url: '',
-          icon: 'facebook',
-          active: false,
-          displayOrder: 3,
-        },
-      ],
+      default: () => [],
     },
     defaultSeo: {
       title: {

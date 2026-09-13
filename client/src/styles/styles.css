@@ -1630,14 +1630,14 @@ h1 em, h2 em, h3 em {
   margin: 0 0 24px;
 }
 
-.footer-col a:not(.footer-whatsapp) {
+.footer-col a:not(.footer-whatsapp):not(.footer-social-btn) {
   display: block;
   font-size: 13px;
   color: rgba(255, 255, 255, 0.75);
   margin-bottom: 12px;
 }
 
-.footer-col a:not(.footer-whatsapp):hover {
+.footer-col a:not(.footer-whatsapp):not(.footer-social-btn):hover {
   color: var(--gold);
 }
 
@@ -1685,6 +1685,8 @@ h1 em, h2 em, h3 em {
 }
 
 .social-icons a,
+.social-icons .footer-social-btn,
+.footer-col .footer-social-btn,
 .footer-social-btn {
   width: 40px;
   height: 40px;
@@ -1732,6 +1734,7 @@ h1 em, h2 em, h3 em {
   margin: 0;
   padding: 0;
   flex: 0 0 auto;
+  flex-shrink: 0;
   pointer-events: none;
   stroke: #ffffff;
   color: #ffffff;
