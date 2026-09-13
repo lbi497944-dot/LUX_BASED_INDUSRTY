@@ -5,6 +5,7 @@ import { useSettings } from '../../context/SettingsContext';
 import { newsletterService } from '../../services/newsletterService';
 import { collectionService } from '../../services/collectionService';
 import { companyContact } from '../../data/site';
+import { getPlatformMetadata, validateSafeSocialUrl } from '../../utils/socialPlatforms';
 import Toast from '../common/Toast';
 
 export default function Footer() {
@@ -105,57 +106,63 @@ export default function Footer() {
     }
   };
 
-  const activeSocials = [
-    {
-      key: 'instagram',
-      label: 'Instagram',
-      url: settings?.socialLinks?.instagram,
-      className: 'social-instagram',
-      icon: (
-        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-          <rect x="2" y="2" width="20" height="20" rx="5" ry="5" />
-          <path d="M16 11.37A4 4 0 1 1 12.63 8 4 4 0 0 1 16 11.37z" />
-          <line x1="17.5" y1="6.5" x2="17.51" y2="6.5" />
-        </svg>
-      ),
-    },
-    {
-      key: 'linkedin',
-      label: 'LinkedIn',
-      url: settings?.socialLinks?.linkedin,
-      className: 'social-linkedin',
-      icon: (
-        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-          <path d="M16 8a6 6 0 0 1 6 6v7h-4v-7a2 2 0 0 0-2-2 2 2 0 0 0-2 2v7h-4v-7a6 6 0 0 1 6-6z" />
-          <rect x="2" y="9" width="4" height="12" />
-          <circle cx="4" cy="4" r="2" />
-        </svg>
-      ),
-    },
-    {
-      key: 'pinterest',
-      label: 'Pinterest',
-      url: settings?.socialLinks?.pinterest,
-      className: 'social-pinterest',
-      icon: (
-        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-          <line x1="12" y1="2" x2="12" y2="22" />
-          <path d="M12 2a9 9 0 0 0-9 9c0 3.8 2.3 7 5.5 8.3-.1-.7-.2-1.8 0-2.6l1-4.2s-.3-.6-.3-1.5c0-1.4.8-2.5 1.8-2.5.9 0 1.3.7 1.3 1.5 0 .9-.6 2.2-.9 3.4-.2 1.1.5 2 1.6 2 2 0 3.5-2.1 3.5-5.1 0-2.7-1.9-4.6-4.7-4.6-3.2 0-5.1 2.4-5.1 4.9 0 1 .4 2 1 2.6.1.1.1.2.1.3l-.3 1.4c0 .2-.2.3-.4.2-1.4-.7-2.3-2.8-2.3-4.5 0-3.7 2.7-7.1 7.8-7.1 4.1 0 7.3 2.9 7.3 6.8 0 4.1-2.6 7.4-6.2 7.4-1.2 0-2.3-.6-2.7-1.4l-.7 2.8c-.3 1.1-1.1 2.5-1.6 3.4" />
-        </svg>
-      ),
-    },
-    {
-      key: 'facebook',
-      label: 'Facebook',
-      url: settings?.socialLinks?.facebook,
-      className: 'social-facebook',
-      icon: (
-        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-          <path d="M18 2h-3a5 5 0 0 0-5 5v3H7v4h3v8h4v-8h3l1-4h-4V7a1 1 0 0 1 1-1h3z" />
-        </svg>
-      ),
-    },
-  ].filter((item) => typeof item.url === 'string' && item.url.trim().length > 0);
+  // Baseline platform class fallbacks for legacy/direct mapping
+  const BASELINE_CLASSES = {
+    instagram: 'social-instagram',
+    linkedin: 'social-linkedin',
+    pinterest: 'social-pinterest',
+    facebook: 'social-facebook',
+  };
+
+  const rawSocialLinks = settings?.socialLinks;
+  let normalizedSocialList = [];
+
+  if (Array.isArray(rawSocialLinks)) {
+    normalizedSocialList = rawSocialLinks
+      .filter(
+        (item) =>
+          item &&
+          item.active !== false &&
+          typeof item.url === 'string' &&
+          item.url.trim().length > 0 &&
+          validateSafeSocialUrl(item.url)
+      )
+      .map((item, idx) => {
+        const meta = getPlatformMetadata(item.platform, item.label);
+        return {
+          key: item.id || `${item.platform}-${idx}`,
+          label: item.label || meta.name,
+          url: item.url.trim(),
+          className: meta.className || BASELINE_CLASSES[item.platform] || 'social-custom',
+          icon: meta.icon,
+          displayOrder: Number.isFinite(item.displayOrder) ? item.displayOrder : idx,
+        };
+      })
+      .sort((a, b) => a.displayOrder - b.displayOrder);
+  } else if (rawSocialLinks && typeof rawSocialLinks === 'object') {
+    normalizedSocialList = Object.entries(rawSocialLinks)
+      .filter(
+        ([_, url]) =>
+          typeof url === 'string' &&
+          url.trim().length > 0 &&
+          validateSafeSocialUrl(url)
+      )
+      .map(([platform, url], idx) => {
+        const meta = getPlatformMetadata(platform);
+        return {
+          key: `${platform}-${idx}`,
+          label: meta.name,
+          url: url.trim(),
+          className: meta.className || BASELINE_CLASSES[platform] || 'social-custom',
+          icon: meta.icon,
+          displayOrder: idx,
+        };
+      });
+  }
+
+  const activeSocials = normalizedSocialList.filter(
+    (item) => typeof item.url === 'string' && item.url.trim().length > 0
+  );
 
   return (
     <>

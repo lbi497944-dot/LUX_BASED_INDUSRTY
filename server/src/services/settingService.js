@@ -1,10 +1,105 @@
 import SiteSetting from '../models/SiteSetting.js';
 import { deleteCloudinaryAsset } from '../middleware/uploadMiddleware.js';
 
+export const validateSafeSocialUrl = (url) => {
+  if (!url || typeof url !== 'string') return false;
+  const trimmed = url.trim();
+  if (trimmed.length === 0) return false;
+
+  const sanitized = trimmed.replace(/[\u0000-\u001F\u007F-\u009F\s]/g, '').toLowerCase();
+
+  // Reject dangerous protocols
+  if (
+    sanitized.startsWith('javascript:') ||
+    sanitized.startsWith('data:') ||
+    sanitized.startsWith('vbscript:') ||
+    sanitized.startsWith('file:')
+  ) {
+    return false;
+  }
+
+  // Accept standard http, https, mailto, tel, or whatsapp schemes
+  return (
+    /^https?:\/\//i.test(trimmed) ||
+    /^mailto:/i.test(trimmed) ||
+    /^tel:/i.test(trimmed) ||
+    /^whatsapp:\/\//i.test(trimmed)
+  );
+};
+
+export const normalizeSocialLinks = (socialLinks) => {
+  if (!socialLinks) return [];
+
+  // Case 1: Already an array format
+  if (Array.isArray(socialLinks)) {
+    const normalized = socialLinks
+      .filter((item) => item && typeof item === 'object')
+      .map((item, idx) => {
+        const platform = (item.platform || item.id || 'custom').toLowerCase().trim();
+        const label = (item.label || item.name || platform).trim();
+        const rawUrl = typeof item.url === 'string' ? item.url.trim() : '';
+        const isSafe = rawUrl.length > 0 && validateSafeSocialUrl(rawUrl);
+        const url = isSafe ? rawUrl : '';
+        const icon = typeof item.icon === 'string' ? item.icon.trim() : platform;
+        const active = isSafe ? (item.active !== undefined ? Boolean(item.active) : true) : false;
+        const displayOrder = Number.isFinite(Number(item.displayOrder !== undefined ? item.displayOrder : item.order))
+          ? Number(item.displayOrder !== undefined ? item.displayOrder : item.order)
+          : idx;
+        const id = item.id || item._id || `${platform}-${idx}`;
+
+        return {
+          id: String(id),
+          platform,
+          label: label || platform.charAt(0).toUpperCase() + platform.slice(1),
+          url,
+          icon: icon || platform,
+          active,
+          displayOrder,
+        };
+      });
+
+    normalized.sort((a, b) => a.displayOrder - b.displayOrder);
+    return normalized;
+  }
+
+  // Case 2: Legacy object format { instagram: '...', linkedin: '...', pinterest: '...', facebook: '...' }
+  if (typeof socialLinks === 'object') {
+    const legacyPlatforms = [
+      { platform: 'instagram', label: 'Instagram' },
+      { platform: 'linkedin', label: 'LinkedIn' },
+      { platform: 'pinterest', label: 'Pinterest' },
+      { platform: 'facebook', label: 'Facebook' },
+    ];
+
+    const normalized = [];
+    legacyPlatforms.forEach((p, idx) => {
+      const rawUrl = typeof socialLinks[p.platform] === 'string' ? socialLinks[p.platform].trim() : '';
+      const isSafe = rawUrl.length > 0 && validateSafeSocialUrl(rawUrl);
+      const url = isSafe ? rawUrl : '';
+      normalized.push({
+        id: p.platform,
+        platform: p.platform,
+        label: p.label,
+        url,
+        icon: p.platform,
+        active: isSafe,
+        displayOrder: idx,
+      });
+    });
+
+    return normalized;
+  }
+
+  return [];
+};
+
 export const getSiteSettings = async () => {
   let settings = await SiteSetting.findOne();
   if (!settings) {
     settings = await SiteSetting.create({});
+  }
+  if (settings && settings.socialLinks !== undefined) {
+    settings.socialLinks = normalizeSocialLinks(settings.socialLinks);
   }
   return settings;
 };
@@ -79,6 +174,11 @@ export const updateSiteSettings = async (updateData) => {
     updateData.whatsappNumberClean = updateData.whatsapp
       ? updateData.whatsapp.replace(/[^0-9]/g, '')
       : '';
+  }
+
+  // Social links normalization
+  if (updateData.socialLinks !== undefined) {
+    updateData.socialLinks = normalizeSocialLinks(updateData.socialLinks);
   }
 
   // Handle locations synchronization if locations array provided
@@ -175,6 +275,10 @@ export const updateSiteSettings = async (updateData) => {
         cleanupErr.message
       );
     }
+  }
+
+  if (updatedSettings && updatedSettings.socialLinks !== undefined) {
+    updatedSettings.socialLinks = normalizeSocialLinks(updatedSettings.socialLinks);
   }
 
   return updatedSettings;

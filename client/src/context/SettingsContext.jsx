@@ -19,12 +19,7 @@ export function SettingsProvider({ children }) {
     hours: companyContact?.hours || 'Monday – Saturday: 09:00 AM – 07:00 PM GST',
     catalogueUrl: '',
     locations: [],
-    socialLinks: {
-      instagram: '',
-      linkedin: '',
-      pinterest: '',
-      facebook: '',
-    },
+    socialLinks: [],
   });
 
   const [loading, setLoading] = useState(true);

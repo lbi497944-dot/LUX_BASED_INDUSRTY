@@ -24,6 +24,12 @@ import {
   ExternalLink,
   MessageCircle,
 } from 'lucide-react';
+import {
+  PLATFORM_CATALOG,
+  DEFAULT_BASELINE_PROFILES,
+  getPlatformMetadata,
+  validateSafeSocialUrl,
+} from '../../utils/socialPlatforms';
 import ModalConfirm from '../../components/modals/ModalConfirm';
 import Toast from '../../components/common/Toast';
 import SEO from '../../components/common/SEO';
@@ -39,6 +45,16 @@ const EMPTY_LOCATION = {
   isPrimary: false,
   isActive: true,
   order: 0,
+};
+
+const EMPTY_SOCIAL = {
+  id: '',
+  platform: 'instagram',
+  label: 'Instagram',
+  url: '',
+  icon: 'instagram',
+  active: true,
+  displayOrder: 0,
 };
 
 export default function SettingsManager() {
@@ -57,12 +73,7 @@ export default function SettingsManager() {
     businessHours: '',
     catalogueUrl: '',
     locations: [],
-    socialLinks: {
-      instagram: '',
-      linkedin: '',
-      pinterest: '',
-      facebook: '',
-    },
+    socialLinks: [],
     defaultSeo: {
       title: '',
       description: '',
@@ -85,8 +96,49 @@ export default function SettingsManager() {
   const [locationFormError, setLocationFormError] = useState('');
   const [deleteLocationTarget, setDeleteLocationTarget] = useState(null);
 
+  // Social channels modal & delete state
+  const [isSocialModalOpen, setIsSocialModalOpen] = useState(false);
+  const [editingSocialIndex, setEditingSocialIndex] = useState(null);
+  const [socialFormData, setSocialFormData] = useState(EMPTY_SOCIAL);
+  const [socialFormError, setSocialFormError] = useState('');
+  const [deleteSocialTarget, setDeleteSocialTarget] = useState(null);
+
   useEffect(() => {
     if (settings) {
+      let normalizedSocialLinks = [];
+      if (Array.isArray(settings.socialLinks)) {
+        normalizedSocialLinks = settings.socialLinks.map((item, idx) => ({
+          id: item.id || `soc-${idx}`,
+          platform: item.platform || 'custom',
+          label: item.label || getPlatformMetadata(item.platform || 'custom').name,
+          url: item.url || '',
+          icon: item.icon || item.platform || 'custom',
+          active: item.active !== undefined ? Boolean(item.active) : true,
+          displayOrder: Number.isFinite(item.displayOrder) ? item.displayOrder : idx,
+        }));
+      } else if (settings.socialLinks && typeof settings.socialLinks === 'object') {
+        const legacyObject = {
+          instagram: settings.socialLinks?.instagram || '',
+          linkedin: settings.socialLinks?.linkedin || '',
+          pinterest: settings.socialLinks?.pinterest || '',
+          facebook: settings.socialLinks?.facebook || '',
+        };
+        normalizedSocialLinks = DEFAULT_BASELINE_PROFILES.map((p, idx) => ({
+          id: p.platform,
+          platform: p.platform,
+          label: p.label,
+          url: (legacyObject[p.platform] || '').trim(),
+          icon: p.platform,
+          active: Boolean(legacyObject[p.platform] && legacyObject[p.platform].trim()),
+          displayOrder: idx,
+        }));
+      } else {
+        normalizedSocialLinks = DEFAULT_BASELINE_PROFILES.map((p, idx) => ({
+          ...p,
+          displayOrder: idx,
+        }));
+      }
+
       setFormData({
         brandName: settings.brandName || 'LUX BASED INDUSTRY',
         tagline: settings.tagline || 'Illuminating Luxury Spaces',
@@ -101,12 +153,7 @@ export default function SettingsManager() {
         businessHours: settings.businessHours || 'Monday – Saturday: 09:00 AM – 07:00 PM GST',
         catalogueUrl: settings.catalogueUrl || '',
         locations: Array.isArray(settings.locations) ? settings.locations : [],
-        socialLinks: {
-          instagram: settings.socialLinks?.instagram || '',
-          linkedin: settings.socialLinks?.linkedin || '',
-          pinterest: settings.socialLinks?.pinterest || '',
-          facebook: settings.socialLinks?.facebook || '',
-        },
+        socialLinks: normalizedSocialLinks,
         defaultSeo: {
           title: settings.defaultSeo?.title || 'LUX BASED INDUSTRY | Luxury Architectural Lighting in Dubai',
           description: settings.defaultSeo?.description || 'LUX BASED INDUSTRY creates bespoke architectural lighting, luxury chandeliers, and premium illumination for luxury villas, destination hotels, restaurants, and commercial spaces in Dubai and the UAE.',
@@ -284,6 +331,122 @@ export default function SettingsManager() {
     setFormData((prev) => ({ ...prev, locations: updated }));
   };
 
+  // Social Channels CRUD operations
+  const handleOpenAddSocial = () => {
+    setEditingSocialIndex(null);
+    const defaultPlatform = 'instagram';
+    const meta = getPlatformMetadata(defaultPlatform);
+    setSocialFormData({
+      ...EMPTY_SOCIAL,
+      id: `soc-${Date.now()}`,
+      platform: defaultPlatform,
+      label: meta.name,
+      displayOrder: formData.socialLinks.length,
+    });
+    setSocialFormError('');
+    setIsSocialModalOpen(true);
+  };
+
+  const handleOpenEditSocial = (index) => {
+    setEditingSocialIndex(index);
+    setSocialFormData({ ...formData.socialLinks[index] });
+    setSocialFormError('');
+    setIsSocialModalOpen(true);
+  };
+
+  const handleSocialPlatformChange = (newPlatform) => {
+    const meta = getPlatformMetadata(newPlatform);
+    setSocialFormData((prev) => {
+      const prevMeta = getPlatformMetadata(prev.platform);
+      const isCustomized = prev.label && prev.label !== prevMeta.name;
+      return {
+        ...prev,
+        platform: newPlatform,
+        label: isCustomized ? prev.label : meta.name,
+        icon: newPlatform,
+      };
+    });
+  };
+
+  const handleSaveSocialModal = (e) => {
+    e.preventDefault();
+    const trimmedUrl = (socialFormData.url || '').trim();
+    if (trimmedUrl && !validateSafeSocialUrl(trimmedUrl)) {
+      setSocialFormError('Please enter a valid, safe URL starting with https://, http://, or whatsapp://');
+      return;
+    }
+
+    const updatedSocials = [...formData.socialLinks];
+    const meta = getPlatformMetadata(socialFormData.platform, socialFormData.label);
+    const itemToSave = {
+      ...socialFormData,
+      label: (socialFormData.label || '').trim() || meta.name,
+      url: trimmedUrl,
+      icon: socialFormData.platform,
+    };
+
+    if (editingSocialIndex !== null) {
+      updatedSocials[editingSocialIndex] = itemToSave;
+    } else {
+      updatedSocials.push(itemToSave);
+    }
+
+    updatedSocials.forEach((item, idx) => {
+      item.displayOrder = idx;
+    });
+
+    setFormData((prev) => ({
+      ...prev,
+      socialLinks: updatedSocials,
+    }));
+
+    setIsSocialModalOpen(false);
+  };
+
+  const handleMoveSocial = (index, direction) => {
+    const targetIndex = index + direction;
+    if (targetIndex < 0 || targetIndex >= formData.socialLinks.length) return;
+
+    const updated = [...formData.socialLinks];
+    const temp = updated[index];
+    updated[index] = updated[targetIndex];
+    updated[targetIndex] = temp;
+
+    updated.forEach((item, idx) => {
+      item.displayOrder = idx;
+    });
+
+    setFormData((prev) => ({
+      ...prev,
+      socialLinks: updated,
+    }));
+  };
+
+  const handleToggleSocialActive = (index) => {
+    const updated = [...formData.socialLinks];
+    updated[index] = {
+      ...updated[index],
+      active: !updated[index].active,
+    };
+    setFormData((prev) => ({
+      ...prev,
+      socialLinks: updated,
+    }));
+  };
+
+  const handleDeleteSocialConfirm = () => {
+    if (deleteSocialTarget === null) return;
+    const updated = formData.socialLinks.filter((_, idx) => idx !== deleteSocialTarget);
+    updated.forEach((item, idx) => {
+      item.displayOrder = idx;
+    });
+    setFormData((prev) => ({
+      ...prev,
+      socialLinks: updated,
+    }));
+    setDeleteSocialTarget(null);
+  };
+
   // Form Submission
   const handleSubmit = async (e) => {
     e.preventDefault();
@@ -444,6 +607,115 @@ export default function SettingsManager() {
                 </button>
                 <button type="submit" className="btn btn-gold btn-sm">
                   {editingLocationIndex !== null ? 'Update Location' : 'Add Location'}
+                </button>
+              </div>
+            </form>
+          </div>
+        </div>
+      )}
+
+      {/* Delete Social Channel Confirmation Modal */}
+      <ModalConfirm
+        isOpen={deleteSocialTarget !== null}
+        title="Delete Social Channel"
+        message={`Are you sure you want to remove "${formData.socialLinks[deleteSocialTarget]?.label || 'this social channel'}"?`}
+        onConfirm={handleDeleteSocialConfirm}
+        onCancel={() => setDeleteSocialTarget(null)}
+      />
+
+      {/* Social Channel Add / Edit Modal */}
+      {isSocialModalOpen && (
+        <div className="modal-backdrop" onClick={() => setIsSocialModalOpen(false)} role="dialog" aria-modal="true">
+          <div className="modal-container admin-modal-md" onClick={(e) => e.stopPropagation()}>
+            <button className="modal-close" onClick={() => setIsSocialModalOpen(false)} aria-label="Close modal">
+              <X size={18} />
+            </button>
+            <div className="modal-header">
+              <h2>{editingSocialIndex !== null ? 'Edit Social Channel' : 'Add Social Channel'}</h2>
+              <p>Configure social platform, display label, and target profile URL.</p>
+            </div>
+
+            {socialFormError && (
+              <div className="admin-login-alert" style={{ marginBottom: '16px' }}>
+                <span>{socialFormError}</span>
+              </div>
+            )}
+
+            <form onSubmit={handleSaveSocialModal} className="admin-form-grid">
+              <label>
+                PLATFORM *
+                <select
+                  value={socialFormData.platform}
+                  onChange={(e) => handleSocialPlatformChange(e.target.value)}
+                  style={{
+                    width: '100%',
+                    padding: '10px 14px',
+                    background: 'var(--charcoal-deep)',
+                    border: '1px solid rgba(255, 255, 255, 0.1)',
+                    borderRadius: '4px',
+                    color: '#ffffff',
+                    fontSize: '14px',
+                  }}
+                >
+                  {PLATFORM_CATALOG.map((p) => (
+                    <option key={p.id} value={p.id}>
+                      {p.name}
+                    </option>
+                  ))}
+                </select>
+              </label>
+
+              <label>
+                DISPLAY LABEL
+                <input
+                  type="text"
+                  placeholder="e.g. Instagram, Official YouTube, Portfolio"
+                  value={socialFormData.label}
+                  onChange={(e) => setSocialFormData({ ...socialFormData, label: e.target.value })}
+                />
+              </label>
+
+              <label>
+                PROFILE / CHANNEL URL
+                <input
+                  type="url"
+                  placeholder={getPlatformMetadata(socialFormData.platform).placeholder}
+                  value={socialFormData.url}
+                  onChange={(e) => setSocialFormData({ ...socialFormData, url: e.target.value })}
+                />
+                <span className="field-hint" style={{ fontSize: '11px', color: 'var(--text-muted)', marginTop: '4px', display: 'block' }}>
+                  Must start with https://, http://, or whatsapp:// (no dangerous javascript/data links)
+                </span>
+              </label>
+
+              {/* Live circular preview */}
+              <div className="social-preview-circle-wrap">
+                <span style={{ fontSize: '12px', color: 'var(--text-muted)' }}>Footer Preview:</span>
+                <div className={`footer-social-btn ${getPlatformMetadata(socialFormData.platform).className}`}>
+                  {getPlatformMetadata(socialFormData.platform).icon}
+                </div>
+                <span style={{ fontSize: '13px', color: '#ffffff', fontWeight: 500 }}>
+                  {socialFormData.label || getPlatformMetadata(socialFormData.platform).name}
+                </span>
+              </div>
+
+              <div className="admin-checkbox-row" style={{ marginTop: '8px' }}>
+                <label className="checkbox-label">
+                  <input
+                    type="checkbox"
+                    checked={socialFormData.active}
+                    onChange={(e) => setSocialFormData({ ...socialFormData, active: e.target.checked })}
+                  />
+                  <span>Active & Visible in Public Footer (only displayed if URL is non-empty)</span>
+                </label>
+              </div>
+
+              <div className="modal-actions" style={{ marginTop: '20px' }}>
+                <button type="button" className="btn btn-outline btn-sm" onClick={() => setIsSocialModalOpen(false)}>
+                  Cancel
+                </button>
+                <button type="submit" className="btn btn-gold btn-sm">
+                  {editingSocialIndex !== null ? 'Update Channel' : 'Add Channel'}
                 </button>
               </div>
             </form>
@@ -774,74 +1046,119 @@ export default function SettingsManager() {
           </div>
         </div>
 
-        {/* Panel 4: Social Media Links */}
+        {/* Panel 4: Social Media Channels */}
         <div className="admin-card-panel">
-          <div className="panel-head">
-            <h3>Social Media Channels</h3>
+          <div className="panel-head" style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+            <div>
+              <h3>Social Media Channels</h3>
+              <p style={{ fontSize: '12px', color: 'var(--text-muted)', margin: 0 }}>
+                Manage brand social profiles, live public display, ordering, and platform links.
+              </p>
+            </div>
+            <button type="button" className="btn btn-gold btn-sm" onClick={handleOpenAddSocial}>
+              <Plus size={14} /> ADD SOCIAL CHANNEL
+            </button>
           </div>
 
-          <div className="admin-form-grid">
-            <div className="form-row">
-              <label>
-                INSTAGRAM URL
-                <input
-                  type="url"
-                  value={formData.socialLinks.instagram}
-                  onChange={(e) =>
-                    setFormData({
-                      ...formData,
-                      socialLinks: { ...formData.socialLinks, instagram: e.target.value },
-                    })
-                  }
-                  placeholder="https://instagram.com/..."
-                />
-              </label>
-              <label>
-                LINKEDIN URL
-                <input
-                  type="url"
-                  value={formData.socialLinks.linkedin}
-                  onChange={(e) =>
-                    setFormData({
-                      ...formData,
-                      socialLinks: { ...formData.socialLinks, linkedin: e.target.value },
-                    })
-                  }
-                  placeholder="https://linkedin.com/company/..."
-                />
-              </label>
-            </div>
+          <div className="admin-socials-manager-body">
+            {formData.socialLinks.length === 0 ? (
+              <div className="admin-empty-state" style={{ padding: '24px' }}>
+                <Share2 size={28} style={{ color: 'var(--gold)' }} />
+                <p style={{ margin: '8px 0 0', color: 'var(--text-muted)' }}>
+                  No social media channels configured. Public footer will omit the social links section.
+                </p>
+              </div>
+            ) : (
+              <div className="admin-socials-grid">
+                {formData.socialLinks.map((social, idx) => {
+                  const meta = getPlatformMetadata(social.platform, social.label);
+                  return (
+                    <div
+                      key={social.id || `soc-${idx}`}
+                      className={`admin-social-card ${!social.active ? 'is-inactive' : ''}`}
+                    >
+                      <div className="social-card-top">
+                        <div className="social-card-identity">
+                          <div className={`footer-social-btn ${meta.className}`}>
+                            {meta.icon}
+                          </div>
+                          <div className="social-card-info">
+                            <h4 className="social-card-name">{social.label || meta.name}</h4>
+                            <div className="social-card-badges">
+                              <span className="badge badge-external">{social.platform}</span>
+                              {social.active ? (
+                                <span className="badge badge-active"><CheckCircle2 size={11} /> Active</span>
+                              ) : (
+                                <span className="badge badge-inactive"><XCircle size={11} /> Inactive</span>
+                              )}
+                            </div>
+                          </div>
+                        </div>
+                        <div className="social-card-actions">
+                          <button
+                            type="button"
+                            className="btn-icon"
+                            onClick={() => handleMoveSocial(idx, -1)}
+                            disabled={idx === 0}
+                            title="Move Up"
+                          >
+                            <ArrowUp size={14} />
+                          </button>
+                          <button
+                            type="button"
+                            className="btn-icon"
+                            onClick={() => handleMoveSocial(idx, 1)}
+                            disabled={idx === formData.socialLinks.length - 1}
+                            title="Move Down"
+                          >
+                            <ArrowDown size={14} />
+                          </button>
+                          <button
+                            type="button"
+                            className="btn-icon"
+                            onClick={() => handleOpenEditSocial(idx)}
+                            title="Edit Channel"
+                          >
+                            <Edit2 size={14} />
+                          </button>
+                          <button
+                            type="button"
+                            className="btn-icon btn-danger"
+                            onClick={() => setDeleteSocialTarget(idx)}
+                            title="Delete Channel"
+                          >
+                            <Trash2 size={14} />
+                          </button>
+                        </div>
+                      </div>
 
-            <div className="form-row">
-              <label>
-                PINTEREST URL
-                <input
-                  type="url"
-                  value={formData.socialLinks.pinterest}
-                  onChange={(e) =>
-                    setFormData({
-                      ...formData,
-                      socialLinks: { ...formData.socialLinks, pinterest: e.target.value },
-                    })
-                  }
-                  placeholder="https://pinterest.com/..."
-                />
-              </label>
-              <label>
-                FACEBOOK URL
-                <input
-                  type="url"
-                  value={formData.socialLinks.facebook}
-                  onChange={(e) =>
-                    setFormData({
-                      ...formData,
-                      socialLinks: { ...formData.socialLinks, facebook: e.target.value },
-                    })
-                  }
-                  placeholder="https://facebook.com/..."
-                />
-              </label>
-            </div>
+                      <div className="social-card-url">
+                        {social.url ? (
+                          <a href={social.url} target="_blank" rel="noopener noreferrer">
+                            <ExternalLink size={12} /> {social.url}
+                          </a>
+                        ) : (
+                          <span style={{ fontStyle: 'italic', opacity: 0.6 }}>No URL configured (hidden)</span>
+                        )}
+                      </div>
+
+                      <div className="social-card-footer">
+                        <span style={{ fontSize: '11px', color: 'var(--text-muted)' }}>
+                          Order: #{idx + 1}
+                        </span>
+                        <button
+                          type="button"
+                          className="btn-text-action"
+                          onClick={() => handleToggleSocialActive(idx)}
+                        >
+                          {social.active ? 'Deactivate' : 'Activate'}
+                        </button>
+                      </div>
+                    </div>
+                  );
+                })}
+              </div>
+            )}
           </div>
         </div>
 

@@ -1686,16 +1686,25 @@ h1 em, h2 em, h3 em {
 
 .social-icons a,
 .footer-social-btn {
-  width: 36px;
-  height: 36px;
+  width: 40px;
+  height: 40px;
+  min-width: 40px;
+  min-height: 40px;
   border-radius: 50%;
-  display: flex;
+  display: inline-flex;
   align-items: center;
   justify-content: center;
+  line-height: 1;
+  padding: 0;
+  margin: 0;
+  box-sizing: border-box;
+  flex: 0 0 auto;
   color: #ffffff;
   font-size: 13px;
   text-decoration: none;
   cursor: pointer;
+  position: relative;
+  overflow: hidden;
   transition: transform 0.25s cubic-bezier(0.16, 1, 0.3, 1), box-shadow 0.25s cubic-bezier(0.16, 1, 0.3, 1), filter 0.25s ease, border-color 0.25s ease;
 }
 
@@ -1716,11 +1725,17 @@ h1 em, h2 em, h3 em {
 
 .footer-social-btn svg {
   display: block;
-  flex-shrink: 0;
+  width: 18px;
+  height: 18px;
+  min-width: 18px;
+  min-height: 18px;
+  margin: 0;
+  padding: 0;
+  flex: 0 0 auto;
   pointer-events: none;
   stroke: #ffffff;
   color: #ffffff;
-  transition: transform 0.2s ease;
+  transition: transform 0.2s cubic-bezier(0.16, 1, 0.3, 1);
 }
 
 /* Authentic Platform Brand Colors — Default Normal State */
@@ -1755,6 +1770,133 @@ h1 em, h2 em, h3 em {
   box-shadow: 0 2px 8px rgba(24, 119, 242, 0.32);
 }
 
+.footer-social-btn.social-youtube {
+  background-color: #ff0000;
+  border: 1px solid rgba(255, 0, 0, 0.4);
+  color: #ffffff;
+  box-shadow: 0 2px 8px rgba(255, 0, 0, 0.32);
+}
+
+.footer-social-btn.social-whatsapp {
+  background-color: #25d366;
+  border: 1px solid rgba(37, 211, 102, 0.4);
+  color: #ffffff;
+  box-shadow: 0 2px 8px rgba(37, 211, 102, 0.32);
+}
+
+.footer-social-btn.social-tiktok {
+  background-color: #010101;
+  border: 1px solid rgba(255, 255, 255, 0.2);
+  color: #ffffff;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.4);
+}
+
+.footer-social-btn.social-twitter {
+  background-color: #1da1f2;
+  border: 1px solid rgba(29, 161, 242, 0.4);
+  color: #ffffff;
+  box-shadow: 0 2px 8px rgba(29, 161, 242, 0.32);
+}
+
+.footer-social-btn.social-x {
+  background-color: #0f1419;
+  border: 1px solid rgba(255, 255, 255, 0.2);
+  color: #ffffff;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.4);
+}
+
+.footer-social-btn.social-reddit {
+  background-color: #ff4500;
+  border: 1px solid rgba(255, 69, 0, 0.4);
+  color: #ffffff;
+  box-shadow: 0 2px 8px rgba(255, 69, 0, 0.32);
+}
+
+.footer-social-btn.social-discord {
+  background-color: #5865f2;
+  border: 1px solid rgba(88, 101, 242, 0.4);
+  color: #ffffff;
+  box-shadow: 0 2px 8px rgba(88, 101, 242, 0.32);
+}
+
+.footer-social-btn.social-telegram {
+  background-color: #229ed9;
+  border: 1px solid rgba(34, 158, 217, 0.4);
+  color: #ffffff;
+  box-shadow: 0 2px 8px rgba(34, 158, 217, 0.32);
+}
+
+.footer-social-btn.social-vimeo {
+  background-color: #1ab7ea;
+  border: 1px solid rgba(26, 183, 234, 0.4);
+  color: #ffffff;
+  box-shadow: 0 2px 8px rgba(26, 183, 234, 0.32);
+}
+
+.footer-social-btn.social-medium {
+  background-color: #242424;
+  border: 1px solid rgba(255, 255, 255, 0.2);
+  color: #ffffff;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.4);
+}
+
+.footer-social-btn.social-tumblr {
+  background-color: #35465c;
+  border: 1px solid rgba(53, 70, 92, 0.4);
+  color: #ffffff;
+  box-shadow: 0 2px 8px rgba(53, 70, 92, 0.32);
+}
+
+.footer-social-btn.social-soundcloud {
+  background-color: #ff5500;
+  border: 1px solid rgba(255, 85, 0, 0.4);
+  color: #ffffff;
+  box-shadow: 0 2px 8px rgba(255, 85, 0, 0.32);
+}
+
+.footer-social-btn.social-spotify {
+  background-color: #1db954;
+  border: 1px solid rgba(29, 185, 84, 0.4);
+  color: #ffffff;
+  box-shadow: 0 2px 8px rgba(29, 185, 84, 0.32);
+}
+
+.footer-social-btn.social-dribbble {
+  background-color: #ea4c89;
+  border: 1px solid rgba(234, 76, 137, 0.4);
+  color: #ffffff;
+  box-shadow: 0 2px 8px rgba(234, 76, 137, 0.32);
+}
+
+.footer-social-btn.social-behance {
+  background-color: #1769ff;
+  border: 1px solid rgba(23, 105, 255, 0.4);
+  color: #ffffff;
+  box-shadow: 0 2px 8px rgba(23, 105, 255, 0.32);
+}
+
+.footer-social-btn.social-snapchat {
+  background-color: #fffc00;
+  border: 1px solid rgba(255, 252, 0, 0.4);
+  color: #111111;
+  box-shadow: 0 2px 8px rgba(255, 252, 0, 0.32);
+}
+.footer-social-btn.social-snapchat svg {
+  stroke: #111111;
+  color: #111111;
+}
+
+.footer-social-btn.social-custom {
+  background-color: rgba(13, 38, 19, 0.85);
+  border: 1px solid rgba(230, 199, 122, 0.4);
+  color: #e6c77a;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.28);
+}
+.footer-social-btn.social-custom svg {
+  stroke: #e6c77a;
+  color: #e6c77a;
+}
+
 /* Hover & Focus Enhancements: Lift, Glow, Subtle Scale */
 .social-icons a:hover,
 .footer-social-btn:hover {
@@ -1787,6 +1929,91 @@ h1 em, h2 em, h3 em {
   box-shadow: 0 6px 18px rgba(24, 119, 242, 0.48);
 }
 
+.footer-social-btn.social-youtube:hover {
+  border-color: rgba(255, 255, 255, 0.45);
+  box-shadow: 0 6px 18px rgba(255, 0, 0, 0.48);
+}
+
+.footer-social-btn.social-whatsapp:hover {
+  border-color: rgba(255, 255, 255, 0.45);
+  box-shadow: 0 6px 18px rgba(37, 211, 102, 0.48);
+}
+
+.footer-social-btn.social-tiktok:hover {
+  border-color: rgba(255, 255, 255, 0.45);
+  box-shadow: 0 6px 18px rgba(0, 0, 0, 0.6);
+}
+
+.footer-social-btn.social-twitter:hover {
+  border-color: rgba(255, 255, 255, 0.45);
+  box-shadow: 0 6px 18px rgba(29, 161, 242, 0.48);
+}
+
+.footer-social-btn.social-x:hover {
+  border-color: rgba(255, 255, 255, 0.45);
+  box-shadow: 0 6px 18px rgba(0, 0, 0, 0.6);
+}
+
+.footer-social-btn.social-reddit:hover {
+  border-color: rgba(255, 255, 255, 0.45);
+  box-shadow: 0 6px 18px rgba(255, 69, 0, 0.48);
+}
+
+.footer-social-btn.social-discord:hover {
+  border-color: rgba(255, 255, 255, 0.45);
+  box-shadow: 0 6px 18px rgba(88, 101, 242, 0.48);
+}
+
+.footer-social-btn.social-telegram:hover {
+  border-color: rgba(255, 255, 255, 0.45);
+  box-shadow: 0 6px 18px rgba(34, 158, 217, 0.48);
+}
+
+.footer-social-btn.social-vimeo:hover {
+  border-color: rgba(255, 255, 255, 0.45);
+  box-shadow: 0 6px 18px rgba(26, 183, 234, 0.48);
+}
+
+.footer-social-btn.social-medium:hover {
+  border-color: rgba(255, 255, 255, 0.45);
+  box-shadow: 0 6px 18px rgba(0, 0, 0, 0.6);
+}
+
+.footer-social-btn.social-tumblr:hover {
+  border-color: rgba(255, 255, 255, 0.45);
+  box-shadow: 0 6px 18px rgba(53, 70, 92, 0.48);
+}
+
+.footer-social-btn.social-soundcloud:hover {
+  border-color: rgba(255, 255, 255, 0.45);
+  box-shadow: 0 6px 18px rgba(255, 85, 0, 0.48);
+}
+
+.footer-social-btn.social-spotify:hover {
+  border-color: rgba(255, 255, 255, 0.45);
+  box-shadow: 0 6px 18px rgba(29, 185, 84, 0.48);
+}
+
+.footer-social-btn.social-dribbble:hover {
+  border-color: rgba(255, 255, 255, 0.45);
+  box-shadow: 0 6px 18px rgba(234, 76, 137, 0.48);
+}
+
+.footer-social-btn.social-behance:hover {
+  border-color: rgba(255, 255, 255, 0.45);
+  box-shadow: 0 6px 18px rgba(23, 105, 255, 0.48);
+}
+
+.footer-social-btn.social-snapchat:hover {
+  border-color: rgba(255, 255, 255, 0.6);
+  box-shadow: 0 6px 18px rgba(255, 252, 0, 0.48);
+}
+
+.footer-social-btn.social-custom:hover {
+  border-color: var(--gold);
+  box-shadow: 0 6px 18px rgba(230, 199, 122, 0.35);
+}
+
 /* Accessible focus rings */
 .footer-social-btn.social-instagram:focus-visible {
   box-shadow: 0 0 0 3px rgba(214, 36, 159, 0.45);
@@ -1802,6 +2029,183 @@ h1 em, h2 em, h3 em {
 
 .footer-social-btn.social-facebook:focus-visible {
   box-shadow: 0 0 0 3px rgba(24, 119, 242, 0.45);
+}
+
+.footer-social-btn.social-youtube:focus-visible {
+  box-shadow: 0 0 0 3px rgba(255, 0, 0, 0.45);
+}
+
+.footer-social-btn.social-whatsapp:focus-visible {
+  box-shadow: 0 0 0 3px rgba(37, 211, 102, 0.45);
+}
+
+.footer-social-btn.social-tiktok:focus-visible {
+  box-shadow: 0 0 0 3px rgba(255, 255, 255, 0.45);
+}
+
+.footer-social-btn.social-twitter:focus-visible {
+  box-shadow: 0 0 0 3px rgba(29, 161, 242, 0.45);
+}
+
+.footer-social-btn.social-x:focus-visible {
+  box-shadow: 0 0 0 3px rgba(255, 255, 255, 0.45);
+}
+
+.footer-social-btn.social-reddit:focus-visible {
+  box-shadow: 0 0 0 3px rgba(255, 69, 0, 0.45);
+}
+
+.footer-social-btn.social-discord:focus-visible {
+  box-shadow: 0 0 0 3px rgba(88, 101, 242, 0.45);
+}
+
+.footer-social-btn.social-telegram:focus-visible {
+  box-shadow: 0 0 0 3px rgba(34, 158, 217, 0.45);
+}
+
+.footer-social-btn.social-vimeo:focus-visible {
+  box-shadow: 0 0 0 3px rgba(26, 183, 234, 0.45);
+}
+
+.footer-social-btn.social-medium:focus-visible {
+  box-shadow: 0 0 0 3px rgba(255, 255, 255, 0.45);
+}
+
+.footer-social-btn.social-tumblr:focus-visible {
+  box-shadow: 0 0 0 3px rgba(53, 70, 92, 0.45);
+}
+
+.footer-social-btn.social-soundcloud:focus-visible {
+  box-shadow: 0 0 0 3px rgba(255, 85, 0, 0.45);
+}
+
+.footer-social-btn.social-spotify:focus-visible {
+  box-shadow: 0 0 0 3px rgba(29, 185, 84, 0.45);
+}
+
+.footer-social-btn.social-dribbble:focus-visible {
+  box-shadow: 0 0 0 3px rgba(234, 76, 137, 0.45);
+}
+
+.footer-social-btn.social-behance:focus-visible {
+  box-shadow: 0 0 0 3px rgba(23, 105, 255, 0.45);
+}
+
+.footer-social-btn.social-snapchat:focus-visible {
+  box-shadow: 0 0 0 3px rgba(255, 252, 0, 0.5);
+}
+
+.footer-social-btn.social-custom:focus-visible {
+  box-shadow: 0 0 0 3px rgba(230, 199, 122, 0.45);
+}
+
+/* Admin Socials Manager */
+.admin-socials-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+  gap: 16px;
+  margin-top: 16px;
+}
+
+.admin-social-card {
+  background: rgba(13, 38, 19, 0.6);
+  border: 1px solid rgba(230, 199, 122, 0.2);
+  border-radius: 8px;
+  padding: 16px;
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  transition: border-color 0.2s ease, transform 0.2s ease;
+}
+
+.admin-social-card:hover {
+  border-color: rgba(230, 199, 122, 0.4);
+}
+
+.admin-social-card.is-inactive {
+  opacity: 0.6;
+  border-style: dashed;
+}
+
+.social-card-top {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+}
+
+.social-card-identity {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  min-width: 0;
+}
+
+.social-card-info {
+  min-width: 0;
+}
+
+.social-card-name {
+  font-size: 14px;
+  font-weight: 600;
+  color: #ffffff;
+  margin: 0 0 4px;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.social-card-badges {
+  display: flex;
+  gap: 6px;
+  align-items: center;
+  flex-wrap: wrap;
+}
+
+.social-card-url {
+  font-size: 12px;
+  color: var(--text-muted);
+  word-break: break-all;
+  margin: 0;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.social-card-url a {
+  color: var(--gold);
+  text-decoration: none;
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+}
+
+.social-card-url a:hover {
+  text-decoration: underline;
+}
+
+.social-card-actions {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.social-card-footer {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding-top: 10px;
+  border-top: 1px solid rgba(255, 255, 255, 0.08);
+}
+
+.social-preview-circle-wrap {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 12px;
+  background: rgba(0, 0, 0, 0.25);
+  border-radius: 6px;
+  border: 1px solid rgba(255, 255, 255, 0.05);
 }
 
 /* HERO LOADING SKELETON PLACEHOLDER */

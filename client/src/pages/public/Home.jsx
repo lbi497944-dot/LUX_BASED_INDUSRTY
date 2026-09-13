@@ -140,7 +140,13 @@ export default function Home() {
       latitude: siteConfig.contact.geo.latitude,
       longitude: siteConfig.contact.geo.longitude
     },
-    sameAs: Object.values(settings?.socialLinks || siteConfig.socialLinks)
+    sameAs: Array.isArray(settings?.socialLinks)
+      ? settings.socialLinks
+          .filter((item) => item && item.active !== false && typeof item.url === 'string' && item.url.trim().length > 0)
+          .map((item) => item.url.trim())
+      : Object.values(settings?.socialLinks || siteConfig.socialLinks).filter(
+          (url) => typeof url === 'string' && url.trim().length > 0
+        )
   };
 
   const whyCompanyItems = [
