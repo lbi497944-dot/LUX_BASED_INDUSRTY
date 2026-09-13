@@ -10,6 +10,7 @@ import {
   Send,
   HelpCircle,
   MessageSquareQuote,
+  Star,
   Settings,
   KeyRound,
   PanelsTopLeft,
@@ -27,11 +28,12 @@ const links = [
   { label: 'Newsletter', path: '/admin/newsletter', icon: Send },
   { label: 'FAQs', path: '/admin/faqs', icon: HelpCircle },
   { label: 'Testimonials', path: '/admin/testimonials', icon: MessageSquareQuote },
+  { label: 'Reviews', path: '/admin/reviews', icon: Star, badgeKey: 'reviews' },
   { label: 'Account Security', path: '/admin/account', icon: KeyRound },
   { label: 'Site Settings', path: '/admin/settings', icon: Settings },
 ];
 
-export default function AdminSidebar({ isOpen, onClose }) {
+export default function AdminSidebar({ isOpen, onClose, pendingReviews = 0 }) {
   useEffect(() => {
     if (isOpen) {
       document.body.style.overflow = 'hidden';
@@ -42,6 +44,13 @@ export default function AdminSidebar({ isOpen, onClose }) {
       document.body.style.overflow = '';
     };
   }, [isOpen]);
+
+  const formatBadge = (count) => {
+    if (!count || count <= 0) return null;
+    if (count > 99) return '99+';
+    return count;
+  };
+
   return (
     <>
       {isOpen && <div className="admin-sidebar-backdrop" onClick={onClose} />}
@@ -60,6 +69,8 @@ export default function AdminSidebar({ isOpen, onClose }) {
           <span className="admin-nav-heading">MANAGEMENT</span>
           {links.map((link) => {
             const Icon = link.icon;
+            const badgeValue = link.badgeKey === 'reviews' ? formatBadge(pendingReviews) : null;
+
             return (
               <NavLink
                 key={link.path}
@@ -70,6 +81,11 @@ export default function AdminSidebar({ isOpen, onClose }) {
               >
                 <Icon size={18} />
                 <span>{link.label}</span>
+                {badgeValue !== null && (
+                  <span className="admin-nav-badge" aria-label={`${pendingReviews} pending reviews`}>
+                    {badgeValue}
+                  </span>
+                )}
               </NavLink>
             );
           })}

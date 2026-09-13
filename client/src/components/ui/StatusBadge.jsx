@@ -2,13 +2,13 @@ export default function StatusBadge({ status }) {
   const normalized = (status || 'New').toLowerCase().replace(/\s+/g, '-');
 
   let badgeClass = 'badge-default';
-  if (['new', 'subscribed', 'active'].includes(normalized)) {
+  if (['new', 'subscribed', 'active', 'approved'].includes(normalized)) {
     badgeClass = 'badge-success';
-  } else if (['contacted', 'in-discussion'].includes(normalized)) {
+  } else if (['contacted', 'in-discussion', 'pending'].includes(normalized)) {
     badgeClass = 'badge-warning';
   } else if (['quoted', 'completed', 'resolved'].includes(normalized)) {
     badgeClass = 'badge-info';
-  } else if (['cancelled', 'unsubscribed', 'archived', 'inactive'].includes(normalized)) {
+  } else if (['cancelled', 'unsubscribed', 'archived', 'inactive', 'rejected'].includes(normalized)) {
     badgeClass = 'badge-danger';
   }
 

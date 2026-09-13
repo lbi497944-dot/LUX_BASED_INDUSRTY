@@ -6250,3 +6250,297 @@ h1 em, h2 em, h3 em {
     display: none;
   }
 }
+
+/* ============================================================
+   ADMIN REVIEWS MANAGEMENT & NAVIGATION BADGE STYLES (PHASE 2)
+   ============================================================ */
+
+/* Admin Navigation Badge */
+.admin-nav-badge {
+  margin-left: auto;
+  background-color: var(--gold);
+  color: #0d2613;
+  font-size: 11px;
+  font-weight: 700;
+  line-height: 1;
+  padding: 2px 7px;
+  border-radius: 10px;
+  min-width: 18px;
+  text-align: center;
+  display: inline-block;
+  letter-spacing: 0;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.3);
+}
+
+/* Star Rating Visual */
+.admin-rating-stars {
+  display: inline-flex;
+  align-items: center;
+  gap: 2px;
+}
+
+.admin-rating-stars .star-filled {
+  color: var(--gold);
+  fill: var(--gold);
+}
+
+.admin-rating-stars .star-empty {
+  color: rgba(243, 243, 235, 0.2);
+}
+
+/* Filter Toolbar Tabs */
+.admin-filter-tabs {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  background-color: #112e17;
+  border: 1px solid rgba(230, 199, 122, 0.2);
+  border-radius: 6px;
+  padding: 4px;
+  flex-wrap: wrap;
+}
+
+.admin-filter-tab {
+  background: transparent;
+  border: none;
+  color: rgba(243, 243, 235, 0.75);
+  font-size: 12px;
+  font-weight: 500;
+  padding: 6px 12px;
+  border-radius: 4px;
+  cursor: pointer;
+  transition: var(--transition-smooth);
+}
+
+.admin-filter-tab:hover {
+  color: var(--gold);
+  background-color: rgba(230, 199, 122, 0.08);
+}
+
+.admin-filter-tab.active {
+  background-color: var(--gold);
+  color: #0d2613;
+  font-weight: 600;
+}
+
+/* Review Photos in Table */
+.review-photos-cell {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.review-photo-thumb {
+  width: 36px;
+  height: 36px;
+  border-radius: 4px;
+  object-fit: cover;
+  border: 1px solid rgba(230, 199, 122, 0.25);
+  cursor: pointer;
+  transition: transform 0.2s ease, border-color 0.2s ease;
+}
+
+.review-photo-thumb:hover {
+  transform: scale(1.08);
+  border-color: var(--gold);
+}
+
+/* Detail Modal Photo Gallery */
+.review-modal-gallery {
+  display: flex;
+  gap: 12px;
+  flex-wrap: wrap;
+  margin-top: 10px;
+}
+
+.review-gallery-item {
+  width: 90px;
+  height: 90px;
+  border-radius: 6px;
+  overflow: hidden;
+  border: 1px solid rgba(230, 199, 122, 0.25);
+  cursor: pointer;
+  transition: var(--transition-smooth);
+}
+
+.review-gallery-item:hover {
+  border-color: var(--gold);
+  transform: translateY(-2px);
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.4);
+}
+
+.review-gallery-item img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  display: block;
+}
+
+/* Lightbox Overlay */
+.review-lightbox-backdrop {
+  position: fixed;
+  inset: 0;
+  background-color: rgba(0, 0, 0, 0.88);
+  backdrop-filter: blur(8px);
+  z-index: 1000;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 24px;
+}
+
+.review-lightbox-container {
+  position: relative;
+  max-width: 90vw;
+  max-height: 88vh;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.review-lightbox-img {
+  max-width: 100%;
+  max-height: 85vh;
+  object-fit: contain;
+  border-radius: 8px;
+  box-shadow: 0 20px 40px rgba(0, 0, 0, 0.7);
+  border: 1px solid rgba(230, 199, 122, 0.3);
+}
+
+.review-lightbox-close {
+  position: absolute;
+  top: -42px;
+  right: 0;
+  background: rgba(17, 46, 23, 0.85);
+  border: 1px solid rgba(230, 199, 122, 0.3);
+  color: var(--bg-cream);
+  width: 36px;
+  height: 36px;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  transition: var(--transition-smooth);
+}
+
+.review-lightbox-close:hover {
+  background-color: var(--gold);
+  color: #0d2613;
+}
+
+/* Pagination Controls */
+.admin-pagination {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 16px 20px;
+  border-top: 1px solid rgba(230, 199, 122, 0.12);
+  flex-wrap: wrap;
+  gap: 12px;
+}
+
+.admin-pagination-info {
+  font-size: 13px;
+  color: rgba(243, 243, 235, 0.65);
+}
+
+.admin-pagination-controls {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.admin-pagination-btn {
+  background-color: #112e17;
+  border: 1px solid rgba(230, 199, 122, 0.2);
+  color: var(--bg-cream);
+  padding: 6px 14px;
+  border-radius: 4px;
+  font-size: 12px;
+  font-weight: 500;
+  cursor: pointer;
+  transition: var(--transition-smooth);
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+}
+
+.admin-pagination-btn:hover:not(:disabled) {
+  border-color: var(--gold);
+  color: var(--gold);
+}
+
+.admin-pagination-btn:disabled {
+  opacity: 0.35;
+  cursor: not-allowed;
+}
+
+.admin-page-indicator {
+  font-size: 12px;
+  font-weight: 600;
+  color: var(--gold);
+  padding: 0 6px;
+}
+
+/* Admin Notes Header & Counter */
+.admin-notes-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 8px;
+}
+
+.admin-char-count {
+  font-size: 11px;
+  color: rgba(243, 243, 235, 0.5);
+}
+
+.admin-dirty-indicator {
+  font-size: 10px;
+  color: #facc15;
+  letter-spacing: 0.05em;
+  text-transform: uppercase;
+}
+
+/* Mobile Responsive Reviews List */
+.admin-reviews-mobile-list {
+  display: none;
+  flex-direction: column;
+  gap: 14px;
+}
+
+.admin-review-mobile-card {
+  background-color: #112e17;
+  border: 1px solid rgba(230, 199, 122, 0.15);
+  border-radius: 8px;
+  padding: 16px;
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.admin-review-mobile-header {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 10px;
+}
+
+.admin-review-mobile-actions {
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
+  gap: 8px;
+  padding-top: 10px;
+  border-top: 1px solid rgba(230, 199, 122, 0.1);
+}
+
+@media (max-width: 960px) {
+  .admin-table-desktop-only {
+    display: none;
+  }
+  .admin-reviews-mobile-list {
+    display: flex;
+  }
+}
