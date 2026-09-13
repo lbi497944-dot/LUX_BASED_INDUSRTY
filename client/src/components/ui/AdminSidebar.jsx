@@ -12,6 +12,7 @@ import {
   MessageSquareQuote,
   Star,
   Handshake,
+  Sliders,
   Settings,
   KeyRound,
   PanelsTopLeft,
@@ -21,6 +22,7 @@ import {
 const links = [
   { label: 'Overview', path: '/admin', icon: LayoutDashboard, end: true },
   { label: 'Page Builder', path: '/admin/pages', icon: PanelsTopLeft },
+  { label: 'Transformations', path: '/admin/transformations', icon: Sliders },
   { label: 'Products', path: '/admin/products', icon: Sparkles },
   { label: 'Collections', path: '/admin/collections', icon: Layers },
   { label: 'Portfolio', path: '/admin/projects', icon: Building2 },

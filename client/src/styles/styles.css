@@ -7056,3 +7056,530 @@ h1 em, h2 em, h3 em {
   display: block;
   margin: 0 auto;
 }
+
+/* ==========================================================================
+   PHASE 4: REVIEW CONTRAST, SIGNATURE PIECES, TRANSFORMATIONS & HIERARCHY
+   ========================================================================== */
+
+/* 1. PUBLIC REVIEW FORM HIGH-CONTRAST LUXURY SCOPING (/review) */
+.review-us-page {
+  background-color: var(--primary-dark, #0d2613);
+  color: #f3f3eb;
+  min-height: 100vh;
+}
+
+.review-form-section {
+  background-color: #0b1e10;
+  padding: 60px 0 100px;
+}
+
+.review-form-wrapper {
+  max-width: 840px;
+  margin: 0 auto;
+}
+
+/* Strictly override .form-luxury when inside .review-form */
+.form-luxury.review-form,
+.review-form {
+  background-color: #0e2714 !important;
+  border: 1px solid rgba(230, 199, 122, 0.25) !important;
+  border-radius: 8px;
+  padding: 44px;
+  box-shadow: 0 16px 48px rgba(0, 0, 0, 0.4);
+}
+
+.review-form .form-header {
+  border-bottom: 1px solid rgba(230, 199, 122, 0.2);
+  padding-bottom: 24px;
+  margin-bottom: 28px;
+}
+
+.review-form .form-header .eyebrow {
+  color: var(--gold, #e6c77a) !important;
+  display: inline-block;
+  font-size: 11px;
+  font-weight: 600;
+  letter-spacing: 0.24em;
+  text-transform: uppercase;
+  margin-bottom: 8px;
+}
+
+.review-form .form-header h2 {
+  font-family: var(--font-heading, 'Cormorant Garamond', Georgia, serif) !important;
+  font-size: 32px;
+  color: #f3f3eb !important;
+  margin: 4px 0 10px;
+  letter-spacing: -0.01em;
+}
+
+.review-form .form-header p {
+  font-size: 14px;
+  color: rgba(243, 243, 235, 0.78) !important;
+  line-height: 1.6;
+  margin: 0;
+}
+
+/* Form Labels, Hints, and Text */
+.review-form label,
+.review-form .field-label {
+  color: var(--gold, #e6c77a) !important;
+  font-size: 12px !important;
+  font-weight: 600 !important;
+  letter-spacing: 0.12em !important;
+  text-transform: uppercase !important;
+  margin-bottom: 8px;
+  display: block;
+}
+
+.review-form .field-hint,
+.review-form small {
+  color: rgba(243, 243, 235, 0.65) !important;
+  font-size: 12px !important;
+  line-height: 1.5;
+  margin-top: 6px;
+  display: block;
+}
+
+.review-form .optional-tag {
+  color: rgba(243, 243, 235, 0.5) !important;
+  font-size: 11px;
+  font-weight: 400;
+  letter-spacing: 0.04em;
+  margin-left: 6px;
+  text-transform: none;
+}
+
+/* Inputs, Textareas, Selects */
+.form-luxury.review-form input,
+.form-luxury.review-form select,
+.form-luxury.review-form textarea,
+.review-form input,
+.review-form select,
+.review-form textarea {
+  background-color: rgba(6, 20, 10, 0.65) !important;
+  border: 1px solid rgba(230, 199, 122, 0.3) !important;
+  color: #f3f3eb !important;
+  font-size: 14px;
+  border-radius: 4px;
+  padding: 13px 16px;
+  width: 100%;
+  box-sizing: border-box;
+  transition: border-color 0.25s ease, box-shadow 0.25s ease, background-color 0.25s ease;
+}
+
+.form-luxury.review-form input:focus,
+.form-luxury.review-form select:focus,
+.form-luxury.review-form textarea:focus,
+.review-form input:focus,
+.review-form select:focus,
+.review-form textarea:focus {
+  border-color: var(--gold, #e6c77a) !important;
+  background-color: rgba(6, 20, 10, 0.9) !important;
+  box-shadow: 0 0 0 3px rgba(230, 199, 122, 0.18) !important;
+  color: #ffffff !important;
+  outline: none;
+}
+
+.review-form input::placeholder,
+.review-form textarea::placeholder {
+  color: rgba(243, 243, 235, 0.4) !important;
+}
+
+.review-form input.input-error,
+.review-form textarea.input-error {
+  border-color: #ef4444 !important;
+  background-color: rgba(239, 68, 68, 0.08) !important;
+}
+
+.review-form .field-error {
+  color: #f87171;
+  font-size: 12px;
+  margin-top: 6px;
+  display: block;
+}
+
+.review-form .character-counter {
+  color: rgba(243, 243, 235, 0.55);
+  font-size: 11px;
+}
+
+.review-form .character-counter.counter-overflow {
+  color: #ef4444;
+  font-weight: 600;
+}
+
+/* Star Rating Selector */
+.review-star-selector {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin-top: 10px;
+  flex-wrap: wrap;
+}
+
+.review-star-selector .star-btn {
+  background: none;
+  border: none;
+  cursor: pointer;
+  padding: 4px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 4px;
+  transition: transform 0.15s ease;
+}
+
+.review-star-selector .star-btn:hover {
+  transform: scale(1.15);
+}
+
+.review-star-selector .rating-descriptor {
+  font-size: 13px;
+  font-weight: 500;
+  color: var(--gold, #e6c77a);
+  letter-spacing: 0.04em;
+  margin-left: 10px;
+}
+
+/* File Dropzone */
+.review-dropzone {
+  margin-top: 8px;
+  border: 1px dashed rgba(230, 199, 122, 0.4);
+  border-radius: 6px;
+  background-color: rgba(6, 20, 10, 0.45);
+  transition: border-color 0.25s ease, background-color 0.25s ease;
+}
+
+.review-dropzone:hover {
+  border-color: var(--gold, #e6c77a);
+  background-color: rgba(230, 199, 122, 0.06);
+}
+
+.dropzone-label {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  padding: 22px;
+  cursor: pointer;
+  width: 100%;
+}
+
+.dropzone-prompt p {
+  color: #f3f3eb;
+  font-weight: 500;
+  font-size: 13px;
+  margin: 0;
+}
+
+.dropzone-prompt span,
+.dropzone-sub {
+  color: rgba(243, 243, 235, 0.6);
+  font-size: 11px;
+  margin-top: 4px;
+  display: block;
+}
+
+/* Privacy & Trust Badge */
+.review-privacy-note {
+  display: flex;
+  align-items: flex-start;
+  gap: 12px;
+  padding: 14px 18px;
+  background-color: rgba(230, 199, 122, 0.07);
+  border: 1px solid rgba(230, 199, 122, 0.2);
+  border-radius: 6px;
+  margin: 24px 0 28px;
+  font-size: 12px;
+  line-height: 1.5;
+  color: rgba(243, 243, 235, 0.75);
+}
+
+.review-privacy-note .shield-icon {
+  color: var(--gold, #e6c77a);
+  flex-shrink: 0;
+  margin-top: 1px;
+}
+
+/* Submit Review Button */
+.review-form .btn-submit-review,
+.btn-submit-review {
+  width: 100%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 10px;
+  padding: 16px 24px;
+  font-size: 12px;
+  letter-spacing: 0.2em;
+  font-weight: 600;
+  text-transform: uppercase;
+  background-color: var(--gold, #e6c77a);
+  color: #0d2613;
+  border: 1px solid var(--gold, #e6c77a);
+  border-radius: 3px;
+  cursor: pointer;
+  transition: all 0.3s ease;
+}
+
+.review-form .btn-submit-review:hover,
+.btn-submit-review:hover {
+  background-color: #f0d48f;
+  box-shadow: 0 6px 24px rgba(230, 199, 122, 0.35);
+  transform: translateY(-1px);
+}
+
+.review-form .btn-submit-review:disabled,
+.btn-submit-review:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+  transform: none;
+}
+
+/* 2. SIGNATURE PIECES PRODUCT CARD CONTRACT */
+.product-card-body {
+  padding-top: 12px;
+}
+
+.product-category-eyebrow {
+  display: block;
+  font-size: 10px;
+  font-weight: 600;
+  letter-spacing: 0.22em;
+  text-transform: uppercase;
+  color: var(--gold, #e6c77a);
+  margin-bottom: 6px;
+}
+
+.product-card-body h4 {
+  font-family: var(--font-heading, 'Cormorant Garamond', Georgia, serif);
+  font-size: 22px;
+  font-weight: 400;
+  color: #f3f3eb;
+  margin: 0 0 6px 0;
+  line-height: 1.25;
+  transition: color 0.3s ease;
+}
+
+.product-card-luxury:hover .product-card-body h4 {
+  color: var(--gold, #e6c77a);
+}
+
+.product-finish-label {
+  font-size: 12px;
+  color: rgba(243, 243, 235, 0.65);
+  margin: 0 0 10px 0;
+  line-height: 1.4;
+  font-style: italic;
+}
+
+.product-view-action {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 10px;
+  font-weight: 600;
+  letter-spacing: 0.2em;
+  text-transform: uppercase;
+  color: var(--gold, #e6c77a);
+  transition: gap 0.25s ease, transform 0.25s ease;
+}
+
+.product-card-luxury:hover .product-view-action {
+  gap: 10px;
+}
+
+/* 3. THE TRANSFORMATION PUBLIC UI & CASE STUDY SELECTOR */
+.ba-detailed-description {
+  max-width: 780px;
+  margin: 24px auto 0;
+  text-align: center;
+  font-size: 15px;
+  line-height: 1.7;
+  color: var(--muted-text);
+}
+
+.dark-section .ba-detailed-description,
+.before-after-section.dark .ba-detailed-description {
+  color: rgba(243, 243, 235, 0.78);
+}
+
+.ba-case-study-selector {
+  display: flex;
+  justify-content: center;
+  gap: 16px;
+  margin-top: 36px;
+  flex-wrap: wrap;
+}
+
+.ba-selector-card {
+  background: rgba(21, 57, 29, 0.04);
+  border: 1px solid rgba(21, 57, 29, 0.14);
+  border-radius: 6px;
+  padding: 12px 14px;
+  cursor: pointer;
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  text-align: left;
+  min-width: 190px;
+  max-width: 250px;
+  flex: 1 1 190px;
+  transition: border-color 0.25s ease, background-color 0.25s ease, transform 0.25s ease, box-shadow 0.25s ease;
+  position: relative;
+}
+
+.ba-selector-card.active {
+  border-color: var(--gold, #e6c77a);
+  background: rgba(230, 199, 122, 0.1);
+  box-shadow: 0 6px 20px rgba(0, 0, 0, 0.08);
+  transform: translateY(-2px);
+}
+
+.ba-selector-card:hover:not(.active) {
+  border-color: rgba(230, 199, 122, 0.5);
+  background: rgba(230, 199, 122, 0.05);
+}
+
+.ba-selector-num {
+  font-size: 9px;
+  font-weight: 600;
+  letter-spacing: 0.2em;
+  color: var(--gold-text, #C9A227);
+  text-transform: uppercase;
+}
+
+.ba-selector-thumb-wrap {
+  width: 100%;
+  height: 76px;
+  border-radius: 4px;
+  overflow: hidden;
+  background: #000;
+  margin: 2px 0;
+}
+
+.ba-selector-thumb {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  transition: transform 0.4s ease;
+}
+
+.ba-selector-card:hover .ba-selector-thumb {
+  transform: scale(1.04);
+}
+
+.ba-selector-title {
+  font-family: var(--font-heading, 'Cormorant Garamond', serif);
+  font-size: 15px;
+  font-weight: 500;
+  color: var(--dark-green);
+  margin: 0;
+  line-height: 1.3;
+}
+
+.dark-section .ba-selector-card .ba-selector-title {
+  color: #f3f3eb;
+}
+
+/* 4. WHY LBI & OUR PROCESS SUBTITLES & HIERARCHY */
+.why-card .why-card-subtitle {
+  display: block;
+  font-size: 10px;
+  font-weight: 600;
+  letter-spacing: 0.2em;
+  color: var(--gold-text, #C9A227);
+  text-transform: uppercase;
+  margin-bottom: 4px;
+}
+
+/* 5. ADMIN TRANSFORMATIONS CMS MANAGER */
+.transformation-table-dual-thumbs {
+  display: flex;
+  gap: 6px;
+  align-items: center;
+}
+
+.transformation-thumb-wrap {
+  position: relative;
+  width: 56px;
+  height: 38px;
+  border-radius: 3px;
+  overflow: hidden;
+  border: 1px solid rgba(230, 199, 122, 0.25);
+  background-color: #000;
+}
+
+.transformation-table-img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+.thumb-tag {
+  position: absolute;
+  bottom: 1px;
+  left: 1px;
+  font-size: 7px;
+  font-weight: 700;
+  padding: 1px 3px;
+  border-radius: 2px;
+  letter-spacing: 0.05em;
+  text-transform: uppercase;
+}
+
+.tag-before {
+  background-color: rgba(0, 0, 0, 0.75);
+  color: #cccccc;
+}
+
+.tag-after {
+  background-color: rgba(21, 57, 29, 0.9);
+  color: var(--gold, #e6c77a);
+}
+
+.transformation-modal-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 16px;
+}
+
+.transformation-upload-card {
+  border: 1px solid rgba(230, 199, 122, 0.25);
+  border-radius: 6px;
+  padding: 14px;
+  background-color: rgba(0, 0, 0, 0.25);
+}
+
+.transformation-card-label {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 8px;
+  font-size: 11px;
+  font-weight: 600;
+  letter-spacing: 0.15em;
+  text-transform: uppercase;
+  color: var(--gold, #e6c77a);
+}
+
+.transformation-preview-box {
+  width: 100%;
+  height: 120px;
+  border-radius: 4px;
+  overflow: hidden;
+  background-color: #000;
+  margin-bottom: 8px;
+  border: 1px solid rgba(255, 255, 255, 0.1);
+}
+
+.transformation-preview-box img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+@media (max-width: 640px) {
+  .transformation-modal-grid {
+    grid-template-columns: 1fr;
+  }
+}

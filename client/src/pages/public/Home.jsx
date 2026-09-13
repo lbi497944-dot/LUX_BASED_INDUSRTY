@@ -9,6 +9,7 @@ import { projectService } from '../../services/projectService';
 import { faqService } from '../../services/faqService';
 import { testimonialService } from '../../services/testimonialService';
 import { partnerService } from '../../services/partnerService';
+import { transformationService } from '../../services/transformationService';
 import { pageService } from '../../services/pageService';
 import DynamicPageRenderer from '../../components/page-builder/DynamicPageRenderer';
 import { useSettings } from '../../context/SettingsContext';
@@ -49,6 +50,7 @@ export default function Home() {
   const [faqItems, setFaqItems] = useState(fallbackFaqs);
   const [testimonials, setTestimonials] = useState(fallbackTestimonials);
   const [partners, setPartners] = useState([]);
+  const [transformations, setTransformations] = useState([]);
   const [savedIds, setSavedIds] = useState(getSavedProductIds());
   const [openFaq, setOpenFaq] = useState(null);
   const [pageData, setPageData] = useState(null);
@@ -59,7 +61,7 @@ export default function Home() {
 
     const fetchHomeData = async () => {
       try {
-        const [colRes, prodRes, projRes, faqRes, testRes, pageRes, partnerRes] = await Promise.allSettled([
+        const [colRes, prodRes, projRes, faqRes, testRes, pageRes, partnerRes, transRes] = await Promise.allSettled([
           collectionService.getCollections({ featured: true }),
           productService.getProducts({ featured: true }),
           projectService.getProjects({ featured: true }),
@@ -67,6 +69,7 @@ export default function Home() {
           testimonialService.getTestimonials(),
           pageService.getPageBySlug('home'),
           partnerService.getPartners(),
+          transformationService.getTransformations(),
         ]);
 
         if (!isMounted) return;
@@ -88,6 +91,9 @@ export default function Home() {
         }
         if (partnerRes.status === 'fulfilled' && partnerRes.value?.data) {
           setPartners(partnerRes.value.data);
+        }
+        if (transRes.status === 'fulfilled' && transRes.value?.data) {
+          setTransformations(transRes.value.data);
         }
         if (
           pageRes.status === 'fulfilled' &&
@@ -270,6 +276,7 @@ export default function Home() {
             faqItems,
             testimonials,
             partners,
+            transformations,
             settings,
             savedIds,
             handleToggleHeart,
@@ -488,7 +495,7 @@ export default function Home() {
       </section>
 
       {/* 5. BEFORE & AFTER TRANSFORMATION SLIDER */}
-      <BeforeAfterSlider />
+      <BeforeAfterSlider transformations={transformations} />
 
       {/* 6. BRAND STORY */}
       <section className="split-story-section">

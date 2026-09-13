@@ -17,8 +17,8 @@ import ContactDirectorySection from './sections/ContactDirectorySection';
 import ClientPartnersMarquee from '../sections/ClientPartnersMarquee';
 
 // Adapters for existing section components to consume standard Page Builder props
-const BeforeAfterAdapter = ({ content, media }) => (
-  <BeforeAfterSlider content={content} media={media} />
+const BeforeAfterAdapter = ({ content, media, context }) => (
+  <BeforeAfterSlider content={content} media={media} transformations={context?.transformations} />
 );
 
 const CatalogueCTAAdapter = ({ content }) => (

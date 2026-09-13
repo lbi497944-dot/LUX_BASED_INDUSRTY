@@ -49,6 +49,7 @@ export default function ValueCardsSection({ content = {}, context = {} }) {
     const sorted = [...content.customItems].sort((a, b) => (Number(a.order) || 0) - (Number(b.order) || 0));
     displayItems = sorted.map((item, idx) => ({
       title: item.title || `Standard 0${idx + 1}`,
+      subtitle: item.subtitle || '',
       text: item.text || item.description || '',
       icon: (item.iconName && ICON_MAP[item.iconName]) || <Sparkles size={24} />,
     }));
@@ -60,6 +61,7 @@ export default function ValueCardsSection({ content = {}, context = {} }) {
         <SectionTitle
           eyebrow={eyebrow}
           title={heading}
+          description={content?.body}
           align={alignment}
         />
         <div className="why-grid">
@@ -69,6 +71,7 @@ export default function ValueCardsSection({ content = {}, context = {} }) {
               <Reveal key={whyKey} delay={idx * 0.1}>
                 <div className="why-card">
                   <div className="why-icon-box">{item.icon}</div>
+                  {item.subtitle && <span className="why-card-subtitle">{item.subtitle}</span>}
                   <h3>{item.title}</h3>
                   <p>{item.text}</p>
                 </div>

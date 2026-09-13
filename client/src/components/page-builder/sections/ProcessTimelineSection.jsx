@@ -21,6 +21,7 @@ export default function ProcessTimelineSection({ content = {} }) {
         <SectionTitle
           eyebrow={eyebrow}
           title={heading}
+          description={content?.body}
         />
         <div className="process-timeline-desktop">
           {displaySteps.map((step, idx) => {

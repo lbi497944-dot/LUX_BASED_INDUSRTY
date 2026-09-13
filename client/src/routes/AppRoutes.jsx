@@ -31,6 +31,7 @@ const FaqsManager = lazy(() => import('../pages/admin/FaqsManager'));
 const TestimonialsManager = lazy(() => import('../pages/admin/TestimonialsManager'));
 const ReviewsManager = lazy(() => import('../pages/admin/ReviewsManager'));
 const PartnersManager = lazy(() => import('../pages/admin/PartnersManager'));
+const TransformationsManager = lazy(() => import('../pages/admin/TransformationsManager'));
 const SettingsManager = lazy(() => import('../pages/admin/SettingsManager'));
 const ChangePasswordManager = lazy(() => import('../pages/admin/ChangePasswordManager'));
 
@@ -119,6 +120,7 @@ export default function AppRoutes() {
             <Route path="testimonials" element={<TestimonialsManager />} />
             <Route path="reviews" element={<ReviewsManager />} />
             <Route path="partners" element={<PartnersManager />} />
+            <Route path="transformations" element={<TransformationsManager />} />
             <Route path="account" element={<ChangePasswordManager />} />
             <Route path="settings" element={<SettingsManager />} />
           </Route>

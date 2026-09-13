@@ -19,7 +19,21 @@ import {
   Globe,
   FileText,
   X,
+  ExternalLink,
 } from 'lucide-react';
+
+const ICON_OPTIONS = [
+  'Sparkles',
+  'Ruler',
+  'Lightbulb',
+  'ShieldCheck',
+  'Award',
+  'Compass',
+  'Gem',
+  'Layers',
+  'Settings',
+  'Check',
+];
 
 /**
  * Validates URLs on the client side according to Stage 1 safety rules.
@@ -201,7 +215,24 @@ export default function InspectorPanel({
     handleMediaChange('slides', currentSlides);
   };
 
-  // Custom Items helpers
+  // Custom Items helpers (Value Cards & Process Timeline)
+  const handleAddCustomItem = () => {
+    if (!activeSection) return;
+    const currentItems = [...(activeSection.content?.customItems || [])];
+    const isProcess = activeSection.type === 'process_timeline';
+    const nextNum = currentItems.length + 1;
+    const newItem = {
+      title: isProcess ? `Phase ${nextNum}` : `Pillar ${nextNum}`,
+      subtitle: isProcess ? `STEP ${String(nextNum).padStart(2, '0')}` : '',
+      text: '',
+      iconName: isProcess ? 'Check' : 'Sparkles',
+      order: nextNum,
+    };
+    onUpdateDraftSection(activeSection.sectionId, {
+      content: { ...(activeSection.content || {}), customItems: [...currentItems, newItem] },
+    });
+  };
+
   const handleUpdateCustomItem = (index, field, value) => {
     if (!activeSection) return;
     const items = [...(activeSection.content?.customItems || [])];
@@ -211,6 +242,33 @@ export default function InspectorPanel({
         content: { ...(activeSection.content || {}), customItems: items },
       });
     }
+  };
+
+  const handleDeleteCustomItem = (index) => {
+    if (!activeSection) return;
+    const currentItems = (activeSection.content?.customItems || []).filter((_, i) => i !== index);
+    currentItems.forEach((it, idx) => {
+      it.order = idx + 1;
+    });
+    onUpdateDraftSection(activeSection.sectionId, {
+      content: { ...(activeSection.content || {}), customItems: currentItems },
+    });
+  };
+
+  const handleMoveCustomItem = (index, direction) => {
+    if (!activeSection) return;
+    const currentItems = [...(activeSection.content?.customItems || [])];
+    const targetIndex = index + direction;
+    if (targetIndex < 0 || targetIndex >= currentItems.length) return;
+    const temp = currentItems[index];
+    currentItems[index] = currentItems[targetIndex];
+    currentItems[targetIndex] = temp;
+    currentItems.forEach((it, idx) => {
+      it.order = idx + 1;
+    });
+    onUpdateDraftSection(activeSection.sectionId, {
+      content: { ...(activeSection.content || {}), customItems: currentItems },
+    });
   };
 
   // =========================================================================
@@ -373,6 +431,63 @@ export default function InspectorPanel({
             </span>
           </div>
         </div>
+
+        {/* Quick Action: Transformation CMS Link */}
+        {activeSection.type === 'before_after' && (
+          <div
+            className="pb-inspector-card pb-transformation-shortcut"
+            style={{
+              background: 'rgba(230, 199, 122, 0.08)',
+              border: '1px solid rgba(230, 199, 122, 0.25)',
+              borderRadius: '4px',
+              padding: '12px 14px',
+              marginBottom: '16px',
+            }}
+          >
+            <div
+              style={{
+                display: 'flex',
+                alignItems: 'center',
+                gap: '8px',
+                color: '#e6c77a',
+                fontSize: '12px',
+                fontWeight: 600,
+                letterSpacing: '0.05em',
+              }}
+            >
+              <Sliders size={14} />
+              <span>TRANSFORMATIONS CMS</span>
+            </div>
+            <p
+              style={{
+                fontSize: '11px',
+                color: 'rgba(243, 243, 235, 0.7)',
+                margin: '8px 0 10px',
+                lineHeight: 1.4,
+              }}
+            >
+              Curate before &amp; after comparison studies, upload dual high-resolution photography, and reorder case studies in the dedicated CMS.
+            </p>
+            <a
+              href="/admin/transformations"
+              target="_blank"
+              rel="noopener noreferrer"
+              className="btn-gold"
+              style={{
+                display: 'inline-flex',
+                alignItems: 'center',
+                gap: '6px',
+                padding: '6px 12px',
+                fontSize: '11px',
+                textDecoration: 'none',
+                borderRadius: '3px',
+              }}
+            >
+              <span>Open Transformations Manager</span>
+              <ExternalLink size={12} />
+            </a>
+          </div>
+        )}
 
         {/* 1. TEXT EDITING FIELDS */}
         {(selectedElement?.field === 'eyebrow' || !selectedElement || selectedElement.type === 'section') &&
@@ -805,16 +920,100 @@ export default function InspectorPanel({
         )}
 
         {/* 4. CUSTOM ITEMS (Value Cards & Process Timeline) */}
-        {Array.isArray(content.customItems) && (
+        {(activeSection.type === 'value_cards' ||
+          activeSection.type === 'process_timeline' ||
+          Array.isArray(content.customItems)) && (
           <div className="pb-inspector-divider">
-            <h4>CUSTOM ITEMS ({content.customItems.length})</h4>
+            <div
+              style={{
+                display: 'flex',
+                justifyContent: 'space-between',
+                alignItems: 'center',
+                marginBottom: '12px',
+              }}
+            >
+              <h4 style={{ margin: 0 }}>
+                {activeSection.type === 'process_timeline'
+                  ? 'PROCESS STEPS'
+                  : activeSection.type === 'value_cards'
+                  ? 'VALUE PILLARS'
+                  : 'CUSTOM ITEMS'}{' '}
+                ({(content.customItems || []).length})
+              </h4>
+              <button
+                type="button"
+                className="pb-add-item-btn"
+                onClick={handleAddCustomItem}
+                style={{ display: 'inline-flex', alignItems: 'center', gap: '4px' }}
+              >
+                <Plus size={12} /> Add Item
+              </button>
+            </div>
+
             <div className="pb-custom-items-list">
-              {content.customItems.map((item, idx) => (
+              {(!content.customItems || content.customItems.length === 0) && (
+                <p style={{ fontSize: '11px', color: 'rgba(243, 243, 235, 0.5)', fontStyle: 'italic' }}>
+                  No items configured. Click &ldquo;Add Item&rdquo; to add custom steps or value pillars.
+                </p>
+              )}
+              {(content.customItems || []).map((item, idx) => (
                 <div key={idx} className="pb-custom-item-card">
-                  <div className="pb-item-header">
-                    <span className="pb-item-num">Item #{idx + 1}</span>
-                    {item.subtitle && <span className="pb-item-subtitle">{item.subtitle}</span>}
+                  <div
+                    className="pb-item-header"
+                    style={{
+                      display: 'flex',
+                      justifyContent: 'space-between',
+                      alignItems: 'center',
+                      marginBottom: '8px',
+                    }}
+                  >
+                    <span className="pb-item-num" style={{ fontWeight: 600, color: '#e6c77a', fontSize: '11px' }}>
+                      #{idx + 1} {item.subtitle ? `— ${item.subtitle}` : ''}
+                    </span>
+                    <div className="pb-slide-actions" style={{ display: 'inline-flex', gap: '4px' }}>
+                      <button
+                        type="button"
+                        disabled={idx === 0}
+                        onClick={() => handleMoveCustomItem(idx, -1)}
+                        title="Move Up"
+                        aria-label={`Move item ${idx + 1} up`}
+                      >
+                        <ChevronUp size={12} />
+                      </button>
+                      <button
+                        type="button"
+                        disabled={idx === (content.customItems || []).length - 1}
+                        onClick={() => handleMoveCustomItem(idx, 1)}
+                        title="Move Down"
+                        aria-label={`Move item ${idx + 1} down`}
+                      >
+                        <ChevronDown size={12} />
+                      </button>
+                      <button
+                        type="button"
+                        onClick={() => handleDeleteCustomItem(idx)}
+                        className="danger"
+                        title="Delete Item"
+                        aria-label={`Delete item ${idx + 1}`}
+                      >
+                        <Trash2 size={12} />
+                      </button>
+                    </div>
                   </div>
+
+                  <div className="pb-field-group">
+                    <label htmlFor={`custom-item-subtitle-${idx}`}>
+                      {activeSection.type === 'process_timeline' ? 'Step Subtitle (e.g. STEP 01)' : 'Subtitle / Tag'}
+                    </label>
+                    <input
+                      id={`custom-item-subtitle-${idx}`}
+                      type="text"
+                      value={item.subtitle || ''}
+                      onChange={(e) => handleUpdateCustomItem(idx, 'subtitle', e.target.value)}
+                      placeholder="e.g. STEP 01"
+                    />
+                  </div>
+
                   <div className="pb-field-group">
                     <label htmlFor={`custom-item-title-${idx}`}>Title</label>
                     <input
@@ -822,8 +1021,34 @@ export default function InspectorPanel({
                       type="text"
                       value={item.title || ''}
                       onChange={(e) => handleUpdateCustomItem(idx, 'title', e.target.value)}
+                      placeholder="e.g. Curated Illumination"
                     />
                   </div>
+
+                  <div className="pb-field-group">
+                    <label htmlFor={`custom-item-icon-${idx}`}>Icon Symbol</label>
+                    <select
+                      id={`custom-item-icon-${idx}`}
+                      value={item.iconName || (activeSection.type === 'process_timeline' ? 'Check' : 'Sparkles')}
+                      onChange={(e) => handleUpdateCustomItem(idx, 'iconName', e.target.value)}
+                      style={{
+                        width: '100%',
+                        padding: '6px 8px',
+                        background: '#0d2613',
+                        border: '1px solid rgba(230, 199, 122, 0.3)',
+                        color: '#f3f3eb',
+                        borderRadius: '3px',
+                        fontSize: '12px',
+                      }}
+                    >
+                      {ICON_OPTIONS.map((opt) => (
+                        <option key={opt} value={opt}>
+                          {opt}
+                        </option>
+                      ))}
+                    </select>
+                  </div>
+
                   <div className="pb-field-group">
                     <label htmlFor={`custom-item-text-${idx}`}>Description Text</label>
                     <textarea
@@ -831,6 +1056,7 @@ export default function InspectorPanel({
                       rows="2"
                       value={item.text || ''}
                       onChange={(e) => handleUpdateCustomItem(idx, 'text', e.target.value)}
+                      placeholder="Enter pillar or step description..."
                     />
                   </div>
                 </div>

@@ -14,6 +14,7 @@ import statsRoutes from './statsRoutes.js';
 import uploadRoutes from './uploadRoutes.js';
 import pageRoutes from './pageRoutes.js';
 import partnerRoutes from './partnerRoutes.js';
+import transformationRoutes from './transformationRoutes.js';
 
 import mongoose from 'mongoose';
 import Collection from '../models/Collection.js';
@@ -129,5 +130,6 @@ router.use('/stats', statsRoutes);
 router.use('/upload', uploadRoutes);
 router.use('/pages', pageRoutes);
 router.use('/partners', partnerRoutes);
+router.use('/transformations', transformationRoutes);
 
 export default router;
