@@ -227,7 +227,7 @@ export default function Footer() {
               {(settings?.phone && settings.phone.trim()) || companyContact.phone}
             </a>
             <a 
-              href={`https://wa.me/${(settings.whatsappNumberClean || settings.whatsapp || '').replace(/[^0-9]/g, '')}`} 
+              href={`https://wa.me/${(settings?.whatsappNumberClean || settings?.whatsapp || companyContact.whatsapp || '971508924411').replace(/[^0-9]/g, '')}?text=${encodeURIComponent("Hello LUX BASED INDUSTRY, I'd like to enquire about your architectural lighting collections.")}`} 
               target="_blank" 
               rel="noopener noreferrer"
               className="footer-whatsapp"
