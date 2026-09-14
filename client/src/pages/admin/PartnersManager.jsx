@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import { partnerService } from '../../services/partnerService';
 import {
   Plus,
@@ -32,6 +32,8 @@ export default function PartnersManager() {
     isActive: true,
   });
   const [modalLoading, setModalLoading] = useState(false);
+  const [discardConfirmOpen, setDiscardConfirmOpen] = useState(false);
+  const initialFormStateRef = useRef(null);
 
   // Modal state for Delete
   const [deleteTarget, setDeleteTarget] = useState(null);
@@ -60,40 +62,66 @@ export default function PartnersManager() {
     fetchPartners();
   }, []);
 
+  const isFormDirty = () => {
+    if (!initialFormStateRef.current) return false;
+    return JSON.stringify(formData) !== initialFormStateRef.current;
+  };
+
+  const handleAttemptCloseModal = () => {
+    if (isFormDirty() && !modalLoading) {
+      setDiscardConfirmOpen(true);
+    } else {
+      setIsModalOpen(false);
+    }
+  };
+
+  const handleConfirmDiscard = () => {
+    setDiscardConfirmOpen(false);
+    setIsModalOpen(false);
+  };
+
   useEffect(() => {
     if (!isModalOpen) return;
     const handleKeyDown = (e) => {
       if (e.key === 'Escape' && !modalLoading) {
-        setIsModalOpen(false);
+        if (discardConfirmOpen) {
+          setDiscardConfirmOpen(false);
+        } else {
+          handleAttemptCloseModal();
+        }
       }
     };
     window.addEventListener('keydown', handleKeyDown);
     return () => window.removeEventListener('keydown', handleKeyDown);
-  }, [isModalOpen, modalLoading]);
+  }, [isModalOpen, modalLoading, discardConfirmOpen, formData]);
 
   const handleOpenCreate = () => {
-    setEditingPartner(null);
-    setFormData({
+    const initialData = {
       name: '',
       logo: '',
       logoPublicId: '',
       website: '',
       order: partners.length > 0 ? Math.max(...partners.map((p) => p.order || 0)) + 1 : 1,
       isActive: true,
-    });
+    };
+    setEditingPartner(null);
+    setFormData(initialData);
+    initialFormStateRef.current = JSON.stringify(initialData);
     setIsModalOpen(true);
   };
 
   const handleOpenEdit = (partner) => {
-    setEditingPartner(partner);
-    setFormData({
+    const initialData = {
       name: partner.name || '',
       logo: partner.logo || '',
       logoPublicId: partner.logoPublicId || '',
       website: partner.website || '',
       order: partner.order !== undefined ? partner.order : 0,
       isActive: partner.isActive !== false,
-    });
+    };
+    setEditingPartner(partner);
+    setFormData(initialData);
+    initialFormStateRef.current = JSON.stringify(initialData);
     setIsModalOpen(true);
   };
 
@@ -234,15 +262,28 @@ export default function PartnersManager() {
         loading={deleteLoading}
       />
 
+      {/* Unsaved Changes Confirmation Modal */}
+      <ModalConfirm
+        isOpen={discardConfirmOpen}
+        title="Discard Unsaved Changes?"
+        message="You have unsaved changes in this partner form. Are you sure you want to discard them and close the dialog?"
+        confirmLabel="Discard & Exit"
+        cancelLabel="Continue Editing"
+        onConfirm={handleConfirmDiscard}
+        onCancel={() => setDiscardConfirmOpen(false)}
+      />
+
       {/* Header */}
       <div className="admin-page-header">
         <div>
           <h2>Client Partners</h2>
           <p>Manage corporate collaborators, luxury developers, and architectural firm logos displayed on the public Home marquee.</p>
         </div>
-        <button onClick={handleOpenCreate} className="btn btn-gold btn-sm">
-          <Plus size={16} /> Add Partner
-        </button>
+        {partners.length > 0 && (
+          <button onClick={handleOpenCreate} className="btn btn-gold btn-sm">
+            <Plus size={16} /> Add Partner
+          </button>
+        )}
       </div>
 
       {/* Partners List Table */}
@@ -321,22 +362,22 @@ export default function PartnersManager() {
                       </button>
                     </td>
                     <td style={{ textAlign: 'right' }}>
-                      <div className="table-actions">
+                      <div style={{ display: 'inline-flex', gap: '6px' }}>
                         <button
                           onClick={() => handleOpenEdit(partner)}
-                          className="btn-icon"
+                          className="admin-action-btn"
                           title="Edit Partner"
                           aria-label={`Edit ${partner.name}`}
                         >
-                          <Edit2 size={16} />
+                          <Edit2 size={15} />
                         </button>
                         <button
                           onClick={() => setDeleteTarget(partner)}
-                          className="btn-icon text-danger"
+                          className="admin-action-btn danger"
                           title="Delete Partner"
                           aria-label={`Delete ${partner.name}`}
                         >
-                          <Trash2 size={16} />
+                          <Trash2 size={15} />
                         </button>
                       </div>
                     </td>
@@ -350,13 +391,19 @@ export default function PartnersManager() {
 
       {/* CREATE / EDIT MODAL */}
       {isModalOpen && (
-        <div className="modal-backdrop" onClick={() => !modalLoading && setIsModalOpen(false)}>
-          <div className="modal-container admin-partner-modal" onClick={(e) => e.stopPropagation()}>
-            <div className="modal-header">
-              <h3>{editingPartner ? 'Edit Client Partner' : 'Add Client Partner'}</h3>
+        <div className="admin-modal-backdrop" onClick={() => !modalLoading && handleAttemptCloseModal()}>
+          <div
+            className="admin-modal admin-modal-dark modal-container admin-partner-modal"
+            onClick={(e) => e.stopPropagation()}
+            role="dialog"
+            aria-modal="true"
+            aria-labelledby="partner-modal-title"
+          >
+            <div className="admin-modal-header modal-header">
+              <h3 id="partner-modal-title">{editingPartner ? 'Edit Client Partner' : 'Add Client Partner'}</h3>
               <button
-                className="modal-close"
-                onClick={() => setIsModalOpen(false)}
+                className="admin-modal-close-btn modal-close"
+                onClick={handleAttemptCloseModal}
                 disabled={modalLoading}
                 aria-label="Close dialog"
               >
@@ -365,9 +412,9 @@ export default function PartnersManager() {
             </div>
 
             <form onSubmit={handleFormSubmit}>
-              <div className="modal-body">
+              <div className="modal-body admin-modal-body">
                 {/* 1. COMPANY NAME */}
-                <div className="form-group">
+                <div className="form-group admin-form-group">
                   <label className="field-label">
                     COMPANY NAME *
                   </label>
@@ -399,7 +446,7 @@ export default function PartnersManager() {
                 />
 
                 {/* 3. WEBSITE URL */}
-                <div className="form-group">
+                <div className="form-group admin-form-group">
                   <label className="field-label">
                     WEBSITE URL <span className="optional-tag">(OPTIONAL)</span>
                   </label>
@@ -416,8 +463,8 @@ export default function PartnersManager() {
                 </div>
 
                 {/* 4. ORDER & ACTIVE TOGGLE */}
-                <div className="form-row">
-                  <div className="form-group">
+                <div className="form-row" style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '16px' }}>
+                  <div className="form-group admin-form-group">
                     <label className="field-label">
                       DISPLAY ORDER
                     </label>
@@ -431,11 +478,11 @@ export default function PartnersManager() {
                     </small>
                   </div>
 
-                  <div className="form-group">
+                  <div className="form-group admin-form-group">
                     <label className="field-label">
                       VISIBILITY STATUS
                     </label>
-                    <label className="admin-checkbox-label mt-2">
+                    <label className="admin-checkbox-label" style={{ marginTop: '10px', display: 'flex', alignItems: 'center', gap: '8px', cursor: 'pointer' }}>
                       <input
                         type="checkbox"
                         checked={formData.isActive}
@@ -447,11 +494,11 @@ export default function PartnersManager() {
                 </div>
               </div>
 
-              <div className="modal-footer">
+              <div className="modal-footer admin-modal-footer">
                 <button
                   type="button"
                   className="btn btn-outline btn-sm"
-                  onClick={() => setIsModalOpen(false)}
+                  onClick={handleAttemptCloseModal}
                   disabled={modalLoading}
                 >
                   Cancel

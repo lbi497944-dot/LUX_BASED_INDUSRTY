@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import { newsletterService } from '../../services/newsletterService';
 import {
   Send,
@@ -42,6 +42,9 @@ export default function NewsletterManager() {
   // Modals State
   const [editorOpen, setEditorOpen] = useState(false);
   const [editingCampaign, setEditingCampaign] = useState(null);
+  const [discardConfirmOpen, setDiscardConfirmOpen] = useState(false);
+  const initialFormStateRef = useRef(null);
+
   const [previewOpen, setPreviewOpen] = useState(false);
   const [previewHtml, setPreviewHtml] = useState('');
   const [previewLoading, setPreviewLoading] = useState(false);
@@ -79,6 +82,49 @@ export default function NewsletterManager() {
   const [formSaving, setFormSaving] = useState(false);
   const [attachmentUploading, setAttachmentUploading] = useState(false);
   const [recipientSearch, setRecipientSearch] = useState('');
+
+  const formatFileSize = (bytes) => {
+    if (!bytes || bytes <= 0) return '';
+    if (bytes < 1024) return `${bytes} B`;
+    if (bytes < 1024 * 1024) return `${(bytes / 1024).toFixed(1)} KB`;
+    return `${(bytes / (1024 * 1024)).toFixed(1)} MB`;
+  };
+
+  const isFormDirty = () => {
+    if (!initialFormStateRef.current) return false;
+    return JSON.stringify(formData) !== initialFormStateRef.current;
+  };
+
+  const handleAttemptCloseEditor = () => {
+    if (isFormDirty() && !formSaving) {
+      setDiscardConfirmOpen(true);
+    } else {
+      setEditorOpen(false);
+    }
+  };
+
+  const handleConfirmDiscard = () => {
+    setDiscardConfirmOpen(false);
+    setEditorOpen(false);
+  };
+
+  useEffect(() => {
+    const handleKeyDown = (e) => {
+      if (e.key === 'Escape') {
+        if (discardConfirmOpen) {
+          setDiscardConfirmOpen(false);
+        } else if (previewOpen) {
+          setPreviewOpen(false);
+        } else if (whatsAppModalOpen) {
+          setWhatsAppModalOpen(false);
+        } else if (editorOpen && !formSaving) {
+          handleAttemptCloseEditor();
+        }
+      }
+    };
+    window.addEventListener('keydown', handleKeyDown);
+    return () => window.removeEventListener('keydown', handleKeyDown);
+  }, [editorOpen, formSaving, previewOpen, whatsAppModalOpen, discardConfirmOpen, formData]);
 
   // Fetch Campaigns
   const fetchCampaigns = async () => {
@@ -124,39 +170,38 @@ export default function NewsletterManager() {
 
   // Open Editor for New or Edit
   const handleOpenEditor = (campaign = null) => {
-    if (campaign) {
-      setEditingCampaign(campaign);
-      setFormData({
-        title: campaign.title || '',
-        subject: campaign.subject || '',
-        previewText: campaign.previewText || '',
-        heading: campaign.heading || '',
-        content: campaign.content || '',
-        imageUrl: campaign.imageUrl || '',
-        imagePublicId: campaign.imagePublicId || '',
-        ctaText: campaign.ctaText || '',
-        ctaUrl: campaign.ctaUrl || '',
-        attachments: campaign.attachments || [],
-        targetAudience: campaign.targetAudience || 'all',
-        selectedRecipients: campaign.selectedRecipients || [],
-      });
-    } else {
-      setEditingCampaign(null);
-      setFormData({
-        title: '',
-        subject: '',
-        previewText: '',
-        heading: '',
-        content: '',
-        imageUrl: '',
-        imagePublicId: '',
-        ctaText: '',
-        ctaUrl: '',
-        attachments: [],
-        targetAudience: 'all',
-        selectedRecipients: [],
-      });
-    }
+    const initialData = campaign
+      ? {
+          title: campaign.title || '',
+          subject: campaign.subject || '',
+          previewText: campaign.previewText || '',
+          heading: campaign.heading || '',
+          content: campaign.content || '',
+          imageUrl: campaign.imageUrl || '',
+          imagePublicId: campaign.imagePublicId || '',
+          ctaText: campaign.ctaText || '',
+          ctaUrl: campaign.ctaUrl || '',
+          attachments: campaign.attachments || [],
+          targetAudience: campaign.targetAudience || 'all',
+          selectedRecipients: campaign.selectedRecipients || [],
+        }
+      : {
+          title: '',
+          subject: '',
+          previewText: '',
+          heading: '',
+          content: '',
+          imageUrl: '',
+          imagePublicId: '',
+          ctaText: '',
+          ctaUrl: '',
+          attachments: [],
+          targetAudience: 'all',
+          selectedRecipients: [],
+        };
+    setEditingCampaign(campaign);
+    setFormData(initialData);
+    initialFormStateRef.current = JSON.stringify(initialData);
     setEditorOpen(true);
   };
 
@@ -177,6 +222,7 @@ export default function NewsletterManager() {
         await newsletterService.createCampaign(formData);
         setToast({ type: 'success', title: 'Campaign Created', message: 'New newsletter draft created.' });
       }
+      initialFormStateRef.current = JSON.stringify(formData);
       setEditorOpen(false);
       fetchCampaigns();
     } catch (err) {
@@ -420,6 +466,17 @@ export default function NewsletterManager() {
         loading={sendingLoading}
       />
 
+      {/* Discard Unsaved Changes Modal */}
+      <ModalConfirm
+        isOpen={discardConfirmOpen}
+        title="Discard Unsaved Changes?"
+        message="You have unsaved changes in this campaign draft. Are you sure you want to discard your edits and close the editor?"
+        confirmLabel="Discard & Exit"
+        cancelLabel="Continue Editing"
+        onConfirm={handleConfirmDiscard}
+        onCancel={() => setDiscardConfirmOpen(false)}
+      />
+
       {/* Page Header */}
       <div className="admin-page-header">
         <div>
@@ -428,9 +485,11 @@ export default function NewsletterManager() {
         </div>
         <div className="admin-header-actions">
           {activeTab === 'campaigns' ? (
-            <button className="btn btn-gold btn-sm" onClick={() => handleOpenEditor()}>
-              <Plus size={16} /> CREATE NEWSLETTER
-            </button>
+            campaigns.length > 0 && (
+              <button className="btn btn-gold btn-sm" onClick={() => handleOpenEditor()}>
+                <Plus size={16} /> CREATE NEWSLETTER
+              </button>
+            )
           ) : (
             subscribers.length > 0 && (
               <button className="btn btn-outline btn-sm" onClick={handleCopyAllEmails}>
@@ -681,20 +740,25 @@ export default function NewsletterManager() {
 
       {/* CAMPAIGN EDITOR MODAL */}
       {editorOpen && (
-        <div className="admin-modal-backdrop" onClick={() => setEditorOpen(false)}>
+        <div className="admin-modal-backdrop" onClick={handleAttemptCloseEditor}>
           <div
-            className="admin-modal admin-modal-dark"
+            className="admin-modal admin-modal-dark modal-container admin-modal-lg"
             style={{ maxWidth: '850px', maxHeight: '90vh', overflowY: 'auto' }}
             onClick={(e) => e.stopPropagation()}
+            role="dialog"
+            aria-modal="true"
+            aria-labelledby="campaign-editor-title"
           >
-            <div className="admin-modal-header">
-              <h2>{editingCampaign ? 'Edit Newsletter Campaign' : 'Create Newsletter Campaign'}</h2>
-              <button className="admin-modal-close-btn" onClick={() => setEditorOpen(false)} aria-label="Close modal">
+            <div className="admin-modal-header modal-header">
+              <h2 id="campaign-editor-title" style={{ margin: 0, fontSize: '20px', fontFamily: 'Cinzel, serif', color: 'var(--gold)' }}>
+                {editingCampaign ? 'Edit Newsletter Campaign' : 'Create Newsletter Campaign'}
+              </h2>
+              <button className="admin-modal-close-btn modal-close" onClick={handleAttemptCloseEditor} aria-label="Close modal">
                 <X size={20} />
               </button>
             </div>
 
-            <form onSubmit={handleSaveCampaign} className="admin-form">
+            <form onSubmit={handleSaveCampaign} className="admin-form modal-body admin-modal-body">
               <div className="admin-form-group">
                 <label>Campaign Title (Internal Reference) *</label>
                 <input
@@ -740,16 +804,15 @@ export default function NewsletterManager() {
 
               {/* Banner Image Upload */}
               <div className="admin-form-group">
-                <label>Campaign Featured Image (Optional)</label>
                 <AdminImageUpload
-                  currentImageUrl={formData.imageUrl}
-                  onImageUploaded={(url, publicId) => {
+                  label="CAMPAIGN FEATURED IMAGE"
+                  value={formData.imageUrl}
+                  publicId={formData.imagePublicId}
+                  onChange={({ url, publicId }) => {
                     setFormData((prev) => ({ ...prev, imageUrl: url, imagePublicId: publicId }));
                   }}
-                  onImageRemoved={() => {
-                    setFormData((prev) => ({ ...prev, imageUrl: '', imagePublicId: '' }));
-                  }}
-                  folder="veloura_lighting/newsletters"
+                  helpText="Featured banner or editorial photo (JPG, PNG, WEBP · Max 10MB)"
+                  disabled={formSaving}
                 />
               </div>
 
@@ -757,7 +820,8 @@ export default function NewsletterManager() {
               <div className="admin-form-group">
                 <label>Editorial Content (HTML / Formatted Text) *</label>
                 <textarea
-                  rows={8}
+                  rows={10}
+                  style={{ minHeight: '280px', fontFamily: 'inherit', lineHeight: '1.6' }}
                   required
                   placeholder="Enter newsletter body content. Paragraphs, links, and formatting will be rendered cleanly."
                   value={formData.content}
@@ -811,27 +875,37 @@ export default function NewsletterManager() {
                     {formData.attachments.map((att, idx) => (
                       <div
                         key={idx}
+                        className="admin-attachment-card"
                         style={{
                           display: 'flex',
                           justifyContent: 'space-between',
                           alignItems: 'center',
-                          padding: '8px 12px',
+                          padding: '10px 14px',
                           background: 'rgba(21, 57, 29, 0.4)',
-                          border: '1px solid rgba(230, 199, 122, 0.15)',
-                          borderRadius: '4px',
-                          fontSize: '13px',
+                          border: '1px solid rgba(230, 199, 122, 0.2)',
+                          borderRadius: '6px',
+                          gap: '12px',
                         }}
                       >
-                        <span style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
-                          <FileText size={15} style={{ color: 'var(--gold)' }} />
-                          <strong>{att.filename || 'Document'}</strong>
-                          {att.size ? <small style={{ color: 'rgba(243, 243, 235, 0.6)' }}>({Math.round(att.size / 1024)} KB)</small> : null}
-                        </span>
+                        <div style={{ display: 'flex', alignItems: 'center', gap: '10px', minWidth: 0, flex: 1 }}>
+                          <FileText size={18} style={{ color: 'var(--gold)', flexShrink: 0 }} />
+                          <div style={{ minWidth: 0, overflow: 'hidden' }}>
+                            <p style={{ margin: 0, fontWeight: 500, fontSize: '13px', color: '#FAF8F1', textOverflow: 'ellipsis', overflow: 'hidden', whiteSpace: 'nowrap' }}>
+                              {att.filename || 'Document'}
+                            </p>
+                            {att.size ? (
+                              <span style={{ fontSize: '11px', color: 'rgba(243, 243, 235, 0.6)' }}>
+                                {formatFileSize(att.size)}
+                              </span>
+                            ) : null}
+                          </div>
+                        </div>
                         <button
                           type="button"
                           className="admin-action-btn danger"
                           onClick={() => handleRemoveAttachment(idx)}
                           title="Remove attachment"
+                          aria-label={`Remove ${att.filename || 'attachment'}`}
                         >
                           <Trash2 size={14} />
                         </button>
@@ -940,8 +1014,8 @@ export default function NewsletterManager() {
               </div>
 
               {/* Form Actions */}
-              <div className="admin-modal-actions" style={{ marginTop: '24px' }}>
-                <button type="button" className="btn btn-outline" onClick={() => setEditorOpen(false)}>
+              <div className="admin-modal-actions modal-footer admin-modal-footer" style={{ marginTop: '24px' }}>
+                <button type="button" className="btn btn-outline" onClick={handleAttemptCloseEditor}>
                   Cancel
                 </button>
                 <button type="submit" className="btn btn-gold" disabled={formSaving}>
@@ -958,13 +1032,16 @@ export default function NewsletterManager() {
       {previewOpen && (
         <div className="admin-modal-backdrop" onClick={() => setPreviewOpen(false)}>
           <div
-            className="admin-modal admin-modal-dark"
+            className="admin-modal admin-modal-dark modal-container admin-modal-lg"
             style={{ maxWidth: '780px', maxHeight: '90vh', overflowY: 'auto' }}
             onClick={(e) => e.stopPropagation()}
+            role="dialog"
+            aria-modal="true"
+            aria-labelledby="preview-modal-title"
           >
-            <div className="admin-modal-header">
-              <h2>Newsletter Live Preview</h2>
-              <button className="admin-modal-close-btn" onClick={() => setPreviewOpen(false)} aria-label="Close preview">
+            <div className="admin-modal-header modal-header">
+              <h2 id="preview-modal-title" style={{ margin: 0, fontSize: '20px', fontFamily: 'Cinzel, serif', color: 'var(--gold)' }}>Newsletter Live Preview</h2>
+              <button className="admin-modal-close-btn modal-close" onClick={() => setPreviewOpen(false)} aria-label="Close preview">
                 <X size={20} />
               </button>
             </div>
@@ -975,7 +1052,7 @@ export default function NewsletterManager() {
                 <p>Rendering Email Frame...</p>
               </div>
             ) : (
-              <div>
+              <div className="modal-body admin-modal-body">
                 <iframe
                   title="Newsletter Email Preview"
                   srcDoc={previewHtml}
@@ -1003,18 +1080,21 @@ export default function NewsletterManager() {
       {whatsAppModalOpen && (
         <div className="admin-modal-backdrop" onClick={() => setWhatsAppModalOpen(false)}>
           <div
-            className="admin-modal admin-modal-dark"
+            className="admin-modal admin-modal-dark modal-container admin-modal-md"
             style={{ maxWidth: '580px' }}
             onClick={(e) => e.stopPropagation()}
+            role="dialog"
+            aria-modal="true"
+            aria-labelledby="whatsapp-modal-title"
           >
-            <div className="admin-modal-header">
-              <h2>Share Campaign via WhatsApp</h2>
-              <button className="admin-modal-close-btn" onClick={() => setWhatsAppModalOpen(false)} aria-label="Close modal">
+            <div className="admin-modal-header modal-header">
+              <h2 id="whatsapp-modal-title" style={{ margin: 0, fontSize: '20px', fontFamily: 'Cinzel, serif', color: 'var(--gold)' }}>Share Campaign via WhatsApp</h2>
+              <button className="admin-modal-close-btn modal-close" onClick={() => setWhatsAppModalOpen(false)} aria-label="Close modal">
                 <X size={20} />
               </button>
             </div>
 
-            <div className="admin-form">
+            <div className="admin-form modal-body admin-modal-body">
               <div className="admin-form-group">
                 <label>Recipient WhatsApp Number (International Format) *</label>
                 <input
@@ -1058,7 +1138,7 @@ export default function NewsletterManager() {
                 </div>
               )}
 
-              <div className="admin-modal-actions" style={{ marginTop: '20px' }}>
+              <div className="admin-modal-actions modal-footer admin-modal-footer" style={{ marginTop: '20px' }}>
                 <button type="button" className="btn btn-outline" onClick={() => setWhatsAppModalOpen(false)}>
                   Cancel
                 </button>
