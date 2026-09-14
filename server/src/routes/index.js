@@ -15,6 +15,7 @@ import uploadRoutes from './uploadRoutes.js';
 import pageRoutes from './pageRoutes.js';
 import partnerRoutes from './partnerRoutes.js';
 import transformationRoutes from './transformationRoutes.js';
+import * as settingController from '../controllers/settingController.js';
 
 import mongoose from 'mongoose';
 import Collection from '../models/Collection.js';
@@ -131,5 +132,6 @@ router.use('/upload', uploadRoutes);
 router.use('/pages', pageRoutes);
 router.use('/partners', partnerRoutes);
 router.use('/transformations', transformationRoutes);
+router.get('/catalogue', settingController.getCatalogue);
 
 export default router;

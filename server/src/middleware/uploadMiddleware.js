@@ -72,6 +72,92 @@ export const uploadReviewImages = multer({
   fileFilter: reviewImageFilter,
 });
 
+// Strict PDF-only file filter for official architectural catalogue
+const cataloguePdfFilter = (req, file, cb) => {
+  const ext = path.extname(file.originalname).toLowerCase();
+  const allowedExtensions = ['.pdf'];
+  const allowedMimeTypes = ['application/pdf', 'application/x-pdf'];
+
+  if (!allowedExtensions.includes(ext)) {
+    const err = new Error(`Unsupported file type (${ext}). Only official PDF documents (.pdf) are permitted.`);
+    err.statusCode = 400;
+    return cb(err, false);
+  }
+
+  if (file.mimetype && !allowedMimeTypes.includes(file.mimetype.toLowerCase())) {
+    const err = new Error(`Unsupported MIME type (${file.mimetype}). Only application/pdf is permitted.`);
+    err.statusCode = 400;
+    return cb(err, false);
+  }
+
+  cb(null, true);
+};
+
+export const uploadCataloguePdfMiddleware = multer({
+  storage,
+  limits: {
+    fileSize: 25 * 1024 * 1024, // 25 MB max limit for comprehensive architectural lighting PDF
+    files: 1,
+  },
+  fileFilter: cataloguePdfFilter,
+});
+
+/**
+ * Validates PDF magic bytes (%PDF-) on memory buffer
+ */
+export const validatePdfBuffer = (buffer) => {
+  if (!buffer || !Buffer.isBuffer(buffer) || buffer.length < 5) {
+    const error = new Error('Invalid file structure. File is too small or missing buffer content.');
+    error.statusCode = 400;
+    throw error;
+  }
+  const magic = buffer.subarray(0, 5).toString('ascii');
+  if (magic !== '%PDF-') {
+    const error = new Error('Invalid PDF file structure. File signature does not match PDF specification (%PDF-).');
+    error.statusCode = 400;
+    throw error;
+  }
+  return true;
+};
+
+export const _uploadDeps = {
+  cloudinary,
+};
+
+/**
+ * Upload a catalogue PDF memory buffer directly to Cloudinary and capture actual resource_type
+ */
+export const uploadCatalogueStreamToCloudinary = (fileBuffer, originalname, mimetype) => {
+  return new Promise((resolve, reject) => {
+    const folder = process.env.CLOUDINARY_FOLDER || 'veloura_lighting';
+    const uploadStream = _uploadDeps.cloudinary.uploader.upload_stream(
+      {
+        folder,
+        resource_type: 'auto',
+      },
+      (error, result) => {
+        if (error) {
+          return reject(error);
+        }
+        resolve({
+          url: result.secure_url,
+          publicId: result.public_id,
+          resourceType: result.resource_type || 'image',
+          bytes: result.bytes || fileBuffer.length,
+          format: result.format || 'pdf',
+          filename: originalname,
+          mimeType: mimetype,
+        });
+      }
+    );
+
+    const stream = new Readable();
+    stream.push(fileBuffer);
+    stream.push(null);
+    stream.pipe(uploadStream);
+  });
+};
+
 /**
  * Upload a memory buffer stream directly to Cloudinary
  */

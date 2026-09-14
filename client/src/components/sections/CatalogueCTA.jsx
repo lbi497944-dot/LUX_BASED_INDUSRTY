@@ -1,23 +1,35 @@
 import { Link } from 'react-router-dom';
-import { Download, ArrowUpRight } from 'lucide-react';
+import { Download, ArrowUpRight, MessageCircle } from 'lucide-react';
 import { useSettings } from '../../context/SettingsContext';
-import { siteConfig } from '../../seo/seoConfig';
+import { siteConfig, getCatalogueWhatsAppMessage, getCatalogueDownloadUrl } from '../../seo/seoConfig';
 
 export default function CatalogueCTA({ content = {} } = {}) {
   const { settings } = useSettings();
-  const effectiveCatalogueUrl = (content?.primaryBtnUrl || settings?.catalogueUrl || siteConfig.catalogueUrl || '').trim();
 
-  // Valid real catalogue: MUST be an explicit external HTTP/HTTPS URL
-  const hasRealCatalogue =
-    effectiveCatalogueUrl.startsWith('http://') || effectiveCatalogueUrl.startsWith('https://');
+  // The global catalogue system is AUTHORITATIVE.
+  // Page Builder primaryBtnUrl or legacy settings.catalogueUrl must NOT override the active state or inject stale URLs.
+  const globalCatalogueUrl = (settings?.catalogue?.url || '').trim();
+  const isVelouraUrl = /veloura/i.test(globalCatalogueUrl);
+  const hasRealCatalogue = Boolean(
+    globalCatalogueUrl &&
+    !isVelouraUrl &&
+    (globalCatalogueUrl.startsWith('http://') || globalCatalogueUrl.startsWith('https://'))
+  );
+
+  const rawFilename = settings?.catalogue?.originalFilename || 'LUX_BASED_INDUSTRY_Catalogue_2026.pdf';
+  const downloadUrl = hasRealCatalogue ? getCatalogueDownloadUrl(globalCatalogueUrl, rawFilename) : '';
+
+  // WhatsApp concierge destination & prefilled message
+  const cleanNumber = (settings?.whatsappNumberClean || settings?.whatsapp || siteConfig.whatsAppNumber || '').replace(/[^0-9]/g, '');
+  const brandName = settings?.brandName || 'LUX BASED INDUSTRY';
+  const whatsappMsg = getCatalogueWhatsAppMessage(brandName);
+  const whatsappUrl = cleanNumber ? `https://wa.me/${cleanNumber}?text=${encodeURIComponent(whatsappMsg)}` : '';
 
   const eyebrow = content?.eyebrow || '2026 ARCHITECTURAL SPECIFICATION';
   const heading = content?.heading || 'Explore The 2026 Collection';
   const body =
     content?.body ||
     'Request our comprehensive luminaire catalogue and architectural specification guide featuring technical dimensions, photometrics, material patinas, and installation guidelines for interior designers and architects.';
-  const btnText =
-    content?.primaryBtnText || (hasRealCatalogue ? 'DOWNLOAD CATALOGUE (PDF)' : 'REQUEST SPECIFICATION CATALOGUE');
 
   return (
     <section className="section catalogue-cta-section">
@@ -31,20 +43,32 @@ export default function CatalogueCTA({ content = {} } = {}) {
           <div className="catalogue-action">
             {hasRealCatalogue ? (
               <a
-                href={effectiveCatalogueUrl}
+                href={downloadUrl}
+                download={rawFilename}
                 target="_blank"
                 rel="noopener noreferrer"
                 className="btn btn-gold"
+                title={`Download ${rawFilename}`}
               >
-                <Download size={18} /> {btnText} <ArrowUpRight size={16} />
+                <Download size={18} /> {content?.primaryBtnText || 'DOWNLOAD CATALOGUE (PDF)'} <ArrowUpRight size={16} />
+              </a>
+            ) : whatsappUrl ? (
+              <a
+                href={whatsappUrl}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="btn btn-gold"
+                title="Request official architectural catalogue via WhatsApp Concierge"
+              >
+                <MessageCircle size={18} /> {content?.primaryBtnText || 'REQUEST CATALOGUE ON WHATSAPP'} <ArrowUpRight size={16} />
               </a>
             ) : (
               <Link
-                to={content?.primaryBtnUrl || '/consultation'}
+                to="/contact"
                 className="btn btn-gold"
-                title="Request 2026 Architectural Specification Catalogue via Private Consultation"
+                title="Contact our studio to request the 2026 specification catalogue"
               >
-                <Download size={18} /> {btnText} <ArrowUpRight size={16} />
+                <Download size={18} /> {content?.primaryBtnText || 'REQUEST SPECIFICATION CATALOGUE'} <ArrowUpRight size={16} />
               </Link>
             )}
           </div>

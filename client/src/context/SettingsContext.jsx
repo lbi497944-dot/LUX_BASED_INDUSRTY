@@ -17,6 +17,13 @@ export function SettingsProvider({ children }) {
     whatsappNumberClean: '971508924411',
     address: companyContact?.address || 'Alserkal Avenue, Building 42, Al Quoz 1, Dubai, United Arab Emirates',
     hours: companyContact?.hours || 'Monday – Saturday: 09:00 AM – 07:00 PM GST',
+    catalogue: {
+      url: '',
+      publicId: '',
+      originalFilename: '',
+      bytes: 0,
+      updatedAt: null,
+    },
     catalogueUrl: '',
     locations: [],
     socialLinks: [],

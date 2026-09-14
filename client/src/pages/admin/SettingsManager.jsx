@@ -1,4 +1,4 @@
-import { useState, useEffect, useCallback } from 'react';
+import { useState, useEffect, useCallback, useRef } from 'react';
 import { settingService } from '../../services/settingService';
 import { uploadService } from '../../services/uploadService';
 import { useSettings } from '../../context/SettingsContext';
@@ -23,7 +23,11 @@ import {
   X,
   ExternalLink,
   MessageCircle,
+  FileText,
+  Eye,
+  AlertCircle,
 } from 'lucide-react';
+
 import {
   PLATFORM_CATALOG,
   DEFAULT_BASELINE_PROFILES,
@@ -70,6 +74,15 @@ export default function SettingsManager() {
     city: '',
     country: '',
     businessHours: '',
+    catalogue: {
+      url: '',
+      publicId: '',
+      resourceType: 'image',
+      originalFilename: '',
+      bytes: 0,
+      mimeType: 'application/pdf',
+      updatedAt: null,
+    },
     catalogueUrl: '',
     locations: [],
     socialLinks: [],
@@ -88,6 +101,14 @@ export default function SettingsManager() {
   const [logoMode, setLogoMode] = useState('upload');
   const [logoUploading, setLogoUploading] = useState(false);
   const [logoError, setLogoError] = useState(null);
+
+  // Catalogue state
+  const catalogueFileInputRef = useRef(null);
+  const [catalogueUploading, setCatalogueUploading] = useState(false);
+  const [catalogueError, setCatalogueError] = useState(null);
+  const [showDeleteCatalogueModal, setShowDeleteCatalogueModal] = useState(false);
+  const [showReplaceCatalogueModal, setShowReplaceCatalogueModal] = useState(false);
+  const [pendingCatalogueFile, setPendingCatalogueFile] = useState(null);
 
   // Locations modal & delete state
   const [isLocationModalOpen, setIsLocationModalOpen] = useState(false);
@@ -156,7 +177,16 @@ export default function SettingsManager() {
       city: sourceSettings.city || 'Dubai',
       country: sourceSettings.country || 'United Arab Emirates',
       businessHours: sourceSettings.businessHours || 'Monday – Saturday: 09:00 AM – 07:00 PM GST',
-      catalogueUrl: sourceSettings.catalogueUrl || '',
+      catalogue: sourceSettings.catalogue || {
+        url: sourceSettings.catalogueUrl || '',
+        publicId: '',
+        resourceType: 'image',
+        originalFilename: '',
+        bytes: 0,
+        mimeType: 'application/pdf',
+        updatedAt: null,
+      },
+      catalogueUrl: sourceSettings.catalogue?.url || sourceSettings.catalogueUrl || '',
       locations: Array.isArray(sourceSettings.locations) ? sourceSettings.locations : [],
       socialLinks: normalizedSocialLinks,
       defaultSeo: {
@@ -257,6 +287,110 @@ export default function SettingsManager() {
       logoPublicId: '',
     }));
     setLogoError(null);
+  };
+
+  // Catalogue PDF Management Handlers
+  const executeCatalogueUpload = async (file) => {
+    try {
+      setCatalogueUploading(true);
+      setCatalogueError(null);
+      const uploadFormData = new FormData();
+      uploadFormData.append('file', file);
+      const res = await settingService.uploadCatalogue(uploadFormData);
+      if (res?.data?.catalogue) {
+        setFormData((prev) => ({
+          ...prev,
+          catalogue: res.data.catalogue,
+          catalogueUrl: res.data.catalogue.url,
+        }));
+        await refreshSettings();
+        setToast({
+          type: 'success',
+          title: 'Catalogue PDF Uploaded',
+          message: `${res.data.catalogue.originalFilename || 'Catalogue'} is now live and downloadable.`,
+        });
+      }
+    } catch (err) {
+      const msg = err?.message || 'Failed to upload catalogue PDF.';
+      setCatalogueError(msg);
+      setToast({
+        type: 'error',
+        title: 'Upload Failed',
+        message: msg,
+      });
+    } finally {
+      setCatalogueUploading(false);
+      setPendingCatalogueFile(null);
+      setShowReplaceCatalogueModal(false);
+      if (catalogueFileInputRef.current) {
+        catalogueFileInputRef.current.value = '';
+      }
+    }
+  };
+
+  const handleCatalogueFileSelect = (e) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+
+    setCatalogueError(null);
+
+    const ext = file.name.substring(file.name.lastIndexOf('.')).toLowerCase();
+    if (ext !== '.pdf') {
+      setCatalogueError('Unsupported format. Only official PDF documents (.pdf) are permitted.');
+      e.target.value = '';
+      return;
+    }
+
+    if (file.size > 25 * 1024 * 1024) {
+      setCatalogueError('File size exceeds the 25 MB limit.');
+      e.target.value = '';
+      return;
+    }
+
+    if (formData.catalogue?.url) {
+      setPendingCatalogueFile(file);
+      setShowReplaceCatalogueModal(true);
+    } else {
+      executeCatalogueUpload(file);
+    }
+  };
+
+  const handleDeleteCatalogue = async () => {
+    try {
+      setCatalogueUploading(true);
+      setCatalogueError(null);
+      await settingService.deleteCatalogue();
+      setFormData((prev) => ({
+        ...prev,
+        catalogue: {
+          url: '',
+          publicId: '',
+          resourceType: 'image',
+          originalFilename: '',
+          bytes: 0,
+          mimeType: 'application/pdf',
+          updatedAt: null,
+        },
+        catalogueUrl: '',
+      }));
+      await refreshSettings();
+      setToast({
+        type: 'success',
+        title: 'Catalogue Removed',
+        message: 'Active catalogue PDF deleted. Public CTA switched to WhatsApp concierge.',
+      });
+    } catch (err) {
+      const msg = err?.message || 'Failed to delete catalogue.';
+      setCatalogueError(msg);
+      setToast({
+        type: 'error',
+        title: 'Delete Failed',
+        message: msg,
+      });
+    } finally {
+      setCatalogueUploading(false);
+      setShowDeleteCatalogueModal(false);
+    }
   };
 
   // Location CRUD operations
@@ -970,17 +1104,187 @@ export default function SettingsManager() {
               </label>
             </div>
 
-            <label>
-              CATALOGUE DOWNLOAD PATH / URL
-              <input
-                type="text"
-                value={formData.catalogueUrl}
-                onChange={(e) => updateField('catalogueUrl', e.target.value)}
-                placeholder="/downloads/LBI_Catalogue_2026.pdf"
-              />
-            </label>
           </div>
         </div>
+
+        {/* Panel 3: Architectural Specification Catalogue (PDF) */}
+        <div className="admin-card-panel">
+          <div className="panel-head" style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+            <div>
+              <h3>Architectural Specification Catalogue (PDF)</h3>
+              <p style={{ fontSize: '12px', color: 'var(--text-muted)', margin: 0 }}>
+                Manage the official lighting specification catalogue PDF for client download across the website.
+              </p>
+            </div>
+            {formData.catalogue?.url ? (
+              <span className="badge badge-active" style={{ display: 'inline-flex', alignItems: 'center', gap: '5px' }}>
+                <CheckCircle2 size={12} /> ACTIVE CATALOGUE
+              </span>
+            ) : (
+              <span className="badge badge-inactive" style={{ display: 'inline-flex', alignItems: 'center', gap: '5px' }}>
+                <XCircle size={12} /> NO CATALOGUE
+              </span>
+            )}
+          </div>
+
+          <div style={{ padding: '20px 24px' }}>
+            <input
+              type="file"
+              ref={catalogueFileInputRef}
+              accept=".pdf,application/pdf"
+              style={{ display: 'none' }}
+              onChange={handleCatalogueFileSelect}
+            />
+
+            {catalogueError && (
+              <div
+                style={{
+                  marginBottom: '16px',
+                  padding: '10px 14px',
+                  borderRadius: '4px',
+                  backgroundColor: 'rgba(239, 68, 68, 0.1)',
+                  border: '1px solid rgba(239, 68, 68, 0.3)',
+                  color: '#ef4444',
+                  fontSize: '13px',
+                  display: 'flex',
+                  alignItems: 'center',
+                  gap: '8px',
+                }}
+              >
+                <AlertCircle size={16} />
+                <span>{catalogueError}</span>
+              </div>
+            )}
+
+            {formData.catalogue?.url ? (
+              <div
+                style={{
+                  display: 'flex',
+                  justifyContent: 'space-between',
+                  alignItems: 'center',
+                  padding: '16px 20px',
+                  backgroundColor: 'rgba(255, 255, 255, 0.03)',
+                  border: '1px solid rgba(230, 199, 122, 0.25)',
+                  borderRadius: '6px',
+                  flexWrap: 'wrap',
+                  gap: '16px',
+                }}
+              >
+                <div style={{ display: 'flex', alignItems: 'center', gap: '14px' }}>
+                  <div
+                    style={{
+                      width: '44px',
+                      height: '44px',
+                      borderRadius: '6px',
+                      backgroundColor: 'rgba(230, 199, 122, 0.1)',
+                      border: '1px solid rgba(230, 199, 122, 0.3)',
+                      display: 'flex',
+                      alignItems: 'center',
+                      justifyContent: 'center',
+                      color: 'var(--gold)',
+                    }}
+                  >
+                    <FileText size={22} />
+                  </div>
+                  <div>
+                    <div style={{ fontWeight: 600, fontSize: '15px', color: 'var(--white)' }}>
+                      {formData.catalogue.originalFilename || 'LUX_BASED_INDUSTRY_Catalogue_2026.pdf'}
+                    </div>
+                    <div style={{ fontSize: '12px', color: 'var(--text-muted)', marginTop: '2px' }}>
+                      {formData.catalogue.bytes
+                        ? `${(formData.catalogue.bytes / (1024 * 1024)).toFixed(2)} MB`
+                        : 'PDF Document'}{' '}
+                      • Updated{' '}
+                      {formData.catalogue.updatedAt
+                        ? new Date(formData.catalogue.updatedAt).toLocaleDateString('en-US', {
+                            year: 'numeric',
+                            month: 'short',
+                            day: 'numeric',
+                            hour: '2-digit',
+                            minute: '2-digit',
+                          })
+                        : 'Recently'}
+                    </div>
+                  </div>
+                </div>
+
+                <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
+                  <a
+                    href={formData.catalogue.url}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="btn btn-secondary btn-sm"
+                    title="Open active catalogue in new tab"
+                  >
+                    <Eye size={14} /> VIEW PDF
+                  </a>
+
+                  <button
+                    type="button"
+                    className="btn btn-gold btn-sm"
+                    onClick={() => catalogueFileInputRef.current?.click()}
+                    disabled={catalogueUploading}
+                  >
+                    {catalogueUploading ? (
+                      <>
+                        <Loader2 size={14} className="spin-icon" /> UPLOADING...
+                      </>
+                    ) : (
+                      <>
+                        <Upload size={14} /> REPLACE PDF
+                      </>
+                    )}
+                  </button>
+
+                  <button
+                    type="button"
+                    className="btn btn-danger btn-sm"
+                    onClick={() => setShowDeleteCatalogueModal(true)}
+                    disabled={catalogueUploading}
+                    title="Remove catalogue PDF"
+                  >
+                    <Trash2 size={14} /> REMOVE
+                  </button>
+                </div>
+              </div>
+            ) : (
+              <div
+                style={{
+                  padding: '24px 20px',
+                  backgroundColor: 'rgba(255, 255, 255, 0.02)',
+                  border: '1px dashed rgba(230, 199, 122, 0.25)',
+                  borderRadius: '6px',
+                  textAlign: 'center',
+                }}
+              >
+                <FileText size={32} style={{ color: 'var(--gold)', margin: '0 auto 12px', display: 'block', opacity: 0.8 }} />
+                <h4 style={{ margin: '0 0 6px', fontSize: '15px', color: 'var(--white)' }}>
+                  No Catalogue Uploaded
+                </h4>
+                <p style={{ margin: '0 auto 16px', fontSize: '13px', color: 'var(--text-muted)', maxWidth: '540px', lineHeight: 1.5 }}>
+                  When no catalogue is uploaded, public website CTAs automatically redirect clients to the studio WhatsApp concierge with a prefilled specification request. Upload an official PDF (up to 25 MB) to enable direct public downloads.
+                </p>
+                <button
+                  type="button"
+                  className="btn btn-gold btn-sm"
+                  onClick={() => catalogueFileInputRef.current?.click()}
+                  disabled={catalogueUploading}
+                >
+                  {catalogueUploading ? (
+                    <>
+                      <Loader2 size={14} className="spin-icon" /> UPLOADING PDF...
+                    </>
+                  ) : (
+                    <>
+                      <Upload size={14} /> UPLOAD CATALOGUE PDF (MAX 25 MB)
+                    </>
+                  )}
+                </button>
+              </div>
+            )}
+          </div>
+        </div>
+
 
         {/* Panel 3: Showrooms & Locations */}
         <div className="admin-card-panel">
@@ -1306,7 +1610,32 @@ export default function SettingsManager() {
           )}
         </div>
       </form>
+
+      {/* Modal: Delete Catalogue Confirmation */}
+      <ModalConfirm
+        isOpen={showDeleteCatalogueModal}
+        title="Remove Catalogue PDF"
+        message="Are you sure you want to remove the active catalogue PDF? All public catalogue CTAs across the website will immediately switch to routing client inquiries to the studio WhatsApp concierge."
+        confirmText="Remove PDF"
+        onConfirm={handleDeleteCatalogue}
+        onCancel={() => setShowDeleteCatalogueModal(false)}
+        loading={catalogueUploading}
+      />
+
+      {/* Modal: Replace Catalogue Confirmation */}
+      <ModalConfirm
+        isOpen={showReplaceCatalogueModal}
+        title="Replace Active Catalogue PDF"
+        message={`This will upload "${pendingCatalogueFile?.name}" and immediately replace the active catalogue PDF on the live website. Continue?`}
+        confirmText="Replace Catalogue"
+        onConfirm={() => executeCatalogueUpload(pendingCatalogueFile)}
+        onCancel={() => {
+          setShowReplaceCatalogueModal(false);
+          setPendingCatalogueFile(null);
+          if (catalogueFileInputRef.current) catalogueFileInputRef.current.value = '';
+        }}
+        loading={catalogueUploading}
+      />
     </div>
   );
 }
-

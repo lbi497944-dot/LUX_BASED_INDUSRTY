@@ -1,5 +1,16 @@
+import path from 'path';
 import SiteSetting from '../models/SiteSetting.js';
-import { deleteCloudinaryAsset } from '../middleware/uploadMiddleware.js';
+import {
+  deleteCloudinaryAsset,
+  validatePdfBuffer,
+  uploadCatalogueStreamToCloudinary,
+} from '../middleware/uploadMiddleware.js';
+
+export const _deps = {
+  SiteSetting,
+  deleteCloudinaryAsset,
+  uploadCatalogueStreamToCloudinary,
+};
 
 export const validateSafeSocialUrl = (url) => {
   if (!url || typeof url !== 'string') return false;
@@ -118,9 +129,37 @@ export const getSiteSettings = async () => {
     modified = true;
   }
 
-  // 3. Catalogue URL normalization: remove broken/legacy Veloura catalogue link
+  // 3. Catalogue normalization: ensure structured catalogue object & remove broken/legacy Veloura links
+  if (!settings.catalogue || typeof settings.catalogue !== 'object') {
+    settings.catalogue = {
+      url: '',
+      publicId: '',
+      resourceType: 'image',
+      originalFilename: '',
+      bytes: 0,
+      mimeType: 'application/pdf',
+      updatedAt: null,
+    };
+  }
+
+  if (settings.catalogue?.url && /veloura/i.test(settings.catalogue.url)) {
+    settings.catalogue.url = '';
+    settings.catalogue.publicId = '';
+    settings.catalogue.originalFilename = '';
+    settings.catalogue.bytes = 0;
+    settings.catalogue.updatedAt = null;
+    modified = true;
+  }
+
   if (settings.catalogueUrl && /veloura/i.test(settings.catalogueUrl)) {
     settings.catalogueUrl = '';
+    modified = true;
+  }
+
+  // Backward compatibility: ensure catalogueUrl matches active catalogue.url
+  const activeCatalogueUrl = settings.catalogue?.url || '';
+  if (settings.catalogueUrl !== activeCatalogueUrl) {
+    settings.catalogueUrl = activeCatalogueUrl;
     modified = true;
   }
 
@@ -166,6 +205,7 @@ export const getSiteSettings = async () => {
           $set: {
             email: settings.email,
             brandName: settings.brandName,
+            catalogue: settings.catalogue,
             catalogueUrl: settings.catalogueUrl,
             defaultSeo: settings.defaultSeo,
             socialLinks: settings.socialLinks,
@@ -358,4 +398,145 @@ export const updateSiteSettings = async (updateData) => {
   }
 
   return updatedSettings;
+};
+
+/**
+ * Upload or replace official architectural lighting catalogue PDF with transactional lifecycle
+ */
+export const uploadCataloguePdf = async (file) => {
+  if (!file || !file.buffer) {
+    const error = new Error('No PDF file was provided in the upload request.');
+    error.statusCode = 400;
+    throw error;
+  }
+
+  // Validate magic bytes (%PDF-) to prevent spoofed/malformed uploads
+  validatePdfBuffer(file.buffer);
+
+  // Sanitize filename
+  const rawName = file.originalname || 'LUX_BASED_INDUSTRY_Catalogue_2026.pdf';
+  const sanitizedFilename = path.basename(rawName).replace(/[^a-zA-Z0-9._-]/g, '_');
+
+  let existingSettings = await _deps.SiteSetting.findOne();
+  if (!existingSettings) {
+    existingSettings = await _deps.SiteSetting.create({});
+  }
+
+  // Identify old asset to delete after DB commit
+  const oldAsset = existingSettings.catalogue?.publicId
+    ? {
+        publicId: existingSettings.catalogue.publicId.trim(),
+        resourceType: existingSettings.catalogue.resourceType || 'image',
+      }
+    : null;
+
+  // Stream upload memory buffer to Cloudinary
+  const uploadResult = await _deps.uploadCatalogueStreamToCloudinary(
+    file.buffer,
+    sanitizedFilename,
+    file.mimetype || 'application/pdf'
+  );
+
+  const newCatalogue = {
+    url: uploadResult.url,
+    publicId: uploadResult.publicId,
+    resourceType: uploadResult.resourceType || 'image',
+    originalFilename: sanitizedFilename,
+    bytes: uploadResult.bytes || file.size || (file.buffer ? file.buffer.length : 0),
+    mimeType: 'application/pdf',
+    updatedAt: new Date(),
+  };
+
+  let updatedSettings;
+  try {
+    updatedSettings = await _deps.SiteSetting.findByIdAndUpdate(
+      existingSettings._id,
+      {
+        $set: {
+          catalogue: newCatalogue,
+          catalogueUrl: uploadResult.url,
+        },
+      },
+      { new: true, runValidators: true }
+    );
+  } catch (dbErr) {
+    // Rollback: Clean up newly uploaded Cloudinary asset if DB write fails
+    if (uploadResult.publicId) {
+      try {
+        await _deps.deleteCloudinaryAsset(uploadResult.publicId, {
+          resource_type: uploadResult.resourceType,
+        });
+      } catch (rollbackErr) {
+        console.error('[Catalogue Upload Rollback Error] Failed to delete orphaned asset:', rollbackErr.message);
+      }
+    }
+    throw dbErr;
+  }
+
+  // Only AFTER successful DB update, clean up old Cloudinary asset
+  if (oldAsset && oldAsset.publicId && oldAsset.publicId !== uploadResult.publicId) {
+    try {
+      await _deps.deleteCloudinaryAsset(oldAsset.publicId, {
+        resource_type: oldAsset.resourceType,
+      });
+    } catch (cleanupErr) {
+      console.warn(
+        `[Catalogue Old Asset Cleanup Warning] Failed to delete replaced asset ${oldAsset.publicId}:`,
+        cleanupErr.message
+      );
+    }
+  }
+
+  return updatedSettings.catalogue;
+};
+
+/**
+ * Remove active catalogue PDF and clean up Cloudinary asset
+ */
+export const deleteCataloguePdf = async () => {
+  let existingSettings = await _deps.SiteSetting.findOne();
+  if (!existingSettings) {
+    return { success: true, message: 'No active catalogue to delete.' };
+  }
+
+  const oldAsset = existingSettings.catalogue?.publicId
+    ? {
+        publicId: existingSettings.catalogue.publicId.trim(),
+        resourceType: existingSettings.catalogue.resourceType || 'image',
+      }
+    : null;
+
+  await _deps.SiteSetting.findByIdAndUpdate(
+    existingSettings._id,
+    {
+      $set: {
+        catalogue: {
+          url: '',
+          publicId: '',
+          resourceType: 'image',
+          originalFilename: '',
+          bytes: 0,
+          mimeType: 'application/pdf',
+          updatedAt: null,
+        },
+        catalogueUrl: '',
+      },
+    },
+    { new: true }
+  );
+
+  if (oldAsset && oldAsset.publicId) {
+    try {
+      await _deps.deleteCloudinaryAsset(oldAsset.publicId, {
+        resource_type: oldAsset.resourceType,
+      });
+    } catch (cleanupErr) {
+      console.warn(
+        `[Catalogue Delete Cleanup Warning] Failed to delete asset ${oldAsset.publicId}:`,
+        cleanupErr.message
+      );
+    }
+  }
+
+  return { success: true, message: 'Catalogue removed successfully.' };
 };

@@ -48,6 +48,29 @@ export const getProjectWhatsAppMessage = (projectTitle, companyName = 'LUX BASED
   return `Hello ${companyName}, I'm inspired by your ${projectTitle} project and would like to discuss a similar lighting concept for my space.`;
 };
 
+export const getCatalogueWhatsAppMessage = (companyName = 'LUX BASED INDUSTRY') => {
+  return `Hello ${companyName}, I would like to receive your latest lighting catalogue PDF. Please send it to me.`;
+};
+
+/**
+ * Generates an attachment delivery URL for Cloudinary or direct PDF assets.
+ * Cloudinary supports fl_attachment flag to deliver Content-Disposition: attachment,
+ * prompting genuine browser download across cross-origin requests.
+ */
+export const getCatalogueDownloadUrl = (rawUrl, targetFilename = 'LUX_BASED_INDUSTRY_Catalogue_2026.pdf') => {
+  if (!rawUrl || typeof rawUrl !== 'string') return '';
+  const trimmed = rawUrl.trim();
+  if (!trimmed.startsWith('http://') && !trimmed.startsWith('https://')) return trimmed;
+
+  if (trimmed.includes('res.cloudinary.com') && trimmed.includes('/upload/')) {
+    if (trimmed.includes('/fl_attachment')) return trimmed;
+    const cleanName = (targetFilename || 'LBI_Catalogue_2026.pdf').replace(/[^a-zA-Z0-9._-]/g, '_');
+    return trimmed.replace('/upload/', `/upload/fl_attachment:${cleanName}/`);
+  }
+
+  return trimmed;
+};
+
 export const pageSeoData = {
   home: {
     title: 'LUX BASED INDUSTRY | Luxury Architectural Lighting in Dubai',

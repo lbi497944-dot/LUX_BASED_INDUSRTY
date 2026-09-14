@@ -103,6 +103,41 @@ const siteSettingSchema = new mongoose.Schema(
       type: String,
       default: 'Monday – Saturday: 09:00 AM – 07:00 PM GST',
     },
+    catalogue: {
+      url: {
+        type: String,
+        default: '',
+        trim: true,
+      },
+      publicId: {
+        type: String,
+        default: '',
+        trim: true,
+      },
+      resourceType: {
+        type: String,
+        default: 'image',
+        enum: ['image', 'raw'],
+      },
+      originalFilename: {
+        type: String,
+        default: '',
+        trim: true,
+      },
+      bytes: {
+        type: Number,
+        default: 0,
+      },
+      mimeType: {
+        type: String,
+        default: 'application/pdf',
+        trim: true,
+      },
+      updatedAt: {
+        type: Date,
+        default: null,
+      },
+    },
     catalogueUrl: {
       type: String,
       default: '',
