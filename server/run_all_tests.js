@@ -22,6 +22,7 @@ const testSuites = [
   { name: 'Phase 5D Admin UI & Code Audit', file: 'verify_phase5d.js' },
   { name: 'Phase 5F SEO & Conversion Audit Suite', file: 'test_phase5f_seo_conversion.js' },
   { name: 'Phase 5G Security & Hardening Suite', file: 'test_phase5g_security.js' },
+  { name: 'Phase 5H Newsletter & Notifications Suite', file: 'test_phase5h_newsletter_notifications.js' },
 ];
 
 console.log('========================================================');

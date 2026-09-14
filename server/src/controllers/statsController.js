@@ -9,3 +9,12 @@ export const getStats = async (req, res, next) => {
     next(error);
   }
 };
+
+export const getNotificationsSummary = async (req, res, next) => {
+  try {
+    const summary = await statsService.getNotificationSummary();
+    return successResponse(res, 'Notification summary retrieved.', summary);
+  } catch (error) {
+    next(error);
+  }
+};

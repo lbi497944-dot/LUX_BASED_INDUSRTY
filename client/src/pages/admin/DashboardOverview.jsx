@@ -9,24 +9,34 @@ import {
   CalendarCheck2,
   Mail,
   Send,
+  Star,
   ArrowUpRight,
   Loader2,
   Clock,
   CheckCircle2,
+  AlertCircle,
 } from 'lucide-react';
 import StatusBadge from '../../components/ui/StatusBadge';
 import SEO from '../../components/common/SEO';
+import { useAdminNotifications } from '../../context/NotificationContext';
+
+const taskIconMap = {
+  CalendarCheck2,
+  Mail,
+  Send,
+  Star,
+};
 
 export default function DashboardOverview() {
   const [stats, setStats] = useState(null);
   const [loading, setLoading] = useState(true);
+  const { notifications, tasks, refreshNotifications } = useAdminNotifications();
 
   const fetchStats = async () => {
     try {
       const res = await statsService.getDashboardStats();
       setStats(res.data);
     } catch {
-      // Fallback empty stats
       setStats({
         counts: {
           totalProducts: 4,
@@ -54,6 +64,8 @@ export default function DashboardOverview() {
     try {
       await consultationService.updateStatus(id, newStatus);
       fetchStats();
+      refreshNotifications();
+      window.dispatchEvent(new Event('consultations_updated'));
     } catch (err) {
       console.error(err);
     }
@@ -69,6 +81,7 @@ export default function DashboardOverview() {
   }
 
   const counts = stats?.counts || {};
+  const activeTasks = (tasks || []).filter((t) => t.count > 0);
 
   return (
     <div className="admin-page">
@@ -86,6 +99,58 @@ export default function DashboardOverview() {
         </div>
       </div>
 
+      {/* TODAY'S TASKS SECTION */}
+      <div className="admin-tasks-section">
+        <div className="panel-head" style={{ marginBottom: '14px', borderBottom: 'none', paddingBottom: 0 }}>
+          <h3 style={{ fontSize: '18px', display: 'flex', alignItems: 'center', gap: '8px' }}>
+            <span>Today&apos;s Actionable Tasks</span>
+            {activeTasks.length > 0 && (
+              <span className="admin-task-count-pill" style={{ fontSize: '11px', height: '22px', minWidth: '22px' }}>
+                {activeTasks.reduce((sum, t) => sum + t.count, 0)}
+              </span>
+            )}
+          </h3>
+        </div>
+
+        {activeTasks.length === 0 ? (
+          <div className="admin-tasks-empty-card">
+            <CheckCircle2 size={24} style={{ color: 'var(--gold)', flexShrink: 0 }} />
+            <div>
+              <strong style={{ color: '#FAF8F1', display: 'block', marginBottom: '2px' }}>You&apos;re all caught up.</strong>
+              <small style={{ color: 'rgba(243, 243, 235, 0.65)' }}>No pending enquiries, consultations, or reviews require immediate attention today.</small>
+            </div>
+          </div>
+        ) : (
+          <div className="admin-tasks-grid">
+            {activeTasks.map((task) => {
+              const Icon = taskIconMap[task.icon] || AlertCircle;
+              return (
+                <Link
+                  key={task.id}
+                  to={task.path}
+                  className="admin-task-card"
+                  aria-label={`${task.title}: ${task.count} items requiring attention. Click to navigate.`}
+                >
+                  <div className="admin-task-card-content">
+                    <div className="admin-task-icon-wrap">
+                      <Icon size={20} />
+                    </div>
+                    <div>
+                      <h4 className="admin-task-title">{task.title}</h4>
+                      <p className="admin-task-desc">{task.description}</p>
+                    </div>
+                  </div>
+                  <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'flex-end', gap: '8px' }}>
+                    <span className="admin-task-count-pill">{task.count}</span>
+                    <ArrowUpRight size={16} style={{ color: 'var(--gold)', opacity: 0.8 }} />
+                  </div>
+                </Link>
+              );
+            })}
+          </div>
+        )}
+      </div>
+
       {/* Metrics Grid */}
       <div className="admin-stats-grid">
         <Link
@@ -99,7 +164,7 @@ export default function DashboardOverview() {
               <CalendarCheck2 size={20} />
             </div>
           </div>
-          <div className="stat-number">{counts.newConsultations || 0}</div>
+          <div className="stat-number">{counts.newConsultations ?? notifications.consultations ?? 0}</div>
           <small className="stat-meta">{counts.totalConsultations || 0} total leads recorded</small>
         </Link>
 
@@ -114,7 +179,7 @@ export default function DashboardOverview() {
               <Mail size={20} />
             </div>
           </div>
-          <div className="stat-number">{counts.newEnquiries || 0}</div>
+          <div className="stat-number">{counts.newEnquiries ?? notifications.enquiries ?? 0}</div>
           <small className="stat-meta">{counts.totalEnquiries || 0} general messages</small>
         </Link>
 
@@ -130,7 +195,7 @@ export default function DashboardOverview() {
             </div>
           </div>
           <div className="stat-number">{counts.totalSubscribers || 0}</div>
-          <small className="stat-meta">Active newsletter readership</small>
+          <small className="stat-meta">{notifications.subscriptions || 0} new today</small>
         </Link>
 
         <Link
@@ -149,7 +214,7 @@ export default function DashboardOverview() {
         </Link>
       </div>
 
-      {/* Split Section: Recent Consultations & Recent Enquiries */}
+      {/* Split Section: Recent Consultations & Quick Shortcuts */}
       <div className="admin-dashboard-split">
         {/* Recent Consultations */}
         <div className="admin-card-panel">
