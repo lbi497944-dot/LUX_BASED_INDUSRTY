@@ -9,7 +9,7 @@ export default function WhatsAppButton() {
   const [showTooltip, setShowTooltip] = useState(false);
 
   useEffect(() => {
-    const isDismissed = sessionStorage.getItem('veloura_wa_tooltip_dismissed');
+    const isDismissed = sessionStorage.getItem('lbi_wa_tooltip_dismissed');
     if (isDismissed) return;
 
     const timer = setTimeout(() => {
@@ -22,7 +22,7 @@ export default function WhatsAppButton() {
   const handleDismiss = (e) => {
     e.stopPropagation();
     setShowTooltip(false);
-    sessionStorage.setItem('veloura_wa_tooltip_dismissed', 'true');
+    sessionStorage.setItem('lbi_wa_tooltip_dismissed', 'true');
   };
 
   const cleanNumber = (settings?.whatsappNumberClean || settings?.whatsapp || siteConfig.whatsAppNumber || '').replace(/[^0-9]/g, '');

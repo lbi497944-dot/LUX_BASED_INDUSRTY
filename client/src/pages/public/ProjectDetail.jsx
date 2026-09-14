@@ -82,7 +82,8 @@ export default function ProjectDetail() {
 
   const whatsappUrl = getWhatsAppLink(
     getProjectWhatsAppMessage(projectTitle, brand),
-    settings?.whatsappNumberClean || settings?.phone
+    settings?.whatsappNumberClean || settings?.whatsapp || settings?.phone,
+    brand
   );
 
   const breadcrumbItems = [

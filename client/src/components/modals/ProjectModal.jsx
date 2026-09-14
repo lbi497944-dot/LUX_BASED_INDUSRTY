@@ -62,7 +62,7 @@ export default function ProjectModal({ project, onClose, onSelectProject, projec
   const hasGallery = Array.isArray(project.gallery) && project.gallery.length > 0;
 
   const whatsappMsg = getProjectWhatsAppMessage(project.title, brand);
-  const whatsappUrl = getWhatsAppLink(whatsappMsg, settings?.whatsappNumberClean || settings?.phone);
+  const whatsappUrl = getWhatsAppLink(whatsappMsg, settings?.whatsappNumberClean || settings?.whatsapp || settings?.phone, brand);
 
   return (
     <AnimatePresence>

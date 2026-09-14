@@ -142,7 +142,7 @@ export default function Consultation() {
             <div className="whatsapp-alt-box" style={{ marginTop: '24px' }}>
               <p className="whatsapp-alt-text">Need immediate guidance?</p>
               <a
-                href={getWhatsAppLink()}
+                href={getWhatsAppLink('', settings?.whatsappNumberClean || settings?.whatsapp || settings?.phone, settings?.brandName || 'LUX BASED INDUSTRY')}
                 target="_blank"
                 rel="noopener noreferrer"
                 className="btn btn-whatsapp btn-full"

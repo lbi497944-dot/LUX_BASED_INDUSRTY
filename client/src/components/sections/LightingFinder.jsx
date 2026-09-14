@@ -178,7 +178,7 @@ export default function LightingFinder({ isOpen, onClose }) {
 
               <div className="finder-results-actions">
                 <a
-                  href={getWhatsAppLink(finderWhatsAppMessage, settings?.whatsappNumberClean || settings?.phone)}
+                  href={getWhatsAppLink(finderWhatsAppMessage, settings?.whatsappNumberClean || settings?.whatsapp || settings?.phone, settings?.brandName || 'LUX BASED INDUSTRY')}
                   target="_blank"
                   rel="noopener noreferrer"
                   className="btn btn-whatsapp"

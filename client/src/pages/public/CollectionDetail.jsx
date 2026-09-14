@@ -63,7 +63,8 @@ export default function CollectionDetail() {
   const collectionImage = collection.heroImage || collection.image;
   const collectionWhatsAppUrl = getWhatsAppLink(
     getCollectionWhatsAppMessage(collectionTitle, brand),
-    settings?.whatsappNumberClean || settings?.phone
+    settings?.whatsappNumberClean || settings?.whatsapp || settings?.phone,
+    brand
   );
 
   const matchedSeo = pageSeoData[collection.slug];
@@ -183,7 +184,8 @@ export default function CollectionDetail() {
             {relatedProducts.map((prod, idx) => {
               const productWhatsAppUrl = getWhatsAppLink(
                 getProductWhatsAppMessage(prod.name, brand),
-                settings?.whatsappNumberClean || settings?.phone
+                settings?.whatsappNumberClean || settings?.whatsapp || settings?.phone,
+                brand
               );
               return (
                 <Reveal key={prod._id || prod.id || prod.slug || `prod-${idx}`} delay={idx * 0.1}>
