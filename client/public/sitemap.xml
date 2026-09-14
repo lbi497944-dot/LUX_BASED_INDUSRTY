@@ -31,6 +31,11 @@
     <priority>0.9</priority>
   </url>
   <url>
+    <loc>https://lux-based-indusrty.vercel.app/review</loc>
+    <changefreq>monthly</changefreq>
+    <priority>0.8</priority>
+  </url>
+  <url>
     <loc>https://lux-based-indusrty.vercel.app/collections/grand-chandeliers</loc>
     <changefreq>monthly</changefreq>
     <priority>0.8</priority>
@@ -81,7 +86,7 @@
     <priority>0.8</priority>
   </url>
   <url>
-    <loc>https://lux-based-indusrty.vercel.app/portfolio/royal-commercial-tower-riyadh</loc>
+    <loc>https://lux-based-indusrty.vercel.app/portfolio/royal-commercial-tower</loc>
     <changefreq>monthly</changefreq>
     <priority>0.8</priority>
   </url>

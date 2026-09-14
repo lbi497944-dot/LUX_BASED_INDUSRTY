@@ -18,7 +18,14 @@ export default function CollectionDetail() {
   const fallbackCol = fallbackCollections.find((c) => c.slug === slug) || fallbackCollections[0];
   const [collection, setCollection] = useState(fallbackCol);
   const [relatedProducts, setRelatedProducts] = useState(
-    fallbackProducts.filter((p) => p.collectionSlug === fallbackCol.slug).slice(0, 4)
+    fallbackProducts
+      .filter(
+        (p) =>
+          p.collectionSlug === fallbackCol.slug &&
+          p.slug !== 'testing' &&
+          p.name?.toLowerCase() !== 'testing'
+      )
+      .slice(0, 4)
   );
 
   useEffect(() => {
@@ -31,7 +38,10 @@ export default function CollectionDetail() {
 
         const prodRes = await productService.getProducts({ collection: slug });
         if (prodRes.data?.length) {
-          setRelatedProducts(prodRes.data.slice(0, 4));
+          const clean = prodRes.data.filter(
+            (p) => p.slug !== 'testing' && p.name?.toLowerCase() !== 'testing'
+          );
+          setRelatedProducts(clean.slice(0, 4));
         }
       } catch {
         // Retain fallback

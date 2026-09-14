@@ -17,7 +17,9 @@ export const getProducts = async (req, res, next) => {
 
 export const getProductBySlug = async (req, res, next) => {
   try {
-    const product = await productService.getProductBySlug(req.params.slug);
+    const isAdmin = Boolean(req.admin && req.admin.role === 'admin');
+    const adminView = isAdmin && (req.query.adminView === 'true' || req.query.adminView === true);
+    const product = await productService.getProductBySlug(req.params.slug, adminView);
     return successResponse(res, 'Product details retrieved.', { product });
   } catch (error) {
     next(error);

@@ -11,7 +11,7 @@ export function SettingsProvider({ children }) {
     tagline: 'Illuminating Luxury Spaces',
     logo: '',
     logoPublicId: '',
-    email: companyContact?.email || 'concierge@luxbasedindustry.com',
+    email: companyContact?.email || 'luxbasedindustries@gmail.com',
     phone: companyContact?.phone || '+971 4 340 8899',
     whatsapp: companyContact?.whatsapp || '+971 50 892 4411',
     whatsappNumberClean: '971508924411',

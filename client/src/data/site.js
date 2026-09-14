@@ -165,7 +165,8 @@ export const projects = [
     scope: 'Table-Focused Micro Spotlights, Acoustic Pendant Systems, Wine Cellar Lighting'
   },
   {
-    id: 'flagship-boutique-riyadh',
+    id: 'royal-commercial-tower',
+    slug: 'royal-commercial-tower',
     title: 'ROYAL COMMERCIAL TOWER',
     location: 'Riyadh, Saudi Arabia',
     category: 'Commercial',
@@ -228,7 +229,7 @@ export const valuesData = [
 
 export const companyContact = {
   address: 'Alserkal Avenue, Building 42, Al Quoz 1, Dubai, United Arab Emirates',
-  email: 'concierge@luxbasedindustry.com',
+  email: 'luxbasedindustries@gmail.com',
   phone: '+971 4 340 8899',
   whatsapp: '+971 50 892 4411',
   hours: 'Monday – Saturday: 09:00 AM – 07:00 PM GST'

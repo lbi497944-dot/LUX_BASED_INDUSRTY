@@ -9,7 +9,7 @@ export const siteConfig = {
   whatsappFormatted: '+971 50 892 4411',
   contact: {
     address: 'Alserkal Avenue, Building 42, Al Quoz 1, Dubai, United Arab Emirates',
-    email: 'concierge@luxbasedindustry.com',
+    email: 'luxbasedindustries@gmail.com',
     phone: '+971 4 340 8899',
     hours: 'Monday – Saturday: 09:00 AM – 07:00 PM GST',
     city: 'Dubai',
@@ -101,5 +101,10 @@ export const pageSeoData = {
     title: 'Book a Lighting Consultation | LUX BASED INDUSTRY Dubai',
     description: 'Book a private lighting consultation with LUX BASED INDUSTRY for villas, hotels, restaurants and commercial architectural lighting projects.',
     path: '/consultation'
+  },
+  review: {
+    title: 'Client Reviews & Testimonials | LUX BASED INDUSTRY Dubai',
+    description: 'Read verified client reviews and share your architectural lighting project experience with LUX BASED INDUSTRY Dubai.',
+    path: '/review'
   }
 };

@@ -18,6 +18,7 @@ import { images } from '../../data/site';
 import PageHero from '../../components/sections/PageHero';
 import Toast from '../../components/common/Toast';
 import SEO from '../../components/common/SEO';
+import { pageSeoData } from '../../seo/seoConfig';
 
 const MAX_IMAGES = 3;
 const MAX_IMAGE_SIZE_BYTES = 5 * 1024 * 1024; // 5 MB
@@ -306,8 +307,8 @@ export default function ReviewUs() {
   return (
     <main className="review-us-page">
       <SEO
-        title="Client Review | Share Your Experience | LUX BASED INDUSTRY"
-        description="Share your experience with LUX BASED INDUSTRY bespoke architectural lighting and custom luxury luminaires."
+        title={pageSeoData.review?.title || 'Client Review | Share Your Experience | LUX BASED INDUSTRY'}
+        description={pageSeoData.review?.description || 'Share your experience with LUX BASED INDUSTRY bespoke architectural lighting and custom luxury luminaires.'}
         canonical="/review"
       />
 

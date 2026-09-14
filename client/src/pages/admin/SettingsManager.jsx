@@ -170,7 +170,7 @@ export default function SettingsManager() {
       tagline: sourceSettings.tagline || 'Illuminating Luxury Spaces',
       logo: sourceSettings.logo || '',
       logoPublicId: sourceSettings.logoPublicId || '',
-      email: sourceSettings.email || 'concierge@luxbasedindustry.com',
+      email: sourceSettings.email || 'luxbasedindustries@gmail.com',
       phone: sourceSettings.phone || '+971 4 340 8899',
       whatsapp: sourceSettings.whatsapp || '+971 50 892 4411',
       address: sourceSettings.address || 'Alserkal Avenue, Building 42, Al Quoz 1, Dubai, UAE',
@@ -1064,7 +1064,7 @@ export default function SettingsManager() {
                   type="email"
                   value={formData.email}
                   onChange={(e) => updateField('email', e.target.value)}
-                  placeholder="concierge@luxbasedindustry.com"
+                  placeholder="luxbasedindustries@gmail.com"
                 />
               </label>
               <label>

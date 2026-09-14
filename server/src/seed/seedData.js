@@ -262,7 +262,7 @@ export const projectsSeed = [
   },
   {
     title: 'ROYAL COMMERCIAL TOWER',
-    slug: 'royal-commercial-tower-riyadh',
+    slug: 'royal-commercial-tower',
     location: 'KAFD, Riyadh, Saudi Arabia',
     country: 'Saudi Arabia',
     category: 'Commercial',

@@ -64,7 +64,7 @@ async function runSettingsWhitelistTests() {
       const req = {
         body: {
           brandName: 'LUX BASED INDUSTRY NEW',
-          email: 'concierge@luxbasedindustry.com',
+          email: 'luxbasedindustries@gmail.com',
           locations: [],
         },
       };
@@ -86,7 +86,7 @@ async function runSettingsWhitelistTests() {
 
       const pass =
         capturedPayload?.brandName === 'LUX BASED INDUSTRY NEW' &&
-        capturedPayload?.email === 'concierge@luxbasedindustry.com' &&
+        capturedPayload?.email === 'luxbasedindustries@gmail.com' &&
         Array.isArray(capturedPayload?.locations) &&
         capturedPayload?.locations.length === 0 &&
         responseData?.success === true;

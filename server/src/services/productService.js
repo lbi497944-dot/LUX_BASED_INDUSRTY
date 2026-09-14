@@ -8,6 +8,8 @@ export const getAllProducts = async (queryParams) => {
   const filter = {};
   if (!adminView) {
     filter.isActive = true;
+    filter.slug = { $ne: 'testing' };
+    filter.name = { $not: /^testing$/i };
   }
 
   if (category && category !== 'ALL') {
@@ -53,8 +55,20 @@ export const getAllProducts = async (queryParams) => {
   };
 };
 
-export const getProductBySlug = async (slug) => {
-  const product = await Product.findOne({ slug }).populate('collectionId');
+export const getProductBySlug = async (slug, adminView = false) => {
+  if (!adminView && (!slug || slug.toLowerCase() === 'testing')) {
+    const error = new Error(`Product not found with slug: ${slug}`);
+    error.statusCode = 404;
+    throw error;
+  }
+
+  const query = { slug };
+  if (!adminView) {
+    query.isActive = true;
+    query.name = { $not: /^testing$/i };
+  }
+
+  const product = await Product.findOne(query).populate('collectionId');
   if (!product) {
     const error = new Error(`Product not found with slug: ${slug}`);
     error.statusCode = 404;

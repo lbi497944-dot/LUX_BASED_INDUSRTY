@@ -3,6 +3,8 @@ import dotenv from 'dotenv';
 import Page from '../models/Page.js';
 import SiteSetting from '../models/SiteSetting.js';
 import FAQ from '../models/FAQ.js';
+import Product from '../models/Product.js';
+import Collection from '../models/Collection.js';
 
 dotenv.config();
 
@@ -710,6 +712,26 @@ export const seedSiteBranding = async () => {
       }
     }
     console.log(`  [BrandingSeeder] Normalized ${faqsUpdated} legacy FAQ documents.`);
+
+    // 3. Showcase placeholder normalization (deactivate demo fixtures without mutating real products)
+    try {
+      const pRes = await Product.updateMany(
+        { $or: [{ slug: 'testing' }, { name: /^testing$/i }] },
+        { $set: { isActive: false } }
+      );
+      if (pRes.modifiedCount > 0) {
+        console.log(`  [BrandingSeeder] Deactivated ${pRes.modifiedCount} demo testing product(s).`);
+      }
+      const cRes = await Collection.updateMany(
+        { $or: [{ slug: 'testing' }, { name: /^testing$/i }] },
+        { $set: { isActive: false } }
+      );
+      if (cRes.modifiedCount > 0) {
+        console.log(`  [BrandingSeeder] Deactivated ${cRes.modifiedCount} demo testing collection(s).`);
+      }
+    } catch (normErr) {
+      console.warn('  [BrandingSeeder Warning] Notice deactivating demo fixtures:', normErr.message);
+    }
   } catch (err) {
     console.warn('[BrandingSeeder Warning] Normalization encountered non-fatal error:', err.message);
   }

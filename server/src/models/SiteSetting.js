@@ -22,7 +22,7 @@ const siteSettingSchema = new mongoose.Schema(
     },
     email: {
       type: String,
-      default: 'concierge@luxbasedindustry.com',
+      default: 'luxbasedindustries@gmail.com',
     },
     phone: {
       type: String,

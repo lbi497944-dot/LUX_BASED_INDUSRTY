@@ -61,10 +61,44 @@ router.get('/sitemap.xml', async (req, res) => {
         .trim()
         .replace(/\/+$/, '') ||
       'https://lux-based-indusrty.vercel.app';
-    const [collections, projects] = await Promise.all([
-      Collection.find({ isActive: true }).select('slug updatedAt'),
+    const CURATED_COLLECTION_SLUGS = [
+      'grand-chandeliers',
+      'architectural-pendants',
+      'smart-ambient-systems',
+      'wall-lighting',
+      'floor-lighting',
+      'custom-solutions',
+    ];
+    const CURATED_PROJECT_SLUGS = [
+      'private-residence-dubai',
+      'the-grand-hotel-doha',
+      'luxury-villa-abu-dhabi',
+      'fine-dining-restaurant-dubai',
+      'royal-commercial-tower',
+    ];
+
+    const [rawCollections, rawProjects] = await Promise.all([
+      Collection.find({ isActive: true, slug: { $ne: 'testing' } }).select('slug updatedAt'),
       Project.find({ isActive: true }).select('slug updatedAt'),
     ]);
+
+    let collections = rawCollections.filter((c) => c && c.slug && c.slug !== 'testing');
+    if (collections.length === 0) {
+      collections = CURATED_COLLECTION_SLUGS.map((slug) => ({ slug }));
+    }
+
+    let projects = rawProjects
+      .filter((p) => p && p.slug && p.slug !== 'testing')
+      .map((p) => {
+        const doc = typeof p.toObject === 'function' ? p.toObject() : p;
+        return {
+          ...doc,
+          slug: doc.slug === 'royal-commercial-tower-riyadh' ? 'royal-commercial-tower' : doc.slug,
+        };
+      });
+    if (projects.length === 0) {
+      projects = CURATED_PROJECT_SLUGS.map((slug) => ({ slug }));
+    }
 
     const staticPages = [
       { path: '', priority: '1.0', changefreq: 'weekly' },
@@ -73,6 +107,7 @@ router.get('/sitemap.xml', async (req, res) => {
       { path: 'about', priority: '0.7', changefreq: 'monthly' },
       { path: 'contact', priority: '0.8', changefreq: 'monthly' },
       { path: 'consultation', priority: '0.9', changefreq: 'weekly' },
+      { path: 'review', priority: '0.8', changefreq: 'monthly' },
     ];
 
     let xml = `<?xml version="1.0" encoding="UTF-8"?>\n`;
@@ -91,7 +126,9 @@ router.get('/sitemap.xml', async (req, res) => {
     for (const col of collections) {
       xml += `  <url>\n`;
       xml += `    <loc>${siteUrl}/collections/${col.slug}</loc>\n`;
-      xml += `    <lastmod>${(col.updatedAt || new Date()).toISOString().split('T')[0]}</lastmod>\n`;
+      if (col.updatedAt) {
+        xml += `    <lastmod>${new Date(col.updatedAt).toISOString().split('T')[0]}</lastmod>\n`;
+      }
       xml += `    <changefreq>monthly</changefreq>\n`;
       xml += `    <priority>0.8</priority>\n`;
       xml += `  </url>\n`;
@@ -101,7 +138,9 @@ router.get('/sitemap.xml', async (req, res) => {
     for (const proj of projects) {
       xml += `  <url>\n`;
       xml += `    <loc>${siteUrl}/portfolio/${proj.slug}</loc>\n`;
-      xml += `    <lastmod>${(proj.updatedAt || new Date()).toISOString().split('T')[0]}</lastmod>\n`;
+      if (proj.updatedAt) {
+        xml += `    <lastmod>${new Date(proj.updatedAt).toISOString().split('T')[0]}</lastmod>\n`;
+      }
       xml += `    <changefreq>monthly</changefreq>\n`;
       xml += `    <priority>0.8</priority>\n`;
       xml += `  </url>\n`;
