@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react';
 import { faqService } from '../../services/faqService';
-import { Plus, Edit2, Trash2, HelpCircle, Loader2, X } from 'lucide-react';
+import { Plus, Edit2, Trash2, HelpCircle, Loader2, X, Search, Filter, RotateCw } from 'lucide-react';
 import ModalConfirm from '../../components/modals/ModalConfirm';
 import Toast from '../../components/common/Toast';
 import SEO from '../../components/common/SEO';
@@ -8,6 +8,8 @@ import SEO from '../../components/common/SEO';
 export default function FaqsManager() {
   const [faqs, setFaqs] = useState([]);
   const [loading, setLoading] = useState(true);
+  const [search, setSearch] = useState('');
+  const [selectedCategory, setSelectedCategory] = useState('ALL');
   const [toast, setToast] = useState(null);
 
   const [isModalOpen, setIsModalOpen] = useState(false);
@@ -39,6 +41,19 @@ export default function FaqsManager() {
   useEffect(() => {
     fetchFaqs();
   }, []);
+
+  const allCategories = Array.from(new Set(['General', ...faqs.map((f) => f.category).filter(Boolean)]));
+
+  const filteredFaqs = faqs.filter((faq) => {
+    const matchesCat = selectedCategory === 'ALL' || faq.category === selectedCategory;
+    if (!matchesCat) return false;
+    if (!search.trim()) return true;
+    const query = search.toLowerCase();
+    const q = (faq.question || '').toLowerCase();
+    const a = (faq.answer || '').toLowerCase();
+    const c = (faq.category || '').toLowerCase();
+    return q.includes(query) || a.includes(query) || c.includes(query);
+  });
 
   const handleOpenCreate = () => {
     setEditingFaq(null);
@@ -108,7 +123,7 @@ export default function FaqsManager() {
       <ModalConfirm
         isOpen={Boolean(deleteTarget)}
         title="Delete FAQ"
-        message="Are you sure you want to delete this FAQ question?"
+        message={`Are you sure you want to delete the FAQ "${deleteTarget?.question}"?`}
         onConfirm={handleDeleteConfirm}
         onCancel={() => setDeleteTarget(null)}
         loading={deleteLoading}
@@ -121,7 +136,61 @@ export default function FaqsManager() {
         </div>
         <div className="admin-header-actions">
           <button className="btn btn-gold btn-sm" onClick={handleOpenCreate}>
-            <Plus size={16} /> ADD NEW FAQ
+            <Plus size={16} /> ADD FAQ
+          </button>
+        </div>
+      </div>
+
+      {/* Toolbar */}
+      <div className="admin-toolbar">
+        <div className="admin-toolbar-left">
+          <div className="admin-search-box">
+            <Search size={16} />
+            <input
+              type="text"
+              placeholder="Search FAQs by question, answer or category..."
+              value={search}
+              onChange={(e) => setSearch(e.target.value)}
+            />
+            {search && (
+              <button
+                type="button"
+                style={{ background: 'transparent', border: 'none', color: 'rgba(243,243,235,0.5)', cursor: 'pointer' }}
+                onClick={() => setSearch('')}
+                aria-label="Clear search"
+              >
+                <X size={14} />
+              </button>
+            )}
+          </div>
+
+          <div className="admin-filter-group">
+            <Filter size={16} />
+            <select
+              value={selectedCategory}
+              onChange={(e) => setSelectedCategory(e.target.value)}
+              aria-label="Filter FAQs by category"
+            >
+              <option value="ALL">All Categories</option>
+              {allCategories.map((cat) => (
+                <option key={cat} value={cat}>
+                  {cat}
+                </option>
+              ))}
+            </select>
+          </div>
+        </div>
+
+        <div className="admin-toolbar-right">
+          <button
+            type="button"
+            className="admin-refresh-btn"
+            onClick={fetchFaqs}
+            disabled={loading}
+            title="Refresh FAQs"
+          >
+            <RotateCw size={15} className={loading ? 'spin-icon' : ''} />
+            <span>Refresh</span>
           </button>
         </div>
       </div>
@@ -132,10 +201,14 @@ export default function FaqsManager() {
             <Loader2 className="spin-icon" size={32} />
             <p>Loading FAQs...</p>
           </div>
-        ) : faqs.length === 0 ? (
+        ) : filteredFaqs.length === 0 ? (
           <div className="admin-empty-state">
             <HelpCircle size={36} />
-            <h3>No FAQs recorded</h3>
+            <h3>No FAQs found</h3>
+            <p>Try adjusting your search filter or click below to add a new FAQ.</p>
+            <button className="btn btn-gold btn-sm" onClick={handleOpenCreate} style={{ marginTop: '12px' }}>
+              <Plus size={16} /> ADD FAQ
+            </button>
           </div>
         ) : (
           <div className="admin-table-wrapper">
@@ -150,7 +223,7 @@ export default function FaqsManager() {
                 </tr>
               </thead>
               <tbody>
-                {faqs.map((faq) => (
+                {filteredFaqs.map((faq) => (
                   <tr key={faq._id}>
                     <td>
                       <strong>{faq.question}</strong>

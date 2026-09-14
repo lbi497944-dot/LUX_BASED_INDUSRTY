@@ -27,6 +27,7 @@ const testSuites = [
   { name: 'Phase 6B.1 CMS Live Preview Fidelity & UX Acceptance', file: 'test_phase6b1_acceptance.js' },
   { name: 'Phase 6C Real Business Content & Commercial Operations', file: 'test_phase6c_content_operations.js' },
   { name: 'Phase 6D Controlled Production Content Entry & Owner Acceptance', file: 'test_phase6d_acceptance.js' },
+  { name: 'Phase 6E Final Admin CMS Polish & Content Management', file: 'test_phase6e_cms_polish.js' },
 ];
 
 console.log('========================================================');

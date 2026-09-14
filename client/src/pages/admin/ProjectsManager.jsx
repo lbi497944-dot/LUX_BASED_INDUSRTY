@@ -1,7 +1,7 @@
 import { useState, useEffect } from 'react';
 import { projectService } from '../../services/projectService';
 import { uploadService } from '../../services/uploadService';
-import { Plus, Edit2, Trash2, Search, Filter, Loader2, Building2, X, Upload } from 'lucide-react';
+import { Plus, Edit2, Trash2, Search, Filter, Loader2, Building2, X, Upload, RotateCw } from 'lucide-react';
 import ModalConfirm from '../../components/modals/ModalConfirm';
 import Toast from '../../components/common/Toast';
 import SEO from '../../components/common/SEO';
@@ -12,6 +12,7 @@ import ProjectLivePreview from '../../components/admin/ProjectLivePreview';
 export default function ProjectsManager() {
   const [projects, setProjects] = useState([]);
   const [loading, setLoading] = useState(true);
+  const [search, setSearch] = useState('');
   const [selectedCategory, setSelectedCategory] = useState('ALL');
   const [toast, setToast] = useState(null);
 
@@ -56,6 +57,16 @@ export default function ProjectsManager() {
   useEffect(() => {
     fetchProjects();
   }, [selectedCategory]);
+
+  const filteredProjects = projects.filter((proj) => {
+    if (!search.trim()) return true;
+    const query = search.toLowerCase();
+    const title = (proj.title || '').toLowerCase();
+    const location = (proj.location || '').toLowerCase();
+    const scope = (proj.scope || '').toLowerCase();
+    const description = (proj.description || '').toLowerCase();
+    return title.includes(query) || location.includes(query) || scope.includes(query) || description.includes(query);
+  });
 
   const handleGalleryFilesSelect = async (e) => {
     const files = Array.from(e.target.files || []);
@@ -231,21 +242,56 @@ export default function ProjectsManager() {
         </div>
         <div className="admin-header-actions">
           <button className="btn btn-gold btn-sm" onClick={handleOpenCreate}>
-            <Plus size={16} /> ADD NEW PROJECT
+            <Plus size={16} /> ADD PROJECT
           </button>
         </div>
       </div>
 
       <div className="admin-toolbar">
-        <div className="admin-filter-group">
-          <Filter size={16} />
-          <select value={selectedCategory} onChange={(e) => setSelectedCategory(e.target.value)}>
-            <option value="ALL">All Categories</option>
-            <option value="Residential">Residential</option>
-            <option value="Hospitality">Hospitality</option>
-            <option value="Restaurant">Restaurant</option>
-            <option value="Commercial">Commercial</option>
-          </select>
+        <div className="admin-toolbar-left">
+          <div className="admin-search-box">
+            <Search size={16} />
+            <input
+              type="text"
+              placeholder="Search projects by title, location or scope..."
+              value={search}
+              onChange={(e) => setSearch(e.target.value)}
+            />
+            {search && (
+              <button
+                type="button"
+                style={{ background: 'transparent', border: 'none', color: 'rgba(243,243,235,0.5)', cursor: 'pointer' }}
+                onClick={() => setSearch('')}
+                aria-label="Clear search"
+              >
+                <X size={14} />
+              </button>
+            )}
+          </div>
+
+          <div className="admin-filter-group">
+            <Filter size={16} />
+            <select value={selectedCategory} onChange={(e) => setSelectedCategory(e.target.value)} aria-label="Filter projects by category">
+              <option value="ALL">All Categories</option>
+              <option value="Residential">Residential</option>
+              <option value="Hospitality">Hospitality</option>
+              <option value="Restaurant">Restaurant</option>
+              <option value="Commercial">Commercial</option>
+            </select>
+          </div>
+        </div>
+
+        <div className="admin-toolbar-right">
+          <button
+            type="button"
+            className="admin-refresh-btn"
+            onClick={fetchProjects}
+            disabled={loading}
+            title="Refresh portfolio projects"
+          >
+            <RotateCw size={15} className={loading ? 'spin-icon' : ''} />
+            <span>Refresh</span>
+          </button>
         </div>
       </div>
 
@@ -255,10 +301,14 @@ export default function ProjectsManager() {
             <Loader2 className="spin-icon" size={32} />
             <p>Loading Projects...</p>
           </div>
-        ) : projects.length === 0 ? (
+        ) : filteredProjects.length === 0 ? (
           <div className="admin-empty-state">
             <Building2 size={36} />
             <h3>No projects found</h3>
+            <p>Try adjusting your search filter or click below to add a new project.</p>
+            <button className="btn btn-gold btn-sm" onClick={handleOpenCreate} style={{ marginTop: '12px' }}>
+              <Plus size={16} /> ADD PROJECT
+            </button>
           </div>
         ) : (
           <div className="admin-table-wrapper">
@@ -275,7 +325,7 @@ export default function ProjectsManager() {
                 </tr>
               </thead>
               <tbody>
-                {projects.map((proj) => (
+                {filteredProjects.map((proj) => (
                   <tr key={proj._id || proj.id}>
                     <td>
                       <div className="admin-table-product-cell">

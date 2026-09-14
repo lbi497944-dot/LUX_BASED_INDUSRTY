@@ -9,6 +9,8 @@ import {
   Loader2,
   X,
   ExternalLink,
+  Search,
+  RotateCw,
 } from 'lucide-react';
 import StatusBadge from '../../components/ui/StatusBadge';
 import ModalConfirm from '../../components/modals/ModalConfirm';
@@ -19,6 +21,7 @@ import AdminImageUpload from '../../components/ui/AdminImageUpload';
 export default function PartnersManager() {
   const [partners, setPartners] = useState([]);
   const [loading, setLoading] = useState(true);
+  const [search, setSearch] = useState('');
   const [toast, setToast] = useState(null);
 
   // Modal states for Create/Edit
@@ -62,6 +65,14 @@ export default function PartnersManager() {
   useEffect(() => {
     fetchPartners();
   }, []);
+
+  const filteredPartners = partners.filter((p) => {
+    if (!search.trim()) return true;
+    const query = search.toLowerCase();
+    const name = (p.name || '').toLowerCase();
+    const website = (p.website || '').toLowerCase();
+    return name.includes(query) || website.includes(query);
+  });
 
   const isFormDirty = () => {
     if (!initialFormStateRef.current) return false;
@@ -290,14 +301,52 @@ export default function PartnersManager() {
       {/* Header */}
       <div className="admin-page-header">
         <div>
-          <h2>Client Partners</h2>
-          <p>Manage corporate collaborators, luxury developers, and architectural firm logos displayed on the public Home marquee.</p>
+          <span className="eyebrow gold-label">CLIENT RECOGNITION</span>
+          <h1>Brand Partners & Corporate Clients</h1>
         </div>
-        {partners.length > 0 && (
+        <div className="admin-header-actions">
           <button onClick={handleOpenCreate} className="btn btn-gold btn-sm">
-            <Plus size={16} /> Add Partner
+            <Plus size={16} /> ADD PARTNER
           </button>
-        )}
+        </div>
+      </div>
+
+      {/* Toolbar */}
+      <div className="admin-toolbar">
+        <div className="admin-toolbar-left">
+          <div className="admin-search-box">
+            <Search size={16} />
+            <input
+              type="text"
+              placeholder="Search partners by company name or website..."
+              value={search}
+              onChange={(e) => setSearch(e.target.value)}
+            />
+            {search && (
+              <button
+                type="button"
+                style={{ background: 'transparent', border: 'none', color: 'rgba(243,243,235,0.5)', cursor: 'pointer' }}
+                onClick={() => setSearch('')}
+                aria-label="Clear search"
+              >
+                <X size={14} />
+              </button>
+            )}
+          </div>
+        </div>
+
+        <div className="admin-toolbar-right">
+          <button
+            type="button"
+            className="admin-refresh-btn"
+            onClick={fetchPartners}
+            disabled={loading}
+            title="Refresh partners"
+          >
+            <RotateCw size={15} className={loading ? 'spin-icon' : ''} />
+            <span>Refresh</span>
+          </button>
+        </div>
       </div>
 
       {/* Partners List Table */}
@@ -307,13 +356,13 @@ export default function PartnersManager() {
             <Loader2 className="animate-spin" size={32} />
             <p>Loading partners...</p>
           </div>
-        ) : partners.length === 0 ? (
+        ) : filteredPartners.length === 0 ? (
           <div className="admin-empty-state">
             <Handshake size={48} className="empty-icon" />
-            <h3>No Client Partners Configured</h3>
-            <p>Add your first architectural collaborator or client company logo to activate the public marquee.</p>
+            <h3>No Client Partners Found</h3>
+            <p>Try adjusting your search filter or click below to add a new partner.</p>
             <button onClick={handleOpenCreate} className="btn btn-gold btn-sm mt-4">
-              <Plus size={16} /> Add First Partner
+              <Plus size={16} /> ADD PARTNER
             </button>
           </div>
         ) : (
@@ -330,7 +379,7 @@ export default function PartnersManager() {
                 </tr>
               </thead>
               <tbody>
-                {partners.map((partner) => (
+                {filteredPartners.map((partner) => (
                   <tr key={partner._id}>
                     <td>
                       <div className="partner-table-logo-cell">

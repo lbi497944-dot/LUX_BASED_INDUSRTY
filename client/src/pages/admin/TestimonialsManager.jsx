@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react';
 import { testimonialService } from '../../services/testimonialService';
-import { Plus, Edit2, Trash2, MessageSquareQuote, Loader2, X, Star } from 'lucide-react';
+import { Plus, Edit2, Trash2, MessageSquareQuote, Loader2, X, Star, Search, RotateCw } from 'lucide-react';
 import ModalConfirm from '../../components/modals/ModalConfirm';
 import Toast from '../../components/common/Toast';
 import SEO from '../../components/common/SEO';
@@ -8,6 +8,7 @@ import SEO from '../../components/common/SEO';
 export default function TestimonialsManager() {
   const [testimonials, setTestimonials] = useState([]);
   const [loading, setLoading] = useState(true);
+  const [search, setSearch] = useState('');
   const [toast, setToast] = useState(null);
 
   const [isModalOpen, setIsModalOpen] = useState(false);
@@ -41,6 +42,16 @@ export default function TestimonialsManager() {
   useEffect(() => {
     fetchTestimonials();
   }, []);
+
+  const filteredTestimonials = testimonials.filter((item) => {
+    if (!search.trim()) return true;
+    const query = search.toLowerCase();
+    const name = (item.name || '').toLowerCase();
+    const role = (item.role || '').toLowerCase();
+    const company = (item.company || '').toLowerCase();
+    const content = (item.content || '').toLowerCase();
+    return name.includes(query) || role.includes(query) || company.includes(query) || content.includes(query);
+  });
 
   const handleOpenCreate = () => {
     setEditingItem(null);
@@ -131,16 +142,58 @@ export default function TestimonialsManager() {
         </div>
       </div>
 
+      {/* Toolbar */}
+      <div className="admin-toolbar">
+        <div className="admin-toolbar-left">
+          <div className="admin-search-box">
+            <Search size={16} />
+            <input
+              type="text"
+              placeholder="Search testimonials by client, role or studio..."
+              value={search}
+              onChange={(e) => setSearch(e.target.value)}
+            />
+            {search && (
+              <button
+                type="button"
+                style={{ background: 'transparent', border: 'none', color: 'rgba(243,243,235,0.5)', cursor: 'pointer' }}
+                onClick={() => setSearch('')}
+                aria-label="Clear search"
+              >
+                <X size={14} />
+              </button>
+            )}
+          </div>
+        </div>
+
+        <div className="admin-toolbar-right">
+          <button
+            type="button"
+            className="admin-refresh-btn"
+            onClick={fetchTestimonials}
+            disabled={loading}
+            title="Refresh testimonials"
+          >
+            <RotateCw size={15} className={loading ? 'spin-icon' : ''} />
+            <span>Refresh</span>
+          </button>
+        </div>
+      </div>
+
       <div className="admin-card-panel">
         {loading ? (
           <div className="admin-loading-container">
             <Loader2 className="spin-icon" size={32} />
             <p>Loading Testimonials...</p>
           </div>
-        ) : testimonials.length === 0 ? (
+        ) : filteredTestimonials.length === 0 ? (
           <div className="admin-empty-state">
             <MessageSquareQuote size={36} />
-            <h3>No testimonials added yet</h3>
+            <h3>No testimonials found</h3>
+            <p>Try adjusting your search filter or click below to add a new testimonial.</p>
+            <button className="btn btn-gold btn-sm" onClick={handleOpenCreate} style={{ marginTop: '12px' }}>
+              <Plus size={16} /> ADD TESTIMONIAL
+            </button>
           </div>
         ) : (
           <div className="admin-table-wrapper">
@@ -156,7 +209,7 @@ export default function TestimonialsManager() {
                 </tr>
               </thead>
               <tbody>
-                {testimonials.map((item) => (
+                {filteredTestimonials.map((item) => (
                   <tr key={item._id}>
                     <td>
                       <strong>{item.name}</strong>

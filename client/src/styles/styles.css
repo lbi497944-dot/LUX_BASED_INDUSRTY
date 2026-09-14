@@ -4301,6 +4301,47 @@ h1 em, h2 em, h3 em {
   box-shadow: 0 0 0 1px rgba(230, 199, 122, 0.35);
 }
 
+.admin-toolbar-left {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  flex: 1;
+  flex-wrap: wrap;
+}
+
+.admin-toolbar-right {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.admin-refresh-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  background-color: #112e17;
+  border: 1px solid rgba(230, 199, 122, 0.25);
+  border-radius: 6px;
+  padding: 7px 12px;
+  color: var(--gold-light, #e6c77a);
+  font-size: 13px;
+  font-weight: 500;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  white-space: nowrap;
+}
+
+.admin-refresh-btn:hover:not(:disabled) {
+  background-color: rgba(230, 199, 122, 0.12);
+  border-color: var(--gold, #d4af37);
+  color: #fff;
+}
+
+.admin-refresh-btn:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
 /* Global Admin Select Options Styling */
 .admin-app-wrapper select,
 .admin-page select,

@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react';
 import { consultationService } from '../../services/consultationService';
-import { CalendarCheck2, Filter, Trash2, Eye, FileText, Phone, Mail, MapPin, Loader2, X, MessageCircle } from 'lucide-react';
+import { CalendarCheck2, Filter, Trash2, Eye, FileText, Phone, Mail, MapPin, Loader2, X, MessageCircle, Search, RotateCw } from 'lucide-react';
 import StatusBadge from '../../components/ui/StatusBadge';
 import ModalConfirm from '../../components/modals/ModalConfirm';
 import Toast from '../../components/common/Toast';
@@ -9,6 +9,7 @@ import SEO from '../../components/common/SEO';
 export default function ConsultationsManager() {
   const [consultations, setConsultations] = useState([]);
   const [loading, setLoading] = useState(true);
+  const [search, setSearch] = useState('');
   const [selectedStatus, setSelectedStatus] = useState('ALL');
   const [selectedLead, setSelectedLead] = useState(null);
   const [adminNotes, setAdminNotes] = useState('');
@@ -33,6 +34,18 @@ export default function ConsultationsManager() {
   useEffect(() => {
     fetchConsultations();
   }, [selectedStatus]);
+
+  const filteredConsultations = consultations.filter((item) => {
+    if (!search.trim()) return true;
+    const query = search.toLowerCase();
+    const name = (item.fullName || '').toLowerCase();
+    const email = (item.email || '').toLowerCase();
+    const phone = (item.phone || '').toLowerCase();
+    const type = (item.projectType || '').toLowerCase();
+    const loc = (item.projectLocation || '').toLowerCase();
+    const notes = (item.notes || '').toLowerCase();
+    return name.includes(query) || email.includes(query) || phone.includes(query) || type.includes(query) || loc.includes(query) || notes.includes(query);
+  });
 
   const handleOpenDetail = (item) => {
     setSelectedLead(item);
@@ -107,17 +120,52 @@ export default function ConsultationsManager() {
       </div>
 
       <div className="admin-toolbar">
-        <div className="admin-filter-group">
-          <Filter size={16} />
-          <select value={selectedStatus} onChange={(e) => setSelectedStatus(e.target.value)}>
-            <option value="ALL">All Statuses</option>
-            <option value="New">New</option>
-            <option value="Contacted">Contacted</option>
-            <option value="In Discussion">In Discussion</option>
-            <option value="Quoted">Quoted</option>
-            <option value="Completed">Completed</option>
-            <option value="Cancelled">Cancelled</option>
-          </select>
+        <div className="admin-toolbar-left">
+          <div className="admin-search-box">
+            <Search size={16} />
+            <input
+              type="text"
+              placeholder="Search leads by client name, email, phone or project type..."
+              value={search}
+              onChange={(e) => setSearch(e.target.value)}
+            />
+            {search && (
+              <button
+                type="button"
+                style={{ background: 'transparent', border: 'none', color: 'rgba(243,243,235,0.5)', cursor: 'pointer' }}
+                onClick={() => setSearch('')}
+                aria-label="Clear search"
+              >
+                <X size={14} />
+              </button>
+            )}
+          </div>
+
+          <div className="admin-filter-group">
+            <Filter size={16} />
+            <select value={selectedStatus} onChange={(e) => setSelectedStatus(e.target.value)}>
+              <option value="ALL">All Statuses</option>
+              <option value="New">New</option>
+              <option value="Contacted">Contacted</option>
+              <option value="In Discussion">In Discussion</option>
+              <option value="Quoted">Quoted</option>
+              <option value="Completed">Completed</option>
+              <option value="Cancelled">Cancelled</option>
+            </select>
+          </div>
+        </div>
+
+        <div className="admin-toolbar-right">
+          <button
+            type="button"
+            className="admin-refresh-btn"
+            onClick={fetchConsultations}
+            disabled={loading}
+            title="Refresh consultation leads"
+          >
+            <RotateCw size={15} className={loading ? 'spin-icon' : ''} />
+            <span>Refresh</span>
+          </button>
         </div>
       </div>
 
@@ -127,10 +175,11 @@ export default function ConsultationsManager() {
             <Loader2 className="spin-icon" size={32} />
             <p>Loading Consultations...</p>
           </div>
-        ) : consultations.length === 0 ? (
+        ) : filteredConsultations.length === 0 ? (
           <div className="admin-empty-state">
             <CalendarCheck2 size={36} />
             <h3>No consultation requests found</h3>
+            <p>Try adjusting your search filter or status selection.</p>
           </div>
         ) : (
           <div className="admin-table-wrapper">
@@ -147,7 +196,7 @@ export default function ConsultationsManager() {
                 </tr>
               </thead>
               <tbody>
-                {consultations.map((item) => (
+                {filteredConsultations.map((item) => (
                   <tr key={item._id}>
                     <td>
                       <strong>{item.fullName}</strong>

@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react';
 import { contactService } from '../../services/contactService';
-import { Mail, Phone, MapPin, Eye, Trash2, Filter, Loader2, X, Clock } from 'lucide-react';
+import { Mail, Phone, MapPin, Eye, Trash2, Filter, Loader2, X, Clock, Search, RotateCw } from 'lucide-react';
 import ModalConfirm from '../../components/modals/ModalConfirm';
 import Toast from '../../components/common/Toast';
 import SEO from '../../components/common/SEO';
@@ -8,6 +8,7 @@ import SEO from '../../components/common/SEO';
 export default function ContactEnquiriesManager() {
   const [enquiries, setEnquiries] = useState([]);
   const [loading, setLoading] = useState(true);
+  const [search, setSearch] = useState('');
   const [selectedStatus, setSelectedStatus] = useState('ALL');
   const [selectedEnquiry, setSelectedEnquiry] = useState(null);
   const [adminNotes, setAdminNotes] = useState('');
@@ -32,6 +33,17 @@ export default function ContactEnquiriesManager() {
   useEffect(() => {
     fetchEnquiries();
   }, [selectedStatus]);
+
+  const filteredEnquiries = enquiries.filter((item) => {
+    if (!search.trim()) return true;
+    const query = search.toLowerCase();
+    const name = (item.name || '').toLowerCase();
+    const email = (item.email || '').toLowerCase();
+    const phone = (item.phone || '').toLowerCase();
+    const message = (item.message || '').toLowerCase();
+    const location = (item.location || '').toLowerCase();
+    return name.includes(query) || email.includes(query) || phone.includes(query) || message.includes(query) || location.includes(query);
+  });
 
   const handleOpenDetail = (item) => {
     setSelectedEnquiry(item);
@@ -106,15 +118,50 @@ export default function ContactEnquiriesManager() {
       </div>
 
       <div className="admin-toolbar">
-        <div className="admin-filter-group">
-          <Filter size={16} />
-          <select value={selectedStatus} onChange={(e) => setSelectedStatus(e.target.value)}>
-            <option value="ALL">All Statuses</option>
-            <option value="New">New</option>
-            <option value="Contacted">Contacted</option>
-            <option value="Resolved">Resolved</option>
-            <option value="Archived">Archived</option>
-          </select>
+        <div className="admin-toolbar-left">
+          <div className="admin-search-box">
+            <Search size={16} />
+            <input
+              type="text"
+              placeholder="Search by name, email, phone or message..."
+              value={search}
+              onChange={(e) => setSearch(e.target.value)}
+            />
+            {search && (
+              <button
+                type="button"
+                style={{ background: 'transparent', border: 'none', color: 'rgba(243,243,235,0.5)', cursor: 'pointer' }}
+                onClick={() => setSearch('')}
+                aria-label="Clear search"
+              >
+                <X size={14} />
+              </button>
+            )}
+          </div>
+
+          <div className="admin-filter-group">
+            <Filter size={16} />
+            <select value={selectedStatus} onChange={(e) => setSelectedStatus(e.target.value)}>
+              <option value="ALL">All Statuses</option>
+              <option value="New">New</option>
+              <option value="Contacted">Contacted</option>
+              <option value="Resolved">Resolved</option>
+              <option value="Archived">Archived</option>
+            </select>
+          </div>
+        </div>
+
+        <div className="admin-toolbar-right">
+          <button
+            type="button"
+            className="admin-refresh-btn"
+            onClick={fetchEnquiries}
+            disabled={loading}
+            title="Refresh contact enquiries"
+          >
+            <RotateCw size={15} className={loading ? 'spin-icon' : ''} />
+            <span>Refresh</span>
+          </button>
         </div>
       </div>
 
@@ -124,10 +171,11 @@ export default function ContactEnquiriesManager() {
             <Loader2 className="spin-icon" size={32} />
             <p>Loading Enquiries...</p>
           </div>
-        ) : enquiries.length === 0 ? (
+        ) : filteredEnquiries.length === 0 ? (
           <div className="admin-empty-state">
             <Mail size={36} />
             <h3>No contact messages found</h3>
+            <p>Try adjusting your search filter or status selection.</p>
           </div>
         ) : (
           <div className="admin-table-wrapper">
@@ -144,7 +192,7 @@ export default function ContactEnquiriesManager() {
                 </tr>
               </thead>
               <tbody>
-                {enquiries.map((item) => (
+                {filteredEnquiries.map((item) => (
                   <tr key={item._id}>
                     <td>
                       <strong>{item.name}</strong>

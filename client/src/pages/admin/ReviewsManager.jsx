@@ -438,7 +438,7 @@ export default function ReviewsManager() {
 
         <div className="admin-stat-card">
           <div className="stat-card-header">
-            <span className="stat-label">PENDING MODERATION</span>
+            <span className="stat-label">PENDING REVIEW</span>
             <div className="stat-icon-wrap highlight">
               <Clock size={20} />
             </div>
@@ -449,13 +449,13 @@ export default function ReviewsManager() {
 
         <div className="admin-stat-card">
           <div className="stat-card-header">
-            <span className="stat-label">APPROVED & LIVE</span>
+            <span className="stat-label">PUBLISHED</span>
             <div className="stat-icon-wrap">
               <CheckCircle2 size={20} />
             </div>
           </div>
           <div className="stat-number">{metrics.approved}</div>
-          <small className="stat-meta">Publicly verified</small>
+          <small className="stat-meta">Live on testimonials showcase</small>
         </div>
 
         <div className="admin-stat-card">
@@ -472,27 +472,27 @@ export default function ReviewsManager() {
 
       {/* Filter & Search Toolbar */}
       <div className="admin-toolbar">
-        <div className="admin-filter-tabs" role="tablist">
-          {[
-            { label: 'All Reviews', value: 'ALL' },
-            { label: 'Pending Verification', value: 'Pending' },
-            { label: 'Approved / Live', value: 'Approved' },
-            { label: 'Rejected', value: 'Rejected' },
-          ].map((tab) => (
-            <button
-              key={tab.value}
-              type="button"
-              role="tab"
-              aria-selected={selectedStatus === tab.value}
-              className={`admin-filter-tab ${selectedStatus === tab.value ? 'active' : ''}`}
-              onClick={() => handleStatusFilterChange(tab.value)}
-            >
-              {tab.label}
-            </button>
-          ))}
-        </div>
+        <div className="admin-toolbar-left">
+          <div className="admin-filter-tabs" role="tablist">
+            {[
+              { label: 'All Reviews', value: 'ALL' },
+              { label: 'Pending Review', value: 'Pending' },
+              { label: 'Published / Live', value: 'Approved' },
+              { label: 'Rejected', value: 'Rejected' },
+            ].map((tab) => (
+              <button
+                key={tab.value}
+                type="button"
+                role="tab"
+                aria-selected={selectedStatus === tab.value}
+                className={`admin-filter-tab ${selectedStatus === tab.value ? 'active' : ''}`}
+                onClick={() => handleStatusFilterChange(tab.value)}
+              >
+                {tab.label}
+              </button>
+            ))}
+          </div>
 
-        <div style={{ display: 'flex', alignItems: 'center', gap: '12px', flexWrap: 'wrap' }}>
           <div className="admin-filter-group">
             <Filter size={16} />
             <select
@@ -532,6 +532,19 @@ export default function ReviewsManager() {
               </button>
             )}
           </div>
+        </div>
+
+        <div className="admin-toolbar-right">
+          <button
+            type="button"
+            className="admin-refresh-btn"
+            onClick={fetchReviews}
+            disabled={loading}
+            title="Refresh customer reviews"
+          >
+            <RefreshCw size={15} className={loading ? 'spin-icon' : ''} />
+            <span>Refresh</span>
+          </button>
         </div>
       </div>
 
@@ -932,7 +945,7 @@ export default function ReviewsManager() {
                 <div className="lead-meta-box">
                   <Clock size={18} color="var(--gold)" />
                   <div>
-                    <small>MODERATED DATE</small>
+                    <small>EDITORIAL REVIEW DATE</small>
                     <p>
                       {selectedReview.moderatedAt
                         ? new Date(selectedReview.moderatedAt).toLocaleString()
@@ -944,7 +957,7 @@ export default function ReviewsManager() {
                 <div className="lead-meta-box">
                   <User size={18} color="var(--gold)" />
                   <div>
-                    <small>MODERATED BY</small>
+                    <small>REVIEWED BY</small>
                     <p>
                       {selectedReview.moderatedBy?.username ||
                         selectedReview.moderatedBy?.email ||
@@ -968,7 +981,7 @@ export default function ReviewsManager() {
                 <textarea
                   rows={4}
                   maxLength={1000}
-                  placeholder="Private internal notes regarding customer feedback or moderation verification..."
+                  placeholder="Private internal notes regarding customer feedback or editorial verification..."
                   value={localNotes}
                   onChange={handleNotesChange}
                   disabled={notesSaving}

@@ -8,6 +8,8 @@ import {
   X,
   Sliders,
   Sparkles,
+  Search,
+  RotateCw,
 } from 'lucide-react';
 import StatusBadge from '../../components/ui/StatusBadge';
 import ModalConfirm from '../../components/modals/ModalConfirm';
@@ -20,6 +22,7 @@ import TransformationLivePreview from '../../components/admin/TransformationLive
 export default function TransformationsManager() {
   const [transformations, setTransformations] = useState([]);
   const [loading, setLoading] = useState(true);
+  const [search, setSearch] = useState('');
   const [toast, setToast] = useState(null);
 
   // Workspace tab & Modal states for Create/Edit
@@ -65,6 +68,15 @@ export default function TransformationsManager() {
   useEffect(() => {
     fetchTransformations();
   }, []);
+
+  const filteredTransformations = transformations.filter((t) => {
+    if (!search.trim()) return true;
+    const query = search.toLowerCase();
+    const title = (t.title || '').toLowerCase();
+    const shortDesc = (t.shortDescription || '').toLowerCase();
+    const detailedDesc = (t.detailedDescription || '').toLowerCase();
+    return title.includes(query) || shortDesc.includes(query) || detailedDesc.includes(query);
+  });
 
   useEffect(() => {
     const handleKeyDown = (e) => {
@@ -242,12 +254,52 @@ export default function TransformationsManager() {
       {/* Header */}
       <div className="admin-page-header">
         <div>
-          <h2>The Transformation</h2>
-          <p>Manage before & after architectural lighting comparisons displayed on the public Home page.</p>
+          <span className="eyebrow gold-label">BEFORE & AFTER SHOWCASE</span>
+          <h1>The Transformation</h1>
         </div>
-        <button onClick={handleOpenCreate} className="btn btn-gold btn-sm">
-          <Plus size={16} /> Add Transformation
-        </button>
+        <div className="admin-header-actions">
+          <button onClick={handleOpenCreate} className="btn btn-gold btn-sm">
+            <Plus size={16} /> ADD TRANSFORMATION
+          </button>
+        </div>
+      </div>
+
+      {/* Toolbar */}
+      <div className="admin-toolbar">
+        <div className="admin-toolbar-left">
+          <div className="admin-search-box">
+            <Search size={16} />
+            <input
+              type="text"
+              placeholder="Search transformations by title or description..."
+              value={search}
+              onChange={(e) => setSearch(e.target.value)}
+            />
+            {search && (
+              <button
+                type="button"
+                style={{ background: 'transparent', border: 'none', color: 'rgba(243,243,235,0.5)', cursor: 'pointer' }}
+                onClick={() => setSearch('')}
+                aria-label="Clear search"
+              >
+                <X size={14} />
+              </button>
+            )}
+          </div>
+        </div>
+
+        <div className="admin-toolbar-right">
+          <button
+            type="button"
+            className="admin-refresh-btn"
+            onClick={fetchTransformations}
+            disabled={loading}
+            title="Refresh transformations"
+          >
+            <RotateCw size={15} className={loading ? 'spin-icon' : ''} />
+            <span>Refresh</span>
+          </button>
+        </div>
       </div>
 
       {/* Transformations List Table */}
@@ -257,13 +309,13 @@ export default function TransformationsManager() {
             <Loader2 className="animate-spin" size={32} />
             <p>Loading transformations...</p>
           </div>
-        ) : transformations.length === 0 ? (
+        ) : filteredTransformations.length === 0 ? (
           <div className="admin-empty-state">
             <Sliders size={48} className="empty-icon" />
-            <h3>No Transformations Configured</h3>
-            <p>Add your first architectural lighting case study to empower the interactive before/after slider.</p>
+            <h3>No Transformations Found</h3>
+            <p>Try adjusting your search filter or add a new architectural lighting transformation.</p>
             <button onClick={handleOpenCreate} className="btn btn-gold btn-sm mt-4">
-              <Plus size={16} /> Add First Transformation
+              <Plus size={16} /> ADD TRANSFORMATION
             </button>
           </div>
         ) : (
@@ -279,7 +331,7 @@ export default function TransformationsManager() {
                 </tr>
               </thead>
               <tbody>
-                {transformations.map((item) => (
+                {filteredTransformations.map((item) => (
                   <tr key={item._id}>
                     <td>
                       <div className="transformation-table-dual-thumbs">

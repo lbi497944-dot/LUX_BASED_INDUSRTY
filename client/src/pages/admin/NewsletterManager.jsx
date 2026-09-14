@@ -18,6 +18,7 @@ import {
   Search,
   X,
   ExternalLink,
+  RotateCw,
 } from 'lucide-react';
 import ModalConfirm from '../../components/modals/ModalConfirm';
 import Toast from '../../components/common/Toast';
@@ -35,6 +36,7 @@ export default function NewsletterManager() {
   const [campaigns, setCampaigns] = useState([]);
   const [campaignsLoading, setCampaignsLoading] = useState(true);
   const [campaignFilter, setCampaignFilter] = useState('ALL');
+  const [campaignSearch, setCampaignSearch] = useState('');
 
   // Subscribers State
   const [subscribers, setSubscribers] = useState([]);
@@ -459,41 +461,47 @@ export default function NewsletterManager() {
     }
   };
 
+  const filteredCampaigns = campaigns.filter((c) => {
+    if (!campaignSearch.trim()) return true;
+    const q = campaignSearch.toLowerCase();
+    const title = (c.title || '').toLowerCase();
+    const subject = (c.subject || '').toLowerCase();
+    const heading = (c.heading || '').toLowerCase();
+    return title.includes(q) || subject.includes(q) || heading.includes(q);
+  });
+
   return (
     <div className="admin-page">
-      <SEO title="Newsletter & Broadcasts | LUX CMS" />
+      <SEO title="Newsletter & Campaigns | LUX CMS" />
       <Toast toast={toast} onClose={() => setToast(null)} />
 
-      {/* Delete Campaign Modal */}
+      {/* Delete Campaign Confirmation */}
       <ModalConfirm
         isOpen={Boolean(deleteCampaignTarget)}
         title="Delete Newsletter Campaign"
-        message={'Are you sure you want to delete "' + (deleteCampaignTarget?.title || '') + '"? This cannot be undone.'}
+        message={`Are you sure you want to delete "${deleteCampaignTarget?.title}"? This draft will be permanently removed.`}
         onConfirm={handleDeleteCampaignConfirm}
         onCancel={() => setDeleteCampaignTarget(null)}
         loading={deleteCampaignLoading}
       />
 
-      {/* Delete Subscriber Modal */}
+      {/* Delete Subscriber Confirmation */}
       <ModalConfirm
         isOpen={Boolean(deleteSubscriberTarget)}
         title="Remove Subscriber"
-        message={'Are you sure you want to delete ' + (deleteSubscriberTarget?.email || '') + ' from the readership list?'}
+        message={`Are you sure you want to remove ${deleteSubscriberTarget?.email} from the readership?`}
         onConfirm={handleDeleteSubscriberConfirm}
         onCancel={() => setDeleteSubscriberTarget(null)}
         loading={deleteSubscriberLoading}
       />
 
-      {/* Send Confirmation Modal */}
+      {/* Send Broadcast Confirmation Modal */}
       <ModalConfirm
         isOpen={Boolean(sendTarget)}
-        title="Confirm Newsletter Broadcast"
-        message={
-          sendTarget
-            ? 'You are about to broadcast "' + sendTarget.title + '" (Subject: ' + sendTarget.subject + ') to ' + (sendTarget.targetAudience === 'custom' && sendTarget.selectedRecipients?.length > 0 ? sendTarget.selectedRecipients.length : activeSubscribers.length) + ' active subscribers. This action cannot be undone.'
-            : ''
-        }
+        title="Broadcast Newsletter Campaign"
+        message={`Are you sure you want to dispatch "${sendTarget?.title}" to all recipients (${sendTarget?.targetAudience === 'custom' ? sendTarget?.selectedRecipients?.length || 0 : activeSubscribers.length} subscribers)? This action will queue real email delivery.`}
         confirmLabel="Send Broadcast Now"
+        cancelLabel="Cancel"
         onConfirm={handleSendConfirm}
         onCancel={() => setSendTarget(null)}
         loading={sendingLoading}
@@ -518,11 +526,9 @@ export default function NewsletterManager() {
         </div>
         <div className="admin-header-actions">
           {activeTab === 'campaigns' ? (
-            campaigns.length > 0 && (
-              <button className="btn btn-gold btn-sm" onClick={() => handleOpenEditor()}>
-                <Plus size={16} /> CREATE NEWSLETTER
-              </button>
-            )
+            <button className="btn btn-gold btn-sm" onClick={() => handleOpenEditor()}>
+              <Plus size={16} /> CREATE NEWSLETTER
+            </button>
           ) : (
             subscribers.length > 0 && (
               <button className="btn btn-outline btn-sm" onClick={handleCopyAllEmails}>
@@ -552,9 +558,30 @@ export default function NewsletterManager() {
       {/* TAB 1: CAMPAIGNS */}
       {activeTab === 'campaigns' && (
         <div className="admin-card-panel">
-          <div className="panel-head">
+          <div className="panel-head" style={{ flexWrap: 'wrap', gap: '12px' }}>
             <h3>Editorial Campaigns</h3>
-            <div style={{ display: 'flex', gap: '8px' }}>
+            <div style={{ display: 'flex', gap: '10px', alignItems: 'center', flexWrap: 'wrap' }}>
+              <div style={{ position: 'relative' }}>
+                <Search size={14} style={{ position: 'absolute', left: '10px', top: '10px', color: 'rgba(243, 243, 235, 0.4)' }} />
+                <input
+                  type="text"
+                  placeholder="Search campaigns..."
+                  value={campaignSearch}
+                  onChange={(e) => setCampaignSearch(e.target.value)}
+                  style={{
+                    paddingLeft: '32px',
+                    paddingRight: '12px',
+                    paddingTop: '6px',
+                    paddingBottom: '6px',
+                    borderRadius: '4px',
+                    border: '1px solid rgba(230, 199, 122, 0.2)',
+                    background: '#0E1612',
+                    color: '#FAF8F1',
+                    fontSize: '13px',
+                  }}
+                />
+              </div>
+
               <select
                 className="admin-inline-select"
                 value={campaignFilter}
@@ -565,6 +592,17 @@ export default function NewsletterManager() {
                 <option value="Sent">Sent</option>
                 <option value="Send_Failed">Failed</option>
               </select>
+
+              <button
+                type="button"
+                className="admin-refresh-btn"
+                onClick={fetchCampaigns}
+                disabled={campaignsLoading}
+                title="Refresh campaigns"
+              >
+                <RotateCw size={14} className={campaignsLoading ? 'spin-icon' : ''} />
+                <span>Refresh</span>
+              </button>
             </div>
           </div>
 
@@ -573,13 +611,13 @@ export default function NewsletterManager() {
               <Loader2 className="spin-icon" size={32} />
               <p>Loading Campaigns...</p>
             </div>
-          ) : campaigns.length === 0 ? (
+          ) : filteredCampaigns.length === 0 ? (
             <div className="admin-empty-state">
               <Send size={36} />
-              <h3>No newsletter campaigns created yet</h3>
+              <h3>No newsletter campaigns found</h3>
               <p>Create your first architectural lighting announcement or seasonal editorial.</p>
               <button className="btn btn-gold btn-sm" style={{ marginTop: '16px' }} onClick={() => handleOpenEditor()}>
-                <Plus size={16} /> Create First Campaign
+                <Plus size={16} /> CREATE NEWSLETTER
               </button>
             </div>
           ) : (
@@ -596,7 +634,7 @@ export default function NewsletterManager() {
                   </tr>
                 </thead>
                 <tbody>
-                  {campaigns.map((item) => (
+                  {filteredCampaigns.map((item) => (
                     <tr key={item._id}>
                       <td>
                         <strong>{item.title}</strong>
@@ -714,6 +752,17 @@ export default function NewsletterManager() {
                 <option value="Subscribed">Subscribed (Active)</option>
                 <option value="Unsubscribed">Unsubscribed</option>
               </select>
+
+              <button
+                type="button"
+                className="admin-refresh-btn"
+                onClick={fetchSubscribers}
+                disabled={subscribersLoading}
+                title="Refresh subscribers list"
+              >
+                <RotateCw size={14} className={subscribersLoading ? 'spin-icon' : ''} />
+                <span>Refresh</span>
+              </button>
             </div>
           </div>
 

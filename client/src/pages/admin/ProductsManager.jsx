@@ -1,7 +1,7 @@
 import { useState, useEffect } from 'react';
 import { productService } from '../../services/productService';
 import { collectionService } from '../../services/collectionService';
-import { Plus, Edit2, Trash2, Search, Filter, Loader2, Sparkles, X } from 'lucide-react';
+import { Plus, Edit2, Trash2, Search, Filter, Loader2, Sparkles, X, RotateCw } from 'lucide-react';
 import ModalConfirm from '../../components/modals/ModalConfirm';
 import Toast from '../../components/common/Toast';
 import SEO from '../../components/common/SEO';
@@ -207,37 +207,62 @@ export default function ProductsManager() {
         </div>
         <div className="admin-header-actions">
           <button className="btn btn-gold btn-sm" onClick={handleOpenCreate}>
-            <Plus size={16} /> ADD NEW PRODUCT
+            <Plus size={16} /> ADD PRODUCT
           </button>
         </div>
       </div>
 
       {/* Filter and Search Toolbar */}
       <div className="admin-toolbar">
-        <div className="admin-search-box">
-          <Search size={16} />
-          <input
-            type="text"
-            placeholder="Search products by name, specs or category..."
-            value={search}
-            onChange={(e) => setSearch(e.target.value)}
-          />
+        <div className="admin-toolbar-left">
+          <div className="admin-search-box">
+            <Search size={16} />
+            <input
+              type="text"
+              placeholder="Search products by name, specs or category..."
+              value={search}
+              onChange={(e) => setSearch(e.target.value)}
+            />
+            {search && (
+              <button
+                type="button"
+                style={{ background: 'transparent', border: 'none', color: 'rgba(243,243,235,0.5)', cursor: 'pointer' }}
+                onClick={() => setSearch('')}
+                aria-label="Clear search"
+              >
+                <X size={14} />
+              </button>
+            )}
+          </div>
+
+          <div className="admin-filter-group">
+            <Filter size={16} />
+            <select
+              value={selectedCategory}
+              onChange={(e) => setSelectedCategory(e.target.value)}
+              aria-label="Filter products by category"
+            >
+              <option value="ALL">All Categories</option>
+              {allCategories.map((cat) => (
+                <option key={cat} value={cat}>
+                  {cat}
+                </option>
+              ))}
+            </select>
+          </div>
         </div>
 
-        <div className="admin-filter-group">
-          <Filter size={16} />
-          <select
-            value={selectedCategory}
-            onChange={(e) => setSelectedCategory(e.target.value)}
-            aria-label="Filter products by category"
+        <div className="admin-toolbar-right">
+          <button
+            type="button"
+            className="admin-refresh-btn"
+            onClick={fetchData}
+            disabled={loading}
+            title="Refresh product catalogue"
           >
-            <option value="ALL">All Categories</option>
-            {allCategories.map((cat) => (
-              <option key={cat} value={cat}>
-                {cat}
-              </option>
-            ))}
-          </select>
+            <RotateCw size={15} className={loading ? 'spin-icon' : ''} />
+            <span>Refresh</span>
+          </button>
         </div>
       </div>
 
@@ -252,7 +277,10 @@ export default function ProductsManager() {
           <div className="admin-empty-state">
             <Sparkles size={36} />
             <h3>No products found</h3>
-            <p>Try adjusting your search filter or click "Add New Product" to create one.</p>
+            <p>Try adjusting your search filter or click below to add a new product.</p>
+            <button className="btn btn-gold btn-sm" onClick={handleOpenCreate} style={{ marginTop: '12px' }}>
+              <Plus size={16} /> ADD PRODUCT
+            </button>
           </div>
         ) : (
           <div className="admin-table-wrapper">

@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react';
 import { collectionService } from '../../services/collectionService';
-import { Plus, Edit2, Trash2, Loader2, Layers, X } from 'lucide-react';
+import { Plus, Edit2, Trash2, Loader2, Layers, X, Search, RotateCw } from 'lucide-react';
 import ModalConfirm from '../../components/modals/ModalConfirm';
 import Toast from '../../components/common/Toast';
 import SEO from '../../components/common/SEO';
@@ -11,6 +11,7 @@ import CollectionLivePreview from '../../components/admin/CollectionLivePreview'
 export default function CollectionsManager() {
   const [collections, setCollections] = useState([]);
   const [loading, setLoading] = useState(true);
+  const [search, setSearch] = useState('');
   const [toast, setToast] = useState(null);
 
   const [workspaceTab, setWorkspaceTab] = useState('editor'); // 'editor' | 'preview'
@@ -50,6 +51,15 @@ export default function CollectionsManager() {
   useEffect(() => {
     fetchCollections();
   }, []);
+
+  const filteredCollections = collections.filter((col) => {
+    if (!search.trim()) return true;
+    const query = search.toLowerCase();
+    const name = (col.name || col.title || '').toLowerCase();
+    const slug = (col.slug || '').toLowerCase();
+    const tagline = (col.tagline || '').toLowerCase();
+    return name.includes(query) || slug.includes(query) || tagline.includes(query);
+  });
 
   const handleOpenCreate = () => {
     setEditingCollection(null);
@@ -150,7 +160,45 @@ export default function CollectionsManager() {
         </div>
         <div className="admin-header-actions">
           <button className="btn btn-gold btn-sm" onClick={handleOpenCreate}>
-            <Plus size={16} /> ADD NEW COLLECTION
+            <Plus size={16} /> ADD COLLECTION
+          </button>
+        </div>
+      </div>
+
+      {/* Toolbar */}
+      <div className="admin-toolbar">
+        <div className="admin-toolbar-left">
+          <div className="admin-search-box">
+            <Search size={16} />
+            <input
+              type="text"
+              placeholder="Search collections by name or slug..."
+              value={search}
+              onChange={(e) => setSearch(e.target.value)}
+            />
+            {search && (
+              <button
+                type="button"
+                style={{ background: 'transparent', border: 'none', color: 'rgba(243,243,235,0.5)', cursor: 'pointer' }}
+                onClick={() => setSearch('')}
+                aria-label="Clear search"
+              >
+                <X size={14} />
+              </button>
+            )}
+          </div>
+        </div>
+
+        <div className="admin-toolbar-right">
+          <button
+            type="button"
+            className="admin-refresh-btn"
+            onClick={fetchCollections}
+            disabled={loading}
+            title="Refresh collections"
+          >
+            <RotateCw size={15} className={loading ? 'spin-icon' : ''} />
+            <span>Refresh</span>
           </button>
         </div>
       </div>
@@ -161,10 +209,14 @@ export default function CollectionsManager() {
             <Loader2 className="spin-icon" size={32} />
             <p>Loading Collections...</p>
           </div>
-        ) : collections.length === 0 ? (
+        ) : filteredCollections.length === 0 ? (
           <div className="admin-empty-state">
             <Layers size={36} />
             <h3>No collections found</h3>
+            <p>Try adjusting your search filter or click below to add a new collection.</p>
+            <button className="btn btn-gold btn-sm" onClick={handleOpenCreate} style={{ marginTop: '12px' }}>
+              <Plus size={16} /> ADD COLLECTION
+            </button>
           </div>
         ) : (
           <div className="admin-table-wrapper">
@@ -180,7 +232,7 @@ export default function CollectionsManager() {
                 </tr>
               </thead>
               <tbody>
-                {collections.map((col) => (
+                {filteredCollections.map((col) => (
                   <tr key={col._id || col.slug}>
                     <td>
                       <div className="admin-table-product-cell">
