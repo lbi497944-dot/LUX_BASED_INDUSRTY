@@ -52,3 +52,6 @@ coverage/
 # Temporary Admin Recovery Utility (Local One-Time Use Only)
 reset_admin_password.js
 server/reset_admin_password.js
+
+# Scratch & Temporary Scripts
+scratch/

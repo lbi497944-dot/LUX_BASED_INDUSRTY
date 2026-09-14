@@ -8,6 +8,7 @@ import fs from 'fs';
 import apiRoutes from './routes/index.js';
 import { notFound, errorHandler } from './middleware/errorMiddleware.js';
 import { localUploadsDir } from './config/cloudinary.js';
+import { mongoSanitize } from './middleware/sanitizeMiddleware.js';
 
 const app = express();
 
@@ -19,8 +20,18 @@ app.set('trust proxy', 1);
 app.use(
   helmet({
     crossOriginResourcePolicy: { policy: 'cross-origin' },
+    frameguard: { action: 'sameorigin' },
+    hidePoweredBy: true,
+    noSniff: true,
+    referrerPolicy: { policy: 'strict-origin-when-cross-origin' },
   })
 );
+
+// Permissions policy header
+app.use((req, res, next) => {
+  res.setHeader('Permissions-Policy', 'camera=(), microphone=(), geolocation=()');
+  next();
+});
 
 // Compression
 app.use(compression());
@@ -69,6 +80,9 @@ app.use(
 // Request body parsers
 app.use(express.json({ limit: '10mb' }));
 app.use(express.urlencoded({ extended: true, limit: '10mb' }));
+
+// NoSQL query & parameter sanitization
+app.use(mongoSanitize);
 
 // Logging
 if (process.env.NODE_ENV !== 'test') {

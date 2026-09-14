@@ -21,6 +21,7 @@ const testSuites = [
   { name: 'Transformation Backend Suite', file: 'test_transformation_backend.js' },
   { name: 'Phase 5D Admin UI & Code Audit', file: 'verify_phase5d.js' },
   { name: 'Phase 5F SEO & Conversion Audit Suite', file: 'test_phase5f_seo_conversion.js' },
+  { name: 'Phase 5G Security & Hardening Suite', file: 'test_phase5g_security.js' },
 ];
 
 console.log('========================================================');

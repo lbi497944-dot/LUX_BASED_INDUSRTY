@@ -12,25 +12,29 @@ export const getAllProducts = async (queryParams) => {
     filter.name = { $not: /^testing$/i };
   }
 
-  if (category && category !== 'ALL') {
-    filter.category = new RegExp(`^${category}$`, 'i');
+  if (category && typeof category === 'string' && category !== 'ALL') {
+    const escapedCategory = category.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+    filter.category = new RegExp(`^${escapedCategory}$`, 'i');
   }
 
-  if (collection) {
-    filter.collectionSlug = collection;
+  if (collection && typeof collection === 'string') {
+    filter.collectionSlug = collection.trim();
   }
 
   if (featured !== undefined) {
     filter.featured = featured === 'true' || featured === true;
   }
 
-  if (search) {
-    filter.$or = [
-      { name: { $regex: search, $options: 'i' } },
-      { category: { $regex: search, $options: 'i' } },
-      { description: { $regex: search, $options: 'i' } },
-      { specifications: { $regex: search, $options: 'i' } },
-    ];
+  if (search && typeof search === 'string') {
+    const escapedSearch = search.trim().replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+    if (escapedSearch) {
+      filter.$or = [
+        { name: { $regex: escapedSearch, $options: 'i' } },
+        { category: { $regex: escapedSearch, $options: 'i' } },
+        { description: { $regex: escapedSearch, $options: 'i' } },
+        { specifications: { $regex: escapedSearch, $options: 'i' } },
+      ];
+    }
   }
 
   const pageNum = parseInt(page, 10) || 1;

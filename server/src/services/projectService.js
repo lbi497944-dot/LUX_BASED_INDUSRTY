@@ -10,8 +10,9 @@ export const getAllProjects = async (queryParams) => {
     filter.isActive = true;
   }
 
-  if (category && category !== 'ALL') {
-    filter.category = new RegExp(`^${category}$`, 'i');
+  if (category && typeof category === 'string' && category !== 'ALL') {
+    const escapedCategory = category.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+    filter.category = new RegExp(`^${escapedCategory}$`, 'i');
   }
 
   if (featured !== undefined) {
