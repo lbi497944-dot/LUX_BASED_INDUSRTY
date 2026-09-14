@@ -1,6 +1,8 @@
 import mongoose from 'mongoose';
 import dotenv from 'dotenv';
 import Page from '../models/Page.js';
+import SiteSetting from '../models/SiteSetting.js';
+import FAQ from '../models/FAQ.js';
 
 dotenv.config();
 
@@ -607,6 +609,112 @@ export const seedPages = async () => {
   return { createdCount, skippedCount };
 };
 
+/**
+ * Idempotent branding normalizer: ensures SiteSetting and FAQ documents in production
+ * Atlas / local MongoDB are cleansed of legacy "Veloura" references.
+ */
+export const seedSiteBranding = async () => {
+  console.log('[BrandingSeeder] Starting safe idempotent branding normalization...');
+
+  try {
+    // 1. SiteSetting normalization
+    const settings = await SiteSetting.findOne();
+    if (settings) {
+      let modified = false;
+      if (!settings.email || /veloura/i.test(settings.email) || settings.email.trim() === 'concierge@luxbasedindustry.com') {
+        settings.email = 'luxbasedindustries@gmail.com';
+        modified = true;
+      }
+      if (!settings.brandName || /veloura/i.test(settings.brandName) || settings.brandName.trim() === 'LBI') {
+        settings.brandName = 'LUX BASED INDUSTRY';
+        modified = true;
+      }
+      if (settings.catalogueUrl && /veloura/i.test(settings.catalogueUrl)) {
+        settings.catalogueUrl = '';
+        modified = true;
+      }
+      if (settings.defaultSeo?.description && /veloura/i.test(settings.defaultSeo.description)) {
+        settings.defaultSeo.description =
+          'LUX BASED INDUSTRY creates bespoke architectural lighting, luxury chandeliers, and premium illumination for luxury villas, destination hotels, restaurants, and commercial spaces in Dubai and the UAE.';
+        modified = true;
+      }
+      if (
+        settings.defaultSeo?.title &&
+        (/veloura/i.test(settings.defaultSeo.title) || settings.defaultSeo.title.startsWith('LBI Lighting'))
+      ) {
+        settings.defaultSeo.title = 'LUX BASED INDUSTRY | Luxury Architectural Lighting in Dubai';
+        modified = true;
+      }
+      if (
+        settings.defaultSeo?.ogImage &&
+        (/veloura/i.test(settings.defaultSeo.ogImage) || settings.defaultSeo.ogImage.includes('drive.google.com'))
+      ) {
+        settings.defaultSeo.ogImage =
+          'https://images.unsplash.com/photo-1600210492486-724fe5c67fb0?auto=format&fit=crop&w=1200&h=630&q=90';
+        modified = true;
+      }
+
+      if (Array.isArray(settings.socialLinks)) {
+        const cleaned = settings.socialLinks.map((item) => {
+          if (item && item.url && /veloura/i.test(item.url)) {
+            modified = true;
+            return { ...item, url: '', active: false };
+          }
+          return item;
+        });
+        if (modified) {
+          settings.socialLinks = cleaned;
+        }
+      }
+
+      if (modified) {
+        await SiteSetting.updateOne(
+          { _id: settings._id },
+          {
+            $set: {
+              email: settings.email,
+              brandName: settings.brandName,
+              catalogueUrl: settings.catalogueUrl,
+              defaultSeo: settings.defaultSeo,
+              socialLinks: settings.socialLinks,
+            },
+          }
+        );
+        console.log('  [BrandingSeeder] Successfully normalized SiteSetting document.');
+      } else {
+        console.log('  [BrandingSeeder] SiteSetting document already clean.');
+      }
+    }
+
+    // 2. FAQ normalization
+    const faqs = await FAQ.find({});
+    let faqsUpdated = 0;
+    for (const faq of faqs) {
+      let qChanged = false;
+      let aChanged = false;
+      let newQ = faq.question;
+      let newA = faq.answer;
+
+      if (newQ && /veloura/i.test(newQ)) {
+        newQ = newQ.replace(/Veloura Lighting/gi, 'LUX BASED INDUSTRY').replace(/Veloura/gi, 'LUX BASED INDUSTRY');
+        qChanged = true;
+      }
+      if (newA && /veloura/i.test(newA)) {
+        newA = newA.replace(/Veloura Lighting/gi, 'LUX BASED INDUSTRY').replace(/Veloura/gi, 'LUX BASED INDUSTRY');
+        aChanged = true;
+      }
+
+      if (qChanged || aChanged) {
+        await FAQ.updateOne({ _id: faq._id }, { $set: { question: newQ, answer: newA } });
+        faqsUpdated++;
+      }
+    }
+    console.log(`  [BrandingSeeder] Normalized ${faqsUpdated} legacy FAQ documents.`);
+  } catch (err) {
+    console.warn('[BrandingSeeder Warning] Normalization encountered non-fatal error:', err.message);
+  }
+};
+
 // Standalone execution support
 if (process.argv[1] && process.argv[1].endsWith('pageSeeder.js')) {
   const uri = process.env.MONGODB_URI || 'mongodb://127.0.0.1:27017/veloura_lighting';
@@ -615,6 +723,7 @@ if (process.argv[1] && process.argv[1].endsWith('pageSeeder.js')) {
     .connect(uri)
     .then(async () => {
       await seedPages();
+      await seedSiteBranding();
       await mongoose.disconnect();
       console.log('[PageSeeder] Disconnected from database.');
       process.exit(0);

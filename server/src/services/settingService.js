@@ -38,10 +38,11 @@ export const normalizeSocialLinks = (socialLinks) => {
         const platform = (item.platform || item.id || 'custom').toLowerCase().trim();
         const label = (item.label || item.name || platform).trim();
         const rawUrl = typeof item.url === 'string' ? item.url.trim() : '';
+        const containsVeloura = /veloura/i.test(rawUrl);
         const isSafe = rawUrl.length > 0 && validateSafeSocialUrl(rawUrl);
-        const url = isSafe ? rawUrl : '';
+        const url = containsVeloura ? '' : (isSafe ? rawUrl : '');
         const icon = typeof item.icon === 'string' ? item.icon.trim() : platform;
-        const active = isSafe ? (item.active !== undefined ? Boolean(item.active) : true) : false;
+        const active = isSafe && !containsVeloura ? (item.active !== undefined ? Boolean(item.active) : true) : false;
         const displayOrder = Number.isFinite(Number(item.displayOrder !== undefined ? item.displayOrder : item.order))
           ? Number(item.displayOrder !== undefined ? item.displayOrder : item.order)
           : idx;
@@ -76,15 +77,16 @@ export const normalizeSocialLinks = (socialLinks) => {
     legacyPlatforms.forEach((p) => {
       if (p.platform in socialLinks) {
         const rawUrl = typeof socialLinks[p.platform] === 'string' ? socialLinks[p.platform].trim() : '';
+        const containsVeloura = /veloura/i.test(rawUrl);
         const isSafe = rawUrl.length > 0 && validateSafeSocialUrl(rawUrl);
-        const url = isSafe ? rawUrl : '';
+        const url = containsVeloura ? '' : (isSafe ? rawUrl : '');
         normalized.push({
           id: p.platform,
           platform: p.platform,
           label: p.label,
           url,
           icon: p.platform,
-          active: isSafe,
+          active: isSafe && !containsVeloura,
           displayOrder: orderIndex++,
         });
       }
@@ -101,9 +103,80 @@ export const getSiteSettings = async () => {
   if (!settings) {
     settings = await SiteSetting.create({});
   }
-  if (settings && settings.socialLinks !== undefined) {
-    settings.socialLinks = normalizeSocialLinks(settings.socialLinks);
+
+  let modified = false;
+
+  // 1. Email normalization: authoritative LBI email
+  if (!settings.email || /veloura/i.test(settings.email) || settings.email.trim() === 'concierge@luxbasedindustry.com') {
+    settings.email = 'luxbasedindustries@gmail.com';
+    modified = true;
   }
+
+  // 2. BrandName normalization: authoritative LBI brand name
+  if (!settings.brandName || /veloura/i.test(settings.brandName) || settings.brandName.trim() === 'LBI') {
+    settings.brandName = 'LUX BASED INDUSTRY';
+    modified = true;
+  }
+
+  // 3. Catalogue URL normalization: remove broken/legacy Veloura catalogue link
+  if (settings.catalogueUrl && /veloura/i.test(settings.catalogueUrl)) {
+    settings.catalogueUrl = '';
+    modified = true;
+  }
+
+  // 4. Default SEO normalization
+  if (settings.defaultSeo) {
+    if (settings.defaultSeo.description && /veloura/i.test(settings.defaultSeo.description)) {
+      settings.defaultSeo.description =
+        'LUX BASED INDUSTRY creates bespoke architectural lighting, luxury chandeliers, and premium illumination for luxury villas, destination hotels, restaurants, and commercial spaces in Dubai and the UAE.';
+      modified = true;
+    }
+    if (
+      settings.defaultSeo.title &&
+      (/veloura/i.test(settings.defaultSeo.title) || settings.defaultSeo.title.startsWith('LBI Lighting'))
+    ) {
+      settings.defaultSeo.title = 'LUX BASED INDUSTRY | Luxury Architectural Lighting in Dubai';
+      modified = true;
+    }
+    if (
+      settings.defaultSeo.ogImage &&
+      (/veloura/i.test(settings.defaultSeo.ogImage) || settings.defaultSeo.ogImage.includes('drive.google.com'))
+    ) {
+      settings.defaultSeo.ogImage =
+        'https://images.unsplash.com/photo-1600210492486-724fe5c67fb0?auto=format&fit=crop&w=1200&h=630&q=90';
+      modified = true;
+    }
+  }
+
+  // 5. Social links normalization
+  if (settings && settings.socialLinks !== undefined) {
+    const prevSocialJson = JSON.stringify(settings.socialLinks);
+    settings.socialLinks = normalizeSocialLinks(settings.socialLinks);
+    if (JSON.stringify(settings.socialLinks) !== prevSocialJson) {
+      modified = true;
+    }
+  }
+
+  // Defensive auto-healing in database if any legacy fields were normalized
+  if (modified && settings._id && typeof SiteSetting.updateOne === 'function') {
+    try {
+      await SiteSetting.updateOne(
+        { _id: settings._id },
+        {
+          $set: {
+            email: settings.email,
+            brandName: settings.brandName,
+            catalogueUrl: settings.catalogueUrl,
+            defaultSeo: settings.defaultSeo,
+            socialLinks: settings.socialLinks,
+          },
+        }
+      );
+    } catch {
+      // Non-blocking in-memory fallback
+    }
+  }
+
   return settings;
 };
 
