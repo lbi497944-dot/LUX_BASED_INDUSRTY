@@ -30,7 +30,7 @@ export default function AdminLogin() {
 
   return (
     <div className="admin-login-page">
-      <SEO title="Admin Login | LUX BASED INDUSTRY" canonical="/admin/login" />
+      <SEO title="Admin Login | LUX BASED INDUSTRY" canonical="/admin/login" robots="noindex, nofollow" />
 
       <div className="admin-login-card">
         <div className="admin-login-brand">

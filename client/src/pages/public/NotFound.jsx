@@ -13,6 +13,7 @@ export default function NotFound() {
         title={`Page Not Found | ${brand}`}
         description={`The requested page could not be found on ${brand}.`}
         canonical="/404"
+        robots="noindex, nofollow"
       />
 
       <div className="container not-found-container">

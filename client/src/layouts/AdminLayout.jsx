@@ -3,6 +3,7 @@ import { Outlet, useLocation } from 'react-router-dom';
 import AdminSidebar from '../components/ui/AdminSidebar';
 import AdminHeader from '../components/ui/AdminHeader';
 import { statsService } from '../services/statsService';
+import SEO from '../components/common/SEO';
 
 export default function AdminLayout() {
   const [sidebarOpen, setSidebarOpen] = useState(false);
@@ -63,6 +64,7 @@ export default function AdminLayout() {
 
   return (
     <div className="admin-app-wrapper">
+      <SEO title="Admin CMS | LUX BASED INDUSTRY" canonical="/admin" robots="noindex, nofollow" />
       <AdminSidebar
         isOpen={sidebarOpen}
         onClose={() => setSidebarOpen(false)}

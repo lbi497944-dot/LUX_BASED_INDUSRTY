@@ -5,7 +5,7 @@ import PageHero from '../../components/sections/PageHero';
 import SectionTitle from '../../components/sections/SectionTitle';
 import Reveal from '../../components/sections/Reveal';
 import SEO from '../../components/common/SEO';
-import { pageSeoData, siteConfig } from '../../seo/seoConfig';
+import { pageSeoData, siteConfig, getOrganizationSchema } from '../../seo/seoConfig';
 import { useSettings } from '../../context/SettingsContext';
 
 export default function About() {
@@ -39,19 +39,7 @@ export default function About() {
     }
   ];
 
-  const aboutSchema = {
-    '@context': 'https://schema.org',
-    '@type': 'Organization',
-    name: brand,
-    url: siteConfig.siteUrl,
-    logo: settings?.logo || `${siteConfig.siteUrl}/favicon.svg`,
-    description: siteConfig.defaultDescription,
-    address: {
-      '@type': 'PostalAddress',
-      addressLocality: 'Dubai',
-      addressCountry: 'AE'
-    }
-  };
+  const aboutSchema = getOrganizationSchema(settings);
 
   return (
     <main className="about-page">

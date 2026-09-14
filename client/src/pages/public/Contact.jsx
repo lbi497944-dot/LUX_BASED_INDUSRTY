@@ -6,7 +6,7 @@ import { images } from '../../data/site';
 import PageHero from '../../components/sections/PageHero';
 import Toast from '../../components/common/Toast';
 import SEO from '../../components/common/SEO';
-import { pageSeoData, siteConfig, getWhatsAppLink } from '../../seo/seoConfig';
+import { pageSeoData, siteConfig, getWhatsAppLink, getLocalBusinessSchema } from '../../seo/seoConfig';
 
 export default function Contact() {
   const { settings } = useSettings();
@@ -62,20 +62,7 @@ export default function Contact() {
 
   const primaryLocation = activeLocations.find((l) => l.isPrimary) || activeLocations[0];
 
-  const contactSchema = {
-    '@context': 'https://schema.org',
-    '@type': 'LocalBusiness',
-    name: settings.brandName || siteConfig.siteName,
-    url: `${siteConfig.siteUrl}/contact`,
-    telephone: primaryLocation?.phone || settings.phone,
-    email: primaryLocation?.email || settings.email,
-    address: {
-      '@type': 'PostalAddress',
-      streetAddress: primaryLocation?.address || settings.address,
-      addressLocality: primaryLocation?.city || settings.city || 'Dubai',
-      addressCountry: primaryLocation?.country || 'AE'
-    }
-  };
+  const contactSchema = getLocalBusinessSchema(settings);
 
   const cleanWhatsapp = (settings.whatsappNumberClean || settings.whatsapp || '').replace(/[^0-9]/g, '');
   const waContactMessage = encodeURIComponent(`Hello ${settings.brandName || 'LUX BASED INDUSTRY'}, I'm interested in discussing an architectural lighting project.`);

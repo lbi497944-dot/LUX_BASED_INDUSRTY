@@ -20,6 +20,7 @@ const testSuites = [
   { name: 'Settings Whitelist Suite', file: 'test_settings_whitelist.js' },
   { name: 'Transformation Backend Suite', file: 'test_transformation_backend.js' },
   { name: 'Phase 5D Admin UI & Code Audit', file: 'verify_phase5d.js' },
+  { name: 'Phase 5F SEO & Conversion Audit Suite', file: 'test_phase5f_seo_conversion.js' },
 ];
 
 console.log('========================================================');

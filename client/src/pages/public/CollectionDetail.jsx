@@ -8,7 +8,15 @@ import PageHero from '../../components/sections/PageHero';
 import SectionTitle from '../../components/sections/SectionTitle';
 import Reveal from '../../components/sections/Reveal';
 import SEO from '../../components/common/SEO';
-import { getWhatsAppLink, getCollectionWhatsAppMessage, getProductWhatsAppMessage } from '../../seo/seoConfig';
+import Breadcrumbs from '../../components/common/Breadcrumbs';
+import {
+  getWhatsAppLink,
+  getCollectionWhatsAppMessage,
+  getProductWhatsAppMessage,
+  getBreadcrumbSchema,
+  getCollectionPageSchema,
+  pageSeoData,
+} from '../../seo/seoConfig';
 import { useSettings } from '../../context/SettingsContext';
 
 export default function CollectionDetail() {
@@ -58,20 +66,46 @@ export default function CollectionDetail() {
     settings?.whatsappNumberClean || settings?.phone
   );
 
+  const matchedSeo = pageSeoData[collection.slug];
+  const pageTitle = matchedSeo?.title || `${collectionTitle} | ${brand}`;
+  const pageDescription = matchedSeo?.description || `${collectionTitle} — ${collection.description || 'Luxury lighting collection by LUX BASED INDUSTRY'}`;
+
+  const breadcrumbItems = [
+    { label: 'Home', path: '/' },
+    { label: 'Collections', path: '/collections' },
+    { label: collectionTitle },
+  ];
+
+  const collectionSchema = [
+    getBreadcrumbSchema([
+      { label: 'Home', path: '/' },
+      { label: 'Collections', path: '/collections' },
+      { label: collectionTitle, path: `/collections/${collection.slug}` },
+    ]),
+    getCollectionPageSchema(collection),
+  ];
+
   return (
     <main className="collection-detail-page">
       <SEO
-        title={`${collectionTitle} | ${brand}`}
-        description={`${collectionTitle} — ${collection.description}`}
+        title={pageTitle}
+        description={pageDescription}
         canonical={`/collections/${collection.slug}`}
+        image={collectionImage}
+        schemaData={collectionSchema}
       />
 
       <PageHero
-        eyebrow={collection.eyebrow}
+        eyebrow={collection.eyebrow || 'LUXURY COLLECTION'}
         title={collectionTitle}
         description={collection.description}
         image={collectionImage}
       />
+
+      {/* Accessible Breadcrumb Trail */}
+      <div className="container" style={{ paddingTop: '24px', paddingBottom: '8px' }}>
+        <Breadcrumbs items={breadcrumbItems} />
+      </div>
 
       {/* Intro / Technical Specifications Section */}
       <section className="section">

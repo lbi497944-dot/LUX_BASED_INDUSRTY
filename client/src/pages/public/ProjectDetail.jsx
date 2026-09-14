@@ -7,7 +7,14 @@ import PageHero from '../../components/sections/PageHero';
 import SectionTitle from '../../components/sections/SectionTitle';
 import Reveal from '../../components/sections/Reveal';
 import SEO from '../../components/common/SEO';
-import { getWhatsAppLink, getProjectWhatsAppMessage } from '../../seo/seoConfig';
+import Breadcrumbs from '../../components/common/Breadcrumbs';
+import {
+  getWhatsAppLink,
+  getProjectWhatsAppMessage,
+  getBreadcrumbSchema,
+  getCreativeWorkSchema,
+  pageSeoData,
+} from '../../seo/seoConfig';
 import { useSettings } from '../../context/SettingsContext';
 
 export default function ProjectDetail() {
@@ -68,18 +75,39 @@ export default function ProjectDetail() {
 
   const projectTitle = project.title || 'Architectural Lighting Project';
   const projectImage = project.coverImage || project.image || images.hotel;
+  const projectSlug = project.slug || project.id || slug;
+  const matchedSeo = pageSeoData[projectSlug];
+  const pageTitle = matchedSeo?.title || `${projectTitle} | ${brand} Portfolio`;
+  const pageDescription = matchedSeo?.description || project.description || `Architectural lighting project by ${brand}`;
+
   const whatsappUrl = getWhatsAppLink(
     getProjectWhatsAppMessage(projectTitle, brand),
     settings?.whatsappNumberClean || settings?.phone
   );
 
+  const breadcrumbItems = [
+    { label: 'Home', path: '/' },
+    { label: 'Portfolio', path: '/portfolio' },
+    { label: projectTitle },
+  ];
+
+  const projectSchema = [
+    getBreadcrumbSchema([
+      { label: 'Home', path: '/' },
+      { label: 'Portfolio', path: '/portfolio' },
+      { label: projectTitle, path: `/portfolio/${projectSlug}` },
+    ]),
+    getCreativeWorkSchema(project),
+  ];
+
   return (
     <main className="project-detail-page">
       <SEO
-        title={`${projectTitle} | ${brand} Portfolio`}
-        description={project.description}
-        canonical={`/portfolio/${project.slug || project.id}`}
+        title={pageTitle}
+        description={pageDescription}
+        canonical={`/portfolio/${projectSlug}`}
         image={projectImage}
+        schemaData={projectSchema}
       />
 
       <PageHero
@@ -88,6 +116,11 @@ export default function ProjectDetail() {
         description={project.description}
         image={projectImage}
       />
+
+      {/* Accessible Breadcrumb Trail */}
+      <div className="container" style={{ paddingTop: '24px', paddingBottom: '8px' }}>
+        <Breadcrumbs items={breadcrumbItems} />
+      </div>
 
       <section className="section">
         <div className="container">

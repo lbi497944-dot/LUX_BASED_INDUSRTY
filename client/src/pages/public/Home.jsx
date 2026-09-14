@@ -20,7 +20,7 @@ import CatalogueCTA from '../../components/sections/CatalogueCTA';
 import ClientPartnersMarquee from '../../components/sections/ClientPartnersMarquee';
 import TestimonialsSection from '../../components/sections/TestimonialsSection';
 import SEO from '../../components/common/SEO';
-import { pageSeoData, siteConfig } from '../../seo/seoConfig';
+import { pageSeoData, siteConfig, getOrganizationSchema, getWebSiteSchema, getLocalBusinessSchema } from '../../seo/seoConfig';
 import { getSavedProductIds, toggleSaveProduct } from '../../utils/savedProducts';
 
 const fallbackFaqs = [
@@ -131,36 +131,28 @@ export default function Home() {
     toggleSaveProduct(productId);
   };
 
-  // Schema.org structured data for LocalBusiness & FAQPage
-  const homeSchema = {
-    '@context': 'https://schema.org',
-    '@type': 'LocalBusiness',
-    name: settings?.brandName || siteConfig.siteName,
-    url: siteConfig.siteUrl,
-    logo: settings?.logo || `${siteConfig.siteUrl}/favicon.svg`,
-    image: siteConfig.defaultImage,
-    description: siteConfig.defaultDescription,
-    telephone: settings?.phone || siteConfig.contact.phone,
-    email: settings?.email || siteConfig.contact.email,
-    address: {
-      '@type': 'PostalAddress',
-      streetAddress: settings?.address || 'Alserkal Avenue, Building 42',
-      addressLocality: settings?.city || 'Dubai',
-      addressCountry: settings?.country ? 'AE' : 'AE'
-    },
-    geo: {
-      '@type': 'GeoCoordinates',
-      latitude: siteConfig.contact.geo.latitude,
-      longitude: siteConfig.contact.geo.longitude
-    },
-    sameAs: Array.isArray(settings?.socialLinks)
-      ? settings.socialLinks
-          .filter((item) => item && item.active !== false && typeof item.url === 'string' && item.url.trim().length > 0)
-          .map((item) => item.url.trim())
-      : Object.values(settings?.socialLinks || siteConfig.socialLinks).filter(
-          (url) => typeof url === 'string' && url.trim().length > 0
-        )
-  };
+  // Schema.org structured data graph for Organization, WebSite, LocalBusiness & FAQPage
+  const homeSchema = [
+    getOrganizationSchema(settings),
+    getWebSiteSchema(),
+    getLocalBusinessSchema(settings),
+    ...(faqItems && faqItems.length > 0
+      ? [
+          {
+            '@context': 'https://schema.org',
+            '@type': 'FAQPage',
+            mainEntity: faqItems.map((faq) => ({
+              '@type': 'Question',
+              name: faq.question,
+              acceptedAnswer: {
+                '@type': 'Answer',
+                text: faq.answer,
+              },
+            })),
+          },
+        ]
+      : []),
+  ];
 
   const whyCompanyItems = [
     {
