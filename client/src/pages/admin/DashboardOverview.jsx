@@ -88,7 +88,11 @@ export default function DashboardOverview() {
 
       {/* Metrics Grid */}
       <div className="admin-stats-grid">
-        <div className="admin-stat-card">
+        <Link
+          to="/admin/consultations"
+          className="admin-stat-card admin-stat-card-link"
+          aria-label="View New Consultations"
+        >
           <div className="stat-card-header">
             <span className="stat-label">NEW CONSULTATIONS</span>
             <div className="stat-icon-wrap highlight">
@@ -97,9 +101,13 @@ export default function DashboardOverview() {
           </div>
           <div className="stat-number">{counts.newConsultations || 0}</div>
           <small className="stat-meta">{counts.totalConsultations || 0} total leads recorded</small>
-        </div>
+        </Link>
 
-        <div className="admin-stat-card">
+        <Link
+          to="/admin/contact"
+          className="admin-stat-card admin-stat-card-link"
+          aria-label="View New Contact Enquiries"
+        >
           <div className="stat-card-header">
             <span className="stat-label">NEW ENQUIRIES</span>
             <div className="stat-icon-wrap">
@@ -108,9 +116,13 @@ export default function DashboardOverview() {
           </div>
           <div className="stat-number">{counts.newEnquiries || 0}</div>
           <small className="stat-meta">{counts.totalEnquiries || 0} general messages</small>
-        </div>
+        </Link>
 
-        <div className="admin-stat-card">
+        <Link
+          to="/admin/newsletter"
+          className="admin-stat-card admin-stat-card-link"
+          aria-label="View Newsletter Subscribers"
+        >
           <div className="stat-card-header">
             <span className="stat-label">SUBSCRIBERS</span>
             <div className="stat-icon-wrap">
@@ -119,9 +131,13 @@ export default function DashboardOverview() {
           </div>
           <div className="stat-number">{counts.totalSubscribers || 0}</div>
           <small className="stat-meta">Active newsletter readership</small>
-        </div>
+        </Link>
 
-        <div className="admin-stat-card">
+        <Link
+          to="/admin/products"
+          className="admin-stat-card admin-stat-card-link"
+          aria-label="View Catalogue Pieces"
+        >
           <div className="stat-card-header">
             <span className="stat-label">CATALOGUE PIECES</span>
             <div className="stat-icon-wrap">
@@ -130,7 +146,7 @@ export default function DashboardOverview() {
           </div>
           <div className="stat-number">{counts.totalProducts || 0}</div>
           <small className="stat-meta">Across {counts.totalCollections || 0} collections</small>
-        </div>
+        </Link>
       </div>
 
       {/* Split Section: Recent Consultations & Recent Enquiries */}

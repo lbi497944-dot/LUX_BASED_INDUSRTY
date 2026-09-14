@@ -1,11 +1,20 @@
 import { useState, useEffect } from 'react';
 import { productService } from '../../services/productService';
 import { collectionService } from '../../services/collectionService';
-import { uploadService } from '../../services/uploadService';
-import { Plus, Edit2, Trash2, Search, Filter, Loader2, Sparkles, X, Check, Upload } from 'lucide-react';
+import { Plus, Edit2, Trash2, Search, Filter, Loader2, Sparkles, X } from 'lucide-react';
 import ModalConfirm from '../../components/modals/ModalConfirm';
 import Toast from '../../components/common/Toast';
 import SEO from '../../components/common/SEO';
+import AdminImageUpload from '../../components/ui/AdminImageUpload';
+
+const DEFAULT_CATEGORIES = [
+  'Grand Chandelier',
+  'Pendant Light',
+  'Wall Light',
+  'Table Light',
+  'Floor Light',
+  'Ambient System',
+];
 
 export default function ProductsManager() {
   const [products, setProducts] = useState([]);
@@ -14,13 +23,13 @@ export default function ProductsManager() {
   const [search, setSearch] = useState('');
   const [selectedCategory, setSelectedCategory] = useState('ALL');
   const [toast, setToast] = useState(null);
+  const [customCategories, setCustomCategories] = useState([]);
+  const [isAddingNewCategory, setIsAddingNewCategory] = useState(false);
+  const [newCategoryName, setNewCategoryName] = useState('');
 
   // Edit/Create Modal state
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [editingProduct, setEditingProduct] = useState(null);
-  const [imageUploading, setImageUploading] = useState(false);
-  const [uploadError, setUploadError] = useState(null);
-  const [imageMode, setImageMode] = useState('upload'); // 'upload' | 'url'
   const [formData, setFormData] = useState({
     name: '',
     category: 'Grand Chandelier',
@@ -64,55 +73,35 @@ export default function ProductsManager() {
     fetchData();
   }, [search, selectedCategory]);
 
-  const handleFileSelect = async (e) => {
-    const file = e.target.files?.[0];
-    if (!file) return;
+  const allCategories = Array.from(
+    new Set([
+      ...DEFAULT_CATEGORIES,
+      ...products.map((p) => p.category).filter(Boolean),
+      ...customCategories,
+    ])
+  );
 
-    setUploadError(null);
-
-    const validExtensions = ['.jpg', '.jpeg', '.png', '.webp'];
-    const ext = file.name.substring(file.name.lastIndexOf('.')).toLowerCase();
-    if (!validExtensions.includes(ext)) {
-      setUploadError('Unsupported format. Only JPG, PNG, and WEBP images are allowed.');
-      e.target.value = '';
+  const handleAddNewCategory = () => {
+    const trimmed = newCategoryName.trim();
+    if (!trimmed) {
+      setIsAddingNewCategory(false);
       return;
     }
-
-    if (file.size > 10 * 1024 * 1024) {
-      setUploadError('File size exceeds the 10MB limit.');
-      e.target.value = '';
-      return;
+    const existing = allCategories.find((c) => c.toLowerCase() === trimmed.toLowerCase());
+    if (existing) {
+      setFormData((prev) => ({ ...prev, category: existing }));
+    } else {
+      setCustomCategories((prev) => [...prev, trimmed]);
+      setFormData((prev) => ({ ...prev, category: trimmed }));
     }
-
-    try {
-      setImageUploading(true);
-      const res = await uploadService.uploadFile(file);
-      if (res?.data?.url) {
-        setFormData((prev) => ({
-          ...prev,
-          image: res.data.url,
-          imagePublicId: res.data.publicId || '',
-        }));
-      }
-    } catch (err) {
-      setUploadError(err?.message || 'Failed to upload image to Cloudinary.');
-    } finally {
-      setImageUploading(false);
-      e.target.value = '';
-    }
-  };
-
-  const handleClearImage = () => {
-    setFormData((prev) => ({
-      ...prev,
-      image: '',
-      imagePublicId: '',
-    }));
-    setUploadError(null);
+    setIsAddingNewCategory(false);
+    setNewCategoryName('');
   };
 
   const handleOpenCreate = () => {
     setEditingProduct(null);
+    setIsAddingNewCategory(false);
+    setNewCategoryName('');
     setFormData({
       name: '',
       category: 'Grand Chandelier',
@@ -130,13 +119,13 @@ export default function ProductsManager() {
       featured: false,
       isActive: true,
     });
-    setImageMode('upload');
-    setUploadError(null);
     setIsModalOpen(true);
   };
 
   const handleOpenEdit = (prod) => {
     setEditingProduct(prod);
+    setIsAddingNewCategory(false);
+    setNewCategoryName('');
     setFormData({
       name: prod.name || '',
       category: prod.category || 'Grand Chandelier',
@@ -154,8 +143,6 @@ export default function ProductsManager() {
       featured: prod.featured || false,
       isActive: prod.isActive !== false,
     });
-    setImageMode(prod.imagePublicId ? 'upload' : 'url');
-    setUploadError(null);
     setIsModalOpen(true);
   };
 
@@ -239,14 +226,14 @@ export default function ProductsManager() {
           <select
             value={selectedCategory}
             onChange={(e) => setSelectedCategory(e.target.value)}
+            aria-label="Filter products by category"
           >
             <option value="ALL">All Categories</option>
-            <option value="Grand Chandelier">Grand Chandelier</option>
-            <option value="Pendant Light">Pendant Light</option>
-            <option value="Wall Light">Wall Light</option>
-            <option value="Table Light">Table Light</option>
-            <option value="Floor Light">Floor Light</option>
-            <option value="Ambient System">Ambient System</option>
+            {allCategories.map((cat) => (
+              <option key={cat} value={cat}>
+                {cat}
+              </option>
+            ))}
           </select>
         </div>
       </div>
@@ -352,16 +339,68 @@ export default function ProductsManager() {
                     placeholder="e.g. The Aurelia Grand Chandelier"
                   />
                 </label>
-                <label>
-                  CATEGORY *
-                  <input
-                    type="text"
-                    required
-                    value={formData.category}
-                    onChange={(e) => setFormData({ ...formData, category: e.target.value })}
-                    placeholder="e.g. Grand Chandelier"
-                  />
-                </label>
+                <div className="admin-cat-select-wrap">
+                  <label className="field-label">CATEGORY *</label>
+                  {!isAddingNewCategory ? (
+                    <select
+                      value={formData.category}
+                      onChange={(e) => {
+                        if (e.target.value === '__ADD_NEW__') {
+                          setIsAddingNewCategory(true);
+                          setNewCategoryName('');
+                        } else {
+                          setFormData((prev) => ({ ...prev, category: e.target.value }));
+                        }
+                      }}
+                      aria-label="Product Category"
+                    >
+                      {allCategories.map((cat) => (
+                        <option key={cat} value={cat}>
+                          {cat}
+                        </option>
+                      ))}
+                      <option value="__ADD_NEW__">+ Add New Category...</option>
+                    </select>
+                  ) : (
+                    <div className="admin-new-cat-box">
+                      <input
+                        type="text"
+                        placeholder="Enter category name..."
+                        value={newCategoryName}
+                        onChange={(e) => setNewCategoryName(e.target.value)}
+                        autoFocus
+                        maxLength={50}
+                        onKeyDown={(e) => {
+                          if (e.key === 'Enter') {
+                            e.preventDefault();
+                            handleAddNewCategory();
+                          } else if (e.key === 'Escape') {
+                            setIsAddingNewCategory(false);
+                          }
+                        }}
+                      />
+                      <div className="admin-new-cat-actions">
+                        <button
+                          type="button"
+                          className="btn btn-gold btn-xs"
+                          onClick={handleAddNewCategory}
+                        >
+                          Add
+                        </button>
+                        <button
+                          type="button"
+                          className="btn btn-outline btn-xs"
+                          onClick={() => {
+                            setIsAddingNewCategory(false);
+                            setNewCategoryName('');
+                          }}
+                        >
+                          Cancel
+                        </button>
+                      </div>
+                    </div>
+                  )}
+                </div>
               </div>
 
               <div className="form-row">
@@ -383,132 +422,17 @@ export default function ProductsManager() {
                 </label>
               </div>
 
-              {/* Primary Image Upload / URL */}
-              <div className="admin-media-upload-section" style={{ marginBottom: '16px' }}>
-                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '8px' }}>
-                  <span style={{ fontSize: '11px', fontWeight: 600, letterSpacing: '0.05em', color: 'rgba(243, 243, 235, 0.55)', textTransform: 'uppercase' }}>
-                    PRIMARY FIXTURE IMAGE *
-                  </span>
-                  <div style={{ display: 'flex', gap: '6px' }}>
-                    <button
-                      type="button"
-                      className={`btn btn-sm ${imageMode === 'upload' ? 'btn-gold' : 'btn-outline'}`}
-                      style={{ padding: '2px 10px', fontSize: '11px' }}
-                      onClick={() => { setImageMode('upload'); setUploadError(null); }}
-                    >
-                      <Upload size={12} style={{ marginRight: '4px' }} /> Upload
-                    </button>
-                    <button
-                      type="button"
-                      className={`btn btn-sm ${imageMode === 'url' ? 'btn-gold' : 'btn-outline'}`}
-                      style={{ padding: '2px 10px', fontSize: '11px' }}
-                      onClick={() => { setImageMode('url'); setUploadError(null); }}
-                    >
-                      URL
-                    </button>
-                  </div>
-                </div>
-
-                {imageMode === 'upload' ? (
-                  <label
-                    className="file-upload-box"
-                    style={{
-                      display: 'block',
-                      padding: '16px',
-                      borderRadius: '4px',
-                      cursor: imageUploading ? 'wait' : 'pointer',
-                      border: '1px dashed rgba(230, 199, 122, 0.3)',
-                      backgroundColor: 'rgba(255, 255, 255, 0.02)',
-                    }}
-                  >
-                    <input
-                      type="file"
-                      accept=".jpg,.jpeg,.png,.webp"
-                      onChange={handleFileSelect}
-                      disabled={imageUploading}
-                      className="file-input-hidden"
-                    />
-                    <div className="file-upload-label" style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '8px' }}>
-                      {imageUploading ? (
-                        <>
-                          <Loader2 size={16} className="spin-icon" style={{ color: 'var(--gold)' }} />
-                          <span style={{ color: 'var(--gold)' }}>Uploading to Cloudinary...</span>
-                        </>
-                      ) : (
-                        <>
-                          <Upload size={16} style={{ color: 'var(--gold)' }} />
-                          <span>Click to upload image (JPG, PNG, WEBP · Max 10MB)</span>
-                        </>
-                      )}
-                    </div>
-                  </label>
-                ) : (
-                  <div>
-                    <input
-                      type="url"
-                      value={formData.image}
-                      onChange={(e) => setFormData({ ...formData, image: e.target.value, imagePublicId: '' })}
-                      placeholder="https://images.unsplash.com/... or external image URL"
-                    />
-                  </div>
-                )}
-
-                {uploadError && (
-                  <p style={{ color: '#f87171', fontSize: '12px', marginTop: '6px', marginBottom: 0 }}>
-                    {uploadError}
-                  </p>
-                )}
-
-                {/* Thumbnail Preview Card */}
-                {formData.image && (
-                  <div
-                    style={{
-                      display: 'flex',
-                      alignItems: 'center',
-                      gap: '12px',
-                      marginTop: '10px',
-                      padding: '8px 12px',
-                      background: 'rgba(255, 255, 255, 0.03)',
-                      border: '1px solid rgba(230, 199, 122, 0.2)',
-                      borderRadius: '4px',
-                    }}
-                  >
-                    <img
-                      src={formData.image}
-                      alt="Fixture Preview"
-                      style={{ width: '48px', height: '48px', objectFit: 'cover', borderRadius: '4px' }}
-                      onError={(e) => { e.target.style.display = 'none'; }}
-                    />
-                    <div style={{ flex: 1, minWidth: 0 }}>
-                      <p style={{ fontSize: '12px', margin: 0, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
-                        {formData.image}
-                      </p>
-                      <small style={{ fontSize: '10px', color: formData.imagePublicId ? '#4ade80' : 'rgba(243, 243, 235, 0.55)' }}>
-                        {formData.imagePublicId ? '✓ Cloudinary Hosted' : 'External Image Link'}
-                      </small>
-                    </div>
-                    <button
-                      type="button"
-                      className="admin-action-btn danger"
-                      onClick={handleClearImage}
-                      title="Clear image"
-                      style={{ flexShrink: 0 }}
-                    >
-                      <X size={14} />
-                    </button>
-                  </div>
-                )}
-
-                {/* Hidden input to ensure HTML5 required validation passes only when image is non-empty */}
-                <input
-                  type="text"
-                  required
-                  value={formData.image}
-                  onChange={() => {}}
-                  style={{ position: 'absolute', opacity: 0, pointerEvents: 'none', height: 0, width: 0 }}
-                  tabIndex={-1}
-                />
-              </div>
+              {/* Primary Image Upload */}
+              <AdminImageUpload
+                label="PRIMARY FIXTURE IMAGE"
+                required
+                value={formData.image}
+                publicId={formData.imagePublicId}
+                onChange={({ url, publicId }) =>
+                  setFormData((prev) => ({ ...prev, image: url, imagePublicId: publicId }))
+                }
+                helpText="JPG, PNG, WEBP · Max 10MB"
+              />
 
               <label>
                 DESCRIPTION *

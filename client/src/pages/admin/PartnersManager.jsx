@@ -1,6 +1,5 @@
 import { useState, useEffect } from 'react';
 import { partnerService } from '../../services/partnerService';
-import { uploadService } from '../../services/uploadService';
 import {
   Plus,
   Edit2,
@@ -9,20 +8,12 @@ import {
   Loader2,
   X,
   ExternalLink,
-  Upload,
-  CheckCircle2,
-  XCircle,
-  AlertCircle,
-  ArrowUpDown,
-  Building2,
 } from 'lucide-react';
 import StatusBadge from '../../components/ui/StatusBadge';
 import ModalConfirm from '../../components/modals/ModalConfirm';
 import Toast from '../../components/common/Toast';
 import SEO from '../../components/common/SEO';
-
-const MAX_IMAGE_SIZE_BYTES = 10 * 1024 * 1024; // 10 MB limit for admin logos
-const ALLOWED_EXTENSIONS = ['.jpg', '.jpeg', '.png', '.webp'];
+import AdminImageUpload from '../../components/ui/AdminImageUpload';
 
 export default function PartnersManager() {
   const [partners, setPartners] = useState([]);
@@ -41,8 +32,6 @@ export default function PartnersManager() {
     isActive: true,
   });
   const [modalLoading, setModalLoading] = useState(false);
-  const [imageUploading, setImageUploading] = useState(false);
-  const [uploadError, setUploadError] = useState(null);
 
   // Modal state for Delete
   const [deleteTarget, setDeleteTarget] = useState(null);
@@ -71,9 +60,19 @@ export default function PartnersManager() {
     fetchPartners();
   }, []);
 
+  useEffect(() => {
+    if (!isModalOpen) return;
+    const handleKeyDown = (e) => {
+      if (e.key === 'Escape' && !modalLoading) {
+        setIsModalOpen(false);
+      }
+    };
+    window.addEventListener('keydown', handleKeyDown);
+    return () => window.removeEventListener('keydown', handleKeyDown);
+  }, [isModalOpen, modalLoading]);
+
   const handleOpenCreate = () => {
     setEditingPartner(null);
-    setUploadError(null);
     setFormData({
       name: '',
       logo: '',
@@ -87,7 +86,6 @@ export default function PartnersManager() {
 
   const handleOpenEdit = (partner) => {
     setEditingPartner(partner);
-    setUploadError(null);
     setFormData({
       name: partner.name || '',
       logo: partner.logo || '',
@@ -97,54 +95,6 @@ export default function PartnersManager() {
       isActive: partner.isActive !== false,
     });
     setIsModalOpen(true);
-  };
-
-  const handleLogoUpload = async (e) => {
-    const file = e.target.files?.[0];
-    if (!file) return;
-
-    const ext = file.name.substring(file.name.lastIndexOf('.')).toLowerCase();
-    if (!ALLOWED_EXTENSIONS.includes(ext)) {
-      setUploadError('Unsupported file format. Only JPG, PNG, and WEBP are permitted.');
-      e.target.value = '';
-      return;
-    }
-
-    if (file.size > MAX_IMAGE_SIZE_BYTES) {
-      setUploadError('File size exceeds the 10MB limit.');
-      e.target.value = '';
-      return;
-    }
-
-    setUploadError(null);
-    setImageUploading(true);
-
-    try {
-      const res = await uploadService.uploadFile(file);
-      if (res?.data?.url) {
-        setFormData((prev) => ({
-          ...prev,
-          logo: res.data.url,
-          logoPublicId: res.data.publicId || '',
-        }));
-      } else {
-        throw new Error('Upload succeeded but no image URL was returned.');
-      }
-    } catch (err) {
-      setUploadError(err?.message || 'Failed to upload logo to Cloudinary.');
-    } finally {
-      setImageUploading(false);
-      e.target.value = '';
-    }
-  };
-
-  const handleClearLogo = () => {
-    setFormData((prev) => ({
-      ...prev,
-      logo: '',
-      logoPublicId: '',
-    }));
-    setUploadError(null);
   };
 
   const handleToggleActive = async (partner) => {
@@ -432,57 +382,21 @@ export default function PartnersManager() {
                 </div>
 
                 {/* 2. LOGO UPLOADER */}
-                <div className="form-group">
-                  <label className="field-label">
-                    COMPANY LOGO * (JPG, PNG, WEBP - MAX 10MB)
-                  </label>
-
-                  {formData.logo ? (
-                    <div className="partner-modal-logo-preview">
-                      <img src={formData.logo} alt="Partner logo preview" />
-                      <button
-                        type="button"
-                        onClick={handleClearLogo}
-                        className="btn btn-outline btn-xs mt-2"
-                        disabled={modalLoading}
-                      >
-                        <X size={12} /> Replace Logo
-                      </button>
-                    </div>
-                  ) : (
-                    <div className="admin-file-dropzone">
-                      <input
-                        type="file"
-                        id="partner-logo-input"
-                        accept=".jpg,.jpeg,.png,.webp"
-                        onChange={handleLogoUpload}
-                        disabled={imageUploading || modalLoading}
-                        style={{ display: 'none' }}
-                      />
-                      <label htmlFor="partner-logo-input" className="admin-dropzone-label">
-                        {imageUploading ? (
-                          <div className="dropzone-uploading">
-                            <Loader2 className="animate-spin" size={24} />
-                            <span>Uploading logo to Cloudinary...</span>
-                          </div>
-                        ) : (
-                          <div className="dropzone-idle">
-                            <Upload size={24} />
-                            <strong>Click to choose logo image</strong>
-                            <small>Recommended: Transparent PNG or SVG-styled WEBP</small>
-                          </div>
-                        )}
-                      </label>
-                    </div>
-                  )}
-
-                  {uploadError && (
-                    <div className="field-error mt-2">
-                      <AlertCircle size={14} />
-                      <span>{uploadError}</span>
-                    </div>
-                  )}
-                </div>
+                <AdminImageUpload
+                  label="COMPANY LOGO"
+                  required
+                  value={formData.logo}
+                  publicId={formData.logoPublicId}
+                  onChange={({ url, publicId }) =>
+                    setFormData((prev) => ({
+                      ...prev,
+                      logo: url,
+                      logoPublicId: publicId,
+                    }))
+                  }
+                  helpText="Company logo (JPG, PNG, WEBP · Max 10MB)"
+                  disabled={modalLoading}
+                />
 
                 {/* 3. WEBSITE URL */}
                 <div className="form-group">
@@ -545,7 +459,7 @@ export default function PartnersManager() {
                 <button
                   type="submit"
                   className="btn btn-gold btn-sm"
-                  disabled={modalLoading || imageUploading || !formData.logo}
+                  disabled={modalLoading || !formData.logo}
                 >
                   {modalLoading ? (
                     <>

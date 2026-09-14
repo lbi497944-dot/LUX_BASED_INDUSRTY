@@ -1,10 +1,11 @@
 import { useState, useEffect } from 'react';
 import { projectService } from '../../services/projectService';
 import { uploadService } from '../../services/uploadService';
-import { Plus, Edit2, Trash2, Search, Filter, Loader2, Building2, X, Upload, Image } from 'lucide-react';
+import { Plus, Edit2, Trash2, Search, Filter, Loader2, Building2, X, Upload } from 'lucide-react';
 import ModalConfirm from '../../components/modals/ModalConfirm';
 import Toast from '../../components/common/Toast';
 import SEO from '../../components/common/SEO';
+import AdminImageUpload from '../../components/ui/AdminImageUpload';
 
 export default function ProjectsManager() {
   const [projects, setProjects] = useState([]);
@@ -14,9 +15,6 @@ export default function ProjectsManager() {
 
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [editingProject, setEditingProject] = useState(null);
-  const [imageUploading, setImageUploading] = useState(false);
-  const [uploadError, setUploadError] = useState(null);
-  const [imageMode, setImageMode] = useState('upload'); // 'upload' | 'url'
   const [galleryUploading, setGalleryUploading] = useState(false);
   const [galleryUploadError, setGalleryUploadError] = useState(null);
   const [galleryExternalUrl, setGalleryExternalUrl] = useState('');
@@ -55,53 +53,6 @@ export default function ProjectsManager() {
   useEffect(() => {
     fetchProjects();
   }, [selectedCategory]);
-
-  const handleFileSelect = async (e) => {
-    const file = e.target.files?.[0];
-    if (!file) return;
-
-    setUploadError(null);
-
-    const validExtensions = ['.jpg', '.jpeg', '.png', '.webp'];
-    const ext = file.name.substring(file.name.lastIndexOf('.')).toLowerCase();
-    if (!validExtensions.includes(ext)) {
-      setUploadError('Unsupported format. Only JPG, PNG, and WEBP images are allowed.');
-      e.target.value = '';
-      return;
-    }
-
-    if (file.size > 10 * 1024 * 1024) {
-      setUploadError('File size exceeds the 10MB limit.');
-      e.target.value = '';
-      return;
-    }
-
-    try {
-      setImageUploading(true);
-      const res = await uploadService.uploadFile(file);
-      if (res?.data?.url) {
-        setFormData((prev) => ({
-          ...prev,
-          coverImage: res.data.url,
-          coverImagePublicId: res.data.publicId || '',
-        }));
-      }
-    } catch (err) {
-      setUploadError(err?.message || 'Failed to upload image to Cloudinary.');
-    } finally {
-      setImageUploading(false);
-      e.target.value = '';
-    }
-  };
-
-  const handleClearCoverImage = () => {
-    setFormData((prev) => ({
-      ...prev,
-      coverImage: '',
-      coverImagePublicId: '',
-    }));
-    setUploadError(null);
-  };
 
   const handleGalleryFilesSelect = async (e) => {
     const files = Array.from(e.target.files || []);
@@ -193,8 +144,6 @@ export default function ProjectsManager() {
       featured: false,
       isActive: true,
     });
-    setImageMode('upload');
-    setUploadError(null);
     setGalleryUploadError(null);
     setGalleryExternalUrl('');
     setIsModalOpen(true);
@@ -216,8 +165,6 @@ export default function ProjectsManager() {
       featured: proj.featured || false,
       isActive: proj.isActive !== false,
     });
-    setImageMode(proj.coverImagePublicId ? 'upload' : 'url');
-    setUploadError(null);
     setGalleryUploadError(null);
     setGalleryExternalUrl('');
     setIsModalOpen(true);
@@ -424,132 +371,17 @@ export default function ProjectsManager() {
                 </label>
               </div>
 
-              {/* Primary Cover Image Upload / URL */}
-              <div className="admin-media-upload-section" style={{ marginBottom: '16px' }}>
-                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '8px' }}>
-                  <span style={{ fontSize: '11px', fontWeight: 600, letterSpacing: '0.05em', color: 'rgba(243, 243, 235, 0.55)', textTransform: 'uppercase' }}>
-                    PROJECT COVER IMAGE *
-                  </span>
-                  <div style={{ display: 'flex', gap: '6px' }}>
-                    <button
-                      type="button"
-                      className={`btn btn-sm ${imageMode === 'upload' ? 'btn-gold' : 'btn-outline'}`}
-                      style={{ padding: '2px 10px', fontSize: '11px' }}
-                      onClick={() => { setImageMode('upload'); setUploadError(null); }}
-                    >
-                      <Upload size={12} style={{ marginRight: '4px' }} /> Upload
-                    </button>
-                    <button
-                      type="button"
-                      className={`btn btn-sm ${imageMode === 'url' ? 'btn-gold' : 'btn-outline'}`}
-                      style={{ padding: '2px 10px', fontSize: '11px' }}
-                      onClick={() => { setImageMode('url'); setUploadError(null); }}
-                    >
-                      URL
-                    </button>
-                  </div>
-                </div>
-
-                {imageMode === 'upload' ? (
-                  <label
-                    className="file-upload-box"
-                    style={{
-                      display: 'block',
-                      padding: '16px',
-                      borderRadius: '4px',
-                      cursor: imageUploading ? 'wait' : 'pointer',
-                      border: '1px dashed rgba(230, 199, 122, 0.3)',
-                      backgroundColor: 'rgba(255, 255, 255, 0.02)',
-                    }}
-                  >
-                    <input
-                      type="file"
-                      accept=".jpg,.jpeg,.png,.webp"
-                      onChange={handleFileSelect}
-                      disabled={imageUploading}
-                      className="file-input-hidden"
-                    />
-                    <div className="file-upload-label" style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '8px' }}>
-                      {imageUploading ? (
-                        <>
-                          <Loader2 size={16} className="spin-icon" style={{ color: 'var(--gold)' }} />
-                          <span style={{ color: 'var(--gold)' }}>Uploading to Cloudinary...</span>
-                        </>
-                      ) : (
-                        <>
-                          <Upload size={16} style={{ color: 'var(--gold)' }} />
-                          <span>Click to upload cover image (JPG, PNG, WEBP · Max 10MB)</span>
-                        </>
-                      )}
-                    </div>
-                  </label>
-                ) : (
-                  <div>
-                    <input
-                      type="url"
-                      value={formData.coverImage}
-                      onChange={(e) => setFormData({ ...formData, coverImage: e.target.value, coverImagePublicId: '' })}
-                      placeholder="https://images.unsplash.com/... or external image URL"
-                    />
-                  </div>
-                )}
-
-                {uploadError && (
-                  <p style={{ color: '#f87171', fontSize: '12px', marginTop: '6px', marginBottom: 0 }}>
-                    {uploadError}
-                  </p>
-                )}
-
-                {/* Thumbnail Preview Card */}
-                {formData.coverImage && (
-                  <div
-                    style={{
-                      display: 'flex',
-                      alignItems: 'center',
-                      gap: '12px',
-                      marginTop: '10px',
-                      padding: '8px 12px',
-                      background: 'rgba(255, 255, 255, 0.03)',
-                      border: '1px solid rgba(230, 199, 122, 0.2)',
-                      borderRadius: '4px',
-                    }}
-                  >
-                    <img
-                      src={formData.coverImage}
-                      alt="Cover Preview"
-                      style={{ width: '48px', height: '48px', objectFit: 'cover', borderRadius: '4px' }}
-                      onError={(e) => { e.target.style.display = 'none'; }}
-                    />
-                    <div style={{ flex: 1, minWidth: 0 }}>
-                      <p style={{ fontSize: '12px', margin: 0, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
-                        {formData.coverImage}
-                      </p>
-                      <small style={{ fontSize: '10px', color: formData.coverImagePublicId ? '#4ade80' : 'rgba(243, 243, 235, 0.55)' }}>
-                        {formData.coverImagePublicId ? '✓ Cloudinary Hosted' : 'External Image Link'}
-                      </small>
-                    </div>
-                    <button
-                      type="button"
-                      className="admin-action-btn danger"
-                      onClick={handleClearCoverImage}
-                      title="Clear cover image"
-                      style={{ flexShrink: 0 }}
-                    >
-                      <X size={14} />
-                    </button>
-                  </div>
-                )}
-
-                {/* Hidden input to ensure HTML5 required validation passes only when coverImage is non-empty */}
-                <input
-                  type="text"
-                  required
-                  value={formData.coverImage}
-                  onChange={() => {}}
-                  style={{ position: 'absolute', opacity: 0, pointerEvents: 'none', height: 0, width: 0 }}
-                  tabIndex={-1}
-                />
-              </div>
+              {/* Primary Cover Image Upload */}
+              <AdminImageUpload
+                label="PROJECT COVER IMAGE"
+                required
+                value={formData.coverImage}
+                publicId={formData.coverImagePublicId}
+                onChange={({ url, publicId }) =>
+                  setFormData((prev) => ({ ...prev, coverImage: url, coverImagePublicId: publicId }))
+                }
+                helpText="JPG, PNG, WEBP · Max 10MB"
+              />
 
               {/* Scope & Deliverables */}
               <div className="form-row">

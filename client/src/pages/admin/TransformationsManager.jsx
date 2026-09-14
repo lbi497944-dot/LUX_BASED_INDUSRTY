@@ -1,26 +1,19 @@
 import { useState, useEffect } from 'react';
 import { transformationService } from '../../services/transformationService';
-import { uploadService } from '../../services/uploadService';
 import {
   Plus,
   Edit2,
   Trash2,
   Loader2,
   X,
-  Upload,
-  AlertCircle,
   Sliders,
   Sparkles,
-  ArrowUpDown,
-  ExternalLink,
 } from 'lucide-react';
 import StatusBadge from '../../components/ui/StatusBadge';
 import ModalConfirm from '../../components/modals/ModalConfirm';
 import Toast from '../../components/common/Toast';
 import SEO from '../../components/common/SEO';
-
-const MAX_IMAGE_SIZE_BYTES = 10 * 1024 * 1024; // 10 MB limit for admin photos
-const ALLOWED_EXTENSIONS = ['.jpg', '.jpeg', '.png', '.webp'];
+import AdminImageUpload from '../../components/ui/AdminImageUpload';
 
 export default function TransformationsManager() {
   const [transformations, setTransformations] = useState([]);
@@ -42,9 +35,6 @@ export default function TransformationsManager() {
     isActive: true,
   });
   const [modalLoading, setModalLoading] = useState(false);
-  const [uploadingBefore, setUploadingBefore] = useState(false);
-  const [uploadingAfter, setUploadingAfter] = useState(false);
-  const [uploadError, setUploadError] = useState(null);
 
   // Modal state for Delete
   const [deleteTarget, setDeleteTarget] = useState(null);
@@ -73,9 +63,18 @@ export default function TransformationsManager() {
     fetchTransformations();
   }, []);
 
+  useEffect(() => {
+    const handleKeyDown = (e) => {
+      if (e.key === 'Escape' && isModalOpen && !modalLoading) {
+        setIsModalOpen(false);
+      }
+    };
+    window.addEventListener('keydown', handleKeyDown);
+    return () => window.removeEventListener('keydown', handleKeyDown);
+  }, [isModalOpen, modalLoading]);
+
   const handleOpenCreate = () => {
     setEditingItem(null);
-    setUploadError(null);
     setFormData({
       title: '',
       shortDescription: '',
@@ -92,7 +91,6 @@ export default function TransformationsManager() {
 
   const handleOpenEdit = (item) => {
     setEditingItem(item);
-    setUploadError(null);
     setFormData({
       title: item.title || '',
       shortDescription: item.shortDescription || '',
@@ -105,55 +103,6 @@ export default function TransformationsManager() {
       isActive: item.isActive !== false,
     });
     setIsModalOpen(true);
-  };
-
-  const handleImageUpload = async (e, type) => {
-    const file = e.target.files?.[0];
-    if (!file) return;
-
-    const ext = file.name.substring(file.name.lastIndexOf('.')).toLowerCase();
-    if (!ALLOWED_EXTENSIONS.includes(ext)) {
-      setUploadError('Unsupported file format. Only JPG, PNG, and WEBP are permitted.');
-      e.target.value = '';
-      return;
-    }
-
-    if (file.size > MAX_IMAGE_SIZE_BYTES) {
-      setUploadError('File size exceeds the 10MB limit.');
-      e.target.value = '';
-      return;
-    }
-
-    setUploadError(null);
-    if (type === 'before') setUploadingBefore(true);
-    else setUploadingAfter(true);
-
-    try {
-      const res = await uploadService.uploadFile(file);
-      if (res?.data?.url) {
-        if (type === 'before') {
-          setFormData((prev) => ({
-            ...prev,
-            beforeImage: res.data.url,
-            beforePublicId: res.data.publicId || '',
-          }));
-        } else {
-          setFormData((prev) => ({
-            ...prev,
-            afterImage: res.data.url,
-            afterPublicId: res.data.publicId || '',
-          }));
-        }
-      } else {
-        throw new Error('Upload succeeded but no image URL was returned.');
-      }
-    } catch (err) {
-      setUploadError(err?.message || 'Failed to upload photo to Cloudinary.');
-    } finally {
-      if (type === 'before') setUploadingBefore(false);
-      else setUploadingAfter(false);
-      e.target.value = '';
-    }
   };
 
   const handleToggleActive = async (item) => {
@@ -394,7 +343,7 @@ export default function TransformationsManager() {
       {/* CREATE / EDIT MODAL */}
       {isModalOpen && (
         <div className="modal-backdrop" onClick={() => !modalLoading && setIsModalOpen(false)}>
-          <div className="modal-container admin-partner-modal" style={{ maxWidth: '680px' }} onClick={(e) => e.stopPropagation()}>
+          <div className="modal-container admin-transformation-modal" onClick={(e) => e.stopPropagation()}>
             <div className="modal-header">
               <h3>{editingItem ? 'Edit Transformation' : 'Add Transformation'}</h3>
               <button
@@ -425,107 +374,31 @@ export default function TransformationsManager() {
                 </div>
 
                 {/* 2. DUAL PHOTOS (BEFORE & AFTER) */}
-                <div className="form-row">
-                  {/* BEFORE PHOTO */}
-                  <div className="form-group">
-                    <label className="field-label">
-                      BEFORE PHOTO (UNLIT) *
-                    </label>
-                    {formData.beforeImage ? (
-                      <div className="partner-modal-logo-preview">
-                        <img src={formData.beforeImage} alt="Before preview" style={{ maxHeight: '100px' }} />
-                        <button
-                          type="button"
-                          onClick={() => setFormData((prev) => ({ ...prev, beforeImage: '', beforePublicId: '' }))}
-                          className="btn btn-outline btn-xs mt-2"
-                          disabled={modalLoading}
-                        >
-                          <X size={12} /> Replace Before Photo
-                        </button>
-                      </div>
-                    ) : (
-                      <div className="admin-file-dropzone">
-                        <input
-                          type="file"
-                          id="before-photo-input"
-                          accept=".jpg,.jpeg,.png,.webp"
-                          onChange={(e) => handleImageUpload(e, 'before')}
-                          disabled={uploadingBefore || modalLoading}
-                          style={{ display: 'none' }}
-                        />
-                        <label htmlFor="before-photo-input" className="admin-dropzone-label">
-                          {uploadingBefore ? (
-                            <div className="dropzone-uploading">
-                              <Loader2 className="animate-spin" size={20} />
-                              <span>Uploading...</span>
-                            </div>
-                          ) : (
-                            <div className="dropzone-idle">
-                              <Upload size={20} />
-                              <strong>Upload Before Image</strong>
-                              <small>Dim / unlit room</small>
-                            </div>
-                          )}
-                        </label>
-                      </div>
-                    )}
-                  </div>
-
-                  {/* AFTER PHOTO */}
-                  <div className="form-group">
-                    <label className="field-label">
-                      AFTER PHOTO (ILLUMINATED) *
-                    </label>
-                    {formData.afterImage ? (
-                      <div className="partner-modal-logo-preview">
-                        <img src={formData.afterImage} alt="After preview" style={{ maxHeight: '100px' }} />
-                        <button
-                          type="button"
-                          onClick={() => setFormData((prev) => ({ ...prev, afterImage: '', afterPublicId: '' }))}
-                          className="btn btn-outline btn-xs mt-2"
-                          disabled={modalLoading}
-                        >
-                          <X size={12} /> Replace After Photo
-                        </button>
-                      </div>
-                    ) : (
-                      <div className="admin-file-dropzone">
-                        <input
-                          type="file"
-                          id="after-photo-input"
-                          accept=".jpg,.jpeg,.png,.webp"
-                          onChange={(e) => handleImageUpload(e, 'after')}
-                          disabled={uploadingAfter || modalLoading}
-                          style={{ display: 'none' }}
-                        />
-                        <label htmlFor="after-photo-input" className="admin-dropzone-label">
-                          {uploadingAfter ? (
-                            <div className="dropzone-uploading">
-                              <Loader2 className="animate-spin" size={20} />
-                              <span>Uploading...</span>
-                            </div>
-                          ) : (
-                            <div className="dropzone-idle">
-                              <Upload size={20} />
-                              <strong>Upload After Image</strong>
-                              <small>Warm architectural light</small>
-                            </div>
-                          )}
-                        </label>
-                      </div>
-                    )}
-                  </div>
+                <div className="form-row" style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(260px, 1fr))', gap: '16px' }}>
+                  <AdminImageUpload
+                    label="BEFORE PHOTO (UNLIT)"
+                    required
+                    value={formData.beforeImage}
+                    publicId={formData.beforePublicId}
+                    onChange={({ url, publicId }) =>
+                      setFormData((prev) => ({ ...prev, beforeImage: url, beforePublicId: publicId }))
+                    }
+                    helpText="Unlit space (JPG, PNG, WEBP · Max 10MB)"
+                  />
+                  <AdminImageUpload
+                    label="AFTER PHOTO (ILLUMINATED)"
+                    required
+                    value={formData.afterImage}
+                    publicId={formData.afterPublicId}
+                    onChange={({ url, publicId }) =>
+                      setFormData((prev) => ({ ...prev, afterImage: url, afterPublicId: publicId }))
+                    }
+                    helpText="Illuminated space (JPG, PNG, WEBP · Max 10MB)"
+                  />
                 </div>
 
-                {uploadError && (
-                  <div className="field-error mt-2">
-                    <AlertCircle size={14} />
-                    <span>{uploadError}</span>
-                  </div>
-                )}
-
                 {/* 3. SHORT DESCRIPTION */}
-                <div className="form-group mt-3">
+                <div className="form-group mt-2">
                   <label className="field-label">
                     SHORT SUMMARY (CARD VIEW) <span className="optional-tag">(MAX 300 CHARS)</span>
                   </label>
@@ -596,7 +469,7 @@ export default function TransformationsManager() {
                 <button
                   type="submit"
                   className="btn btn-gold btn-sm"
-                  disabled={modalLoading || uploadingBefore || uploadingAfter || !formData.beforeImage || !formData.afterImage}
+                  disabled={modalLoading || !formData.beforeImage || !formData.afterImage}
                 >
                   {modalLoading ? (
                     <>

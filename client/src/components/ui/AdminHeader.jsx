@@ -2,8 +2,17 @@ import { Menu, LogOut, ExternalLink, User } from 'lucide-react';
 import { useAuth } from '../../context/AuthContext';
 import { Link } from 'react-router-dom';
 
+function formatAdminDisplayName(username) {
+  if (!username) return 'LBI Admin';
+  if (/veloura/i.test(username)) {
+    return username.replace(/veloura/gi, 'LBI').trim() || 'LBI Admin';
+  }
+  return username;
+}
+
 export default function AdminHeader({ onToggleSidebar }) {
   const { user, logout } = useAuth();
+  const displayName = formatAdminDisplayName(user?.username);
 
   return (
     <header className="admin-header">
@@ -25,7 +34,7 @@ export default function AdminHeader({ onToggleSidebar }) {
 
         <div className="admin-user-pill">
           <User size={16} />
-          <span className="admin-user-name">{user?.username || 'Admin'}</span>
+          <span className="admin-user-name">{displayName}</span>
           <span className="admin-role-tag">{user?.role || 'admin'}</span>
         </div>
 
