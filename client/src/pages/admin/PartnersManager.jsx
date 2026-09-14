@@ -1,4 +1,5 @@
 import { useState, useEffect, useRef } from 'react';
+import { createPortal } from 'react-dom';
 import { partnerService } from '../../services/partnerService';
 import {
   Plus,
@@ -79,6 +80,19 @@ export default function PartnersManager() {
     setDiscardConfirmOpen(false);
     setIsModalOpen(false);
   };
+
+  useEffect(() => {
+    const isAnyModalOpen = isModalOpen || discardConfirmOpen || Boolean(deleteTarget);
+    if (isAnyModalOpen) {
+      const originalOverflow = document.body.style.overflow;
+      document.body.style.overflow = 'hidden';
+      return () => {
+        document.body.style.overflow = originalOverflow || '';
+      };
+    } else {
+      document.body.style.overflow = '';
+    }
+  }, [isModalOpen, discardConfirmOpen, deleteTarget]);
 
   useEffect(() => {
     if (!isModalOpen) return;
@@ -390,7 +404,7 @@ export default function PartnersManager() {
       </div>
 
       {/* CREATE / EDIT MODAL */}
-      {isModalOpen && (
+      {isModalOpen && typeof document !== 'undefined' && createPortal(
         <div className="admin-modal-backdrop" onClick={() => !modalLoading && handleAttemptCloseModal()}>
           <div
             className="admin-modal admin-modal-dark modal-container admin-partner-modal"
@@ -414,75 +428,91 @@ export default function PartnersManager() {
             <form onSubmit={handleFormSubmit}>
               <div className="modal-body admin-modal-body">
                 {/* 1. COMPANY NAME */}
-                <div className="form-group admin-form-group">
-                  <label className="field-label">
-                    COMPANY NAME *
+                <div className="form-group">
+                  <label htmlFor="partner-name">
+                    Company / Partner Name <span className="text-danger">*</span>
                   </label>
                   <input
+                    id="partner-name"
                     type="text"
-                    required
-                    maxLength={100}
-                    placeholder="e.g. Foster & Partners"
                     value={formData.name}
                     onChange={(e) => setFormData((prev) => ({ ...prev, name: e.target.value }))}
+                    placeholder="e.g., Nakheel Developments"
+                    required
+                    maxLength={100}
+                    disabled={modalLoading}
                   />
                 </div>
 
-                {/* 2. LOGO UPLOADER */}
-                <AdminImageUpload
-                  label="COMPANY LOGO"
-                  required
-                  value={formData.logo}
-                  publicId={formData.logoPublicId}
-                  onChange={({ url, publicId }) =>
-                    setFormData((prev) => ({
-                      ...prev,
-                      logo: url,
-                      logoPublicId: publicId,
-                    }))
-                  }
-                  helpText="Company logo (JPG, PNG, WEBP · Max 10MB)"
-                  disabled={modalLoading}
-                />
+                {/* 2. PARTNER LOGO (AdminImageUpload) */}
+                <div className="form-group">
+                  <AdminImageUpload
+                    label="COMPANY LOGO"
+                    value={formData.logo}
+                    publicId={formData.logoPublicId}
+                    onChange={({ url, publicId }) =>
+                      setFormData((prev) => ({ ...prev, logo: url, logoPublicId: publicId }))
+                    }
+                    onClear={() =>
+                      setFormData((prev) => ({ ...prev, logo: '', logoPublicId: '' }))
+                    }
+                    disabled={modalLoading}
+                    folder="partners"
+                    required={true}
+                    aspectRatioHelp="Recommended: PNG / SVG with transparent background"
+                  />
+                </div>
 
                 {/* 3. WEBSITE URL */}
-                <div className="form-group admin-form-group">
-                  <label className="field-label">
-                    WEBSITE URL <span className="optional-tag">(OPTIONAL)</span>
-                  </label>
+                <div className="form-group">
+                  <label htmlFor="partner-website">Website URL (Optional)</label>
                   <input
+                    id="partner-website"
                     type="url"
-                    maxLength={500}
-                    placeholder="https://www.company.com"
                     value={formData.website}
                     onChange={(e) => setFormData((prev) => ({ ...prev, website: e.target.value }))}
+                    placeholder="https://example.com"
+                    maxLength={500}
+                    disabled={modalLoading}
                   />
-                  <small className="field-hint">
-                    Include http:// or https://. Clicking the logo on the public website will direct users here safely.
-                  </small>
                 </div>
 
-                {/* 4. ORDER & ACTIVE TOGGLE */}
-                <div className="form-row" style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '16px' }}>
-                  <div className="form-group admin-form-group">
-                    <label className="field-label">
-                      DISPLAY ORDER
-                    </label>
-                    <input
-                      type="number"
-                      value={formData.order}
-                      onChange={(e) => setFormData((prev) => ({ ...prev, order: parseInt(e.target.value, 10) || 0 }))}
-                    />
-                    <small className="field-hint">
-                      Ascending sort order in the public marquee (1, 2, 3...).
-                    </small>
-                  </div>
+                {/* 4. TIER / CATEGORY */}
+                <div className="form-group">
+                  <label htmlFor="partner-tier">Partner Tier / Category</label>
+                  <select
+                    id="partner-tier"
+                    value={formData.tier}
+                    onChange={(e) => setFormData((prev) => ({ ...prev, tier: e.target.value }))}
+                    disabled={modalLoading}
+                  >
+                    <option value="featured">Featured (Top Priority)</option>
+                    <option value="standard">Standard Partner</option>
+                    <option value="collaborator">Design Collaborator</option>
+                    <option value="hospitality">Hospitality Client</option>
+                    <option value="developer">Property Developer</option>
+                    <option value="architect">Architectural Studio</option>
+                  </select>
+                </div>
 
-                  <div className="form-group admin-form-group">
-                    <label className="field-label">
-                      VISIBILITY STATUS
-                    </label>
-                    <label className="admin-checkbox-label" style={{ marginTop: '10px', display: 'flex', alignItems: 'center', gap: '8px', cursor: 'pointer' }}>
+                {/* 5. DISPLAY ORDER */}
+                <div className="form-group">
+                  <label htmlFor="partner-order">Display Order (Lower numbers appear first)</label>
+                  <input
+                    id="partner-order"
+                    type="number"
+                    min="0"
+                    step="1"
+                    value={formData.order}
+                    onChange={(e) => setFormData((prev) => ({ ...prev, order: parseInt(e.target.value, 10) || 0 }))}
+                    disabled={modalLoading}
+                  />
+                </div>
+
+                {/* 6. STATUS */}
+                <div className="form-group">
+                  <div className="checkbox-label" style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+                    <label style={{ cursor: 'pointer', display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
                       <input
                         type="checkbox"
                         checked={formData.isActive}
@@ -521,7 +551,8 @@ export default function PartnersManager() {
               </div>
             </form>
           </div>
-        </div>
+        </div>,
+        document.body
       )}
     </div>
   );

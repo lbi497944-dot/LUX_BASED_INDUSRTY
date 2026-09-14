@@ -1,4 +1,5 @@
 import { useState, useEffect, useRef } from 'react';
+import { createPortal } from 'react-dom';
 import { newsletterService } from '../../services/newsletterService';
 import {
   Send,
@@ -107,6 +108,35 @@ export default function NewsletterManager() {
     setDiscardConfirmOpen(false);
     setEditorOpen(false);
   };
+
+  useEffect(() => {
+    const isAnyModalOpen =
+      editorOpen ||
+      previewOpen ||
+      whatsAppModalOpen ||
+      discardConfirmOpen ||
+      Boolean(sendTarget) ||
+      Boolean(deleteCampaignTarget) ||
+      Boolean(deleteSubscriberTarget);
+
+    if (isAnyModalOpen) {
+      const originalOverflow = document.body.style.overflow;
+      document.body.style.overflow = 'hidden';
+      return () => {
+        document.body.style.overflow = originalOverflow || '';
+      };
+    } else {
+      document.body.style.overflow = '';
+    }
+  }, [
+    editorOpen,
+    previewOpen,
+    whatsAppModalOpen,
+    discardConfirmOpen,
+    sendTarget,
+    deleteCampaignTarget,
+    deleteSubscriberTarget,
+  ]);
 
   useEffect(() => {
     const handleKeyDown = (e) => {
@@ -739,406 +769,445 @@ export default function NewsletterManager() {
       )}
 
       {/* CAMPAIGN EDITOR MODAL */}
-      {editorOpen && (
-        <div className="admin-modal-backdrop" onClick={handleAttemptCloseEditor}>
+      {editorOpen &&
+        createPortal(
           <div
-            className="admin-modal admin-modal-dark modal-container admin-modal-lg"
-            style={{ maxWidth: '850px', maxHeight: '90vh', overflowY: 'auto' }}
-            onClick={(e) => e.stopPropagation()}
-            role="dialog"
-            aria-modal="true"
-            aria-labelledby="campaign-editor-title"
+            className="admin-modal-backdrop"
+            onClick={(e) => {
+              if (e.target === e.currentTarget) handleAttemptCloseEditor();
+            }}
+            role="presentation"
           >
-            <div className="admin-modal-header modal-header">
-              <h2 id="campaign-editor-title" style={{ margin: 0, fontSize: '20px', fontFamily: 'Cinzel, serif', color: 'var(--gold)' }}>
-                {editingCampaign ? 'Edit Newsletter Campaign' : 'Create Newsletter Campaign'}
-              </h2>
-              <button className="admin-modal-close-btn modal-close" onClick={handleAttemptCloseEditor} aria-label="Close modal">
-                <X size={20} />
-              </button>
-            </div>
-
-            <form onSubmit={handleSaveCampaign} className="admin-form modal-body admin-modal-body">
-              <div className="admin-form-group">
-                <label>Campaign Title (Internal Reference) *</label>
-                <input
-                  type="text"
-                  required
-                  placeholder="e.g. Winter Architectural Collections Preview"
-                  value={formData.title}
-                  onChange={(e) => setFormData({ ...formData, title: e.target.value })}
-                />
+            <div
+              className="admin-modal admin-modal-dark admin-modal-lg"
+              onClick={(e) => e.stopPropagation()}
+              role="dialog"
+              aria-modal="true"
+              aria-labelledby="campaign-editor-title"
+            >
+              <div className="admin-modal-header">
+                <h2 id="campaign-editor-title">
+                  {editingCampaign ? 'Edit Newsletter Campaign' : 'Create Newsletter Campaign'}
+                </h2>
+                <button
+                  type="button"
+                  className="admin-modal-close-btn"
+                  onClick={handleAttemptCloseEditor}
+                  aria-label="Close newsletter editor"
+                >
+                  <X size={20} />
+                </button>
               </div>
 
-              <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '16px' }}>
+              <form onSubmit={handleSaveCampaign} className="admin-modal-body admin-form">
                 <div className="admin-form-group">
-                  <label>Email Subject Line *</label>
+                  <label>Campaign Title (Internal Reference) *</label>
                   <input
                     type="text"
                     required
-                    placeholder="e.g. Exclusive Preview: LUX Bespoke Luminaires"
-                    value={formData.subject}
-                    onChange={(e) => setFormData({ ...formData, subject: e.target.value })}
+                    placeholder="e.g. Winter Architectural Collections Preview"
+                    value={formData.title}
+                    onChange={(e) => setFormData({ ...formData, title: e.target.value })}
                   />
                 </div>
-                <div className="admin-form-group">
-                  <label>Preview Text (Inbox Preheader)</label>
-                  <input
-                    type="text"
-                    placeholder="e.g. Architectural luminaires engineered for luxury interiors"
-                    value={formData.previewText}
-                    onChange={(e) => setFormData({ ...formData, previewText: e.target.value })}
-                  />
-                </div>
-              </div>
 
-              <div className="admin-form-group">
-                <label>Heading (Inside Email Template)</label>
-                <input
-                  type="text"
-                  placeholder="e.g. Architectural Illumination · 2026 Collection"
-                  value={formData.heading}
-                  onChange={(e) => setFormData({ ...formData, heading: e.target.value })}
-                />
-              </div>
-
-              {/* Banner Image Upload */}
-              <div className="admin-form-group">
-                <AdminImageUpload
-                  label="CAMPAIGN FEATURED IMAGE"
-                  value={formData.imageUrl}
-                  publicId={formData.imagePublicId}
-                  onChange={({ url, publicId }) => {
-                    setFormData((prev) => ({ ...prev, imageUrl: url, imagePublicId: publicId }));
-                  }}
-                  helpText="Featured banner or editorial photo (JPG, PNG, WEBP · Max 10MB)"
-                  disabled={formSaving}
-                />
-              </div>
-
-              {/* Content Body */}
-              <div className="admin-form-group">
-                <label>Editorial Content (HTML / Formatted Text) *</label>
-                <textarea
-                  rows={10}
-                  style={{ minHeight: '280px', fontFamily: 'inherit', lineHeight: '1.6' }}
-                  required
-                  placeholder="Enter newsletter body content. Paragraphs, links, and formatting will be rendered cleanly."
-                  value={formData.content}
-                  onChange={(e) => setFormData({ ...formData, content: e.target.value })}
-                />
-              </div>
-
-              {/* CTA Button */}
-              <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '16px' }}>
-                <div className="admin-form-group">
-                  <label>CTA Button Label</label>
-                  <input
-                    type="text"
-                    placeholder="e.g. Explore Pendants"
-                    value={formData.ctaText}
-                    onChange={(e) => setFormData({ ...formData, ctaText: e.target.value })}
-                  />
-                </div>
-                <div className="admin-form-group">
-                  <label>CTA Button URL</label>
-                  <input
-                    type="text"
-                    placeholder="e.g. https://lux-based-indusrty.vercel.app/collections"
-                    value={formData.ctaUrl}
-                    onChange={(e) => setFormData({ ...formData, ctaUrl: e.target.value })}
-                  />
-                </div>
-              </div>
-
-              {/* Attachments Section */}
-              <div className="admin-form-group" style={{ borderTop: '1px solid rgba(230, 199, 122, 0.15)', paddingTop: '16px' }}>
-                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '8px' }}>
-                  <label style={{ margin: 0, display: 'flex', alignItems: 'center', gap: '6px' }}>
-                    <Paperclip size={16} /> Attached Documents / Lookbooks ({formData.attachments.length})
-                  </label>
-                  <label className="btn btn-outline btn-xs" style={{ margin: 0, cursor: 'pointer' }}>
-                    {attachmentUploading ? <Loader2 className="spin-icon" size={14} /> : <Plus size={14} />}
-                    <span>{attachmentUploading ? 'Uploading...' : 'Add PDF / Document'}</span>
+                <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '16px' }}>
+                  <div className="admin-form-group">
+                    <label>Email Subject Line *</label>
                     <input
-                      type="file"
-                      accept=".pdf,.jpg,.jpeg,.png,.webp"
-                      onChange={handleAttachmentUpload}
-                      style={{ display: 'none' }}
-                      disabled={attachmentUploading}
+                      type="text"
+                      required
+                      placeholder="e.g. Exclusive Preview: LUX Bespoke Luminaires"
+                      value={formData.subject}
+                      onChange={(e) => setFormData({ ...formData, subject: e.target.value })}
                     />
-                  </label>
-                </div>
-
-                {formData.attachments.length > 0 && (
-                  <div style={{ display: 'flex', flexDirection: 'column', gap: '8px', marginTop: '10px' }}>
-                    {formData.attachments.map((att, idx) => (
-                      <div
-                        key={idx}
-                        className="admin-attachment-card"
-                        style={{
-                          display: 'flex',
-                          justifyContent: 'space-between',
-                          alignItems: 'center',
-                          padding: '10px 14px',
-                          background: 'rgba(21, 57, 29, 0.4)',
-                          border: '1px solid rgba(230, 199, 122, 0.2)',
-                          borderRadius: '6px',
-                          gap: '12px',
-                        }}
-                      >
-                        <div style={{ display: 'flex', alignItems: 'center', gap: '10px', minWidth: 0, flex: 1 }}>
-                          <FileText size={18} style={{ color: 'var(--gold)', flexShrink: 0 }} />
-                          <div style={{ minWidth: 0, overflow: 'hidden' }}>
-                            <p style={{ margin: 0, fontWeight: 500, fontSize: '13px', color: '#FAF8F1', textOverflow: 'ellipsis', overflow: 'hidden', whiteSpace: 'nowrap' }}>
-                              {att.filename || 'Document'}
-                            </p>
-                            {att.size ? (
-                              <span style={{ fontSize: '11px', color: 'rgba(243, 243, 235, 0.6)' }}>
-                                {formatFileSize(att.size)}
-                              </span>
-                            ) : null}
-                          </div>
-                        </div>
-                        <button
-                          type="button"
-                          className="admin-action-btn danger"
-                          onClick={() => handleRemoveAttachment(idx)}
-                          title="Remove attachment"
-                          aria-label={`Remove ${att.filename || 'attachment'}`}
-                        >
-                          <Trash2 size={14} />
-                        </button>
-                      </div>
-                    ))}
                   </div>
-                )}
-              </div>
-
-              {/* Target Audience */}
-              <div className="admin-form-group" style={{ borderTop: '1px solid rgba(230, 199, 122, 0.15)', paddingTop: '16px' }}>
-                <label style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
-                  <Users size={16} /> Target Audience
-                </label>
-                <div style={{ display: 'flex', gap: '20px', margin: '10px 0' }}>
-                  <label style={{ display: 'flex', alignItems: 'center', gap: '8px', cursor: 'pointer', fontSize: '13px' }}>
+                  <div className="admin-form-group">
+                    <label>Preview Text (Inbox Preheader)</label>
                     <input
-                      type="radio"
-                      name="targetAudience"
-                      value="all"
-                      checked={formData.targetAudience === 'all'}
-                      onChange={() => setFormData({ ...formData, targetAudience: 'all' })}
+                      type="text"
+                      placeholder="e.g. Architectural luminaires engineered for luxury interiors"
+                      value={formData.previewText}
+                      onChange={(e) => setFormData({ ...formData, previewText: e.target.value })}
                     />
-                    <span>All Active Subscribers ({activeSubscribers.length})</span>
-                  </label>
-                  <label style={{ display: 'flex', alignItems: 'center', gap: '8px', cursor: 'pointer', fontSize: '13px' }}>
-                    <input
-                      type="radio"
-                      name="targetAudience"
-                      value="custom"
-                      checked={formData.targetAudience === 'custom'}
-                      onChange={() => setFormData({ ...formData, targetAudience: 'custom' })}
-                    />
-                    <span>Select Specific Subscribers ({formData.selectedRecipients.length} chosen)</span>
-                  </label>
+                  </div>
                 </div>
 
-                {formData.targetAudience === 'custom' && (
-                  <div
-                    style={{
-                      border: '1px solid rgba(230, 199, 122, 0.15)',
-                      borderRadius: '6px',
-                      padding: '12px',
-                      background: 'rgba(14, 22, 18, 0.8)',
+                <div className="admin-form-group">
+                  <label>Heading (Inside Email Template)</label>
+                  <input
+                    type="text"
+                    placeholder="e.g. Architectural Illumination · 2026 Collection"
+                    value={formData.heading}
+                    onChange={(e) => setFormData({ ...formData, heading: e.target.value })}
+                  />
+                </div>
+
+                {/* Banner Image Upload */}
+                <div className="admin-form-group">
+                  <AdminImageUpload
+                    label="CAMPAIGN FEATURED IMAGE"
+                    value={formData.imageUrl}
+                    publicId={formData.imagePublicId}
+                    onChange={({ url, publicId }) => {
+                      setFormData((prev) => ({ ...prev, imageUrl: url, imagePublicId: publicId }));
                     }}
-                  >
-                    <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '10px' }}>
+                    helpText="Featured banner or editorial photo (JPG, PNG, WEBP · Max 10MB)"
+                    disabled={formSaving}
+                  />
+                </div>
+
+                {/* Content Body */}
+                <div className="admin-form-group">
+                  <label>Editorial Content (HTML / Formatted Text) *</label>
+                  <textarea
+                    rows={10}
+                    style={{ minHeight: '280px', fontFamily: 'inherit', lineHeight: '1.6' }}
+                    required
+                    placeholder="Enter newsletter body content. Paragraphs, links, and formatting will be rendered cleanly."
+                    value={formData.content}
+                    onChange={(e) => setFormData({ ...formData, content: e.target.value })}
+                  />
+                </div>
+
+                {/* CTA Button */}
+                <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '16px' }}>
+                  <div className="admin-form-group">
+                    <label>CTA Button Label</label>
+                    <input
+                      type="text"
+                      placeholder="e.g. Explore Pendants"
+                      value={formData.ctaText}
+                      onChange={(e) => setFormData({ ...formData, ctaText: e.target.value })}
+                    />
+                  </div>
+                  <div className="admin-form-group">
+                    <label>CTA Button URL</label>
+                    <input
+                      type="text"
+                      placeholder="e.g. https://lux-based-indusrty.vercel.app/collections"
+                      value={formData.ctaUrl}
+                      onChange={(e) => setFormData({ ...formData, ctaUrl: e.target.value })}
+                    />
+                  </div>
+                </div>
+
+                {/* Attachments Section */}
+                <div className="admin-form-group" style={{ borderTop: '1px solid rgba(230, 199, 122, 0.15)', paddingTop: '16px' }}>
+                  <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '8px' }}>
+                    <label style={{ margin: 0, display: 'flex', alignItems: 'center', gap: '6px' }}>
+                      <Paperclip size={16} /> Attached Documents / Lookbooks ({formData.attachments.length})
+                    </label>
+                    <label className="btn btn-outline btn-xs" style={{ margin: 0, cursor: 'pointer' }}>
+                      {attachmentUploading ? <Loader2 className="spin-icon" size={14} /> : <Plus size={14} />}
+                      <span>{attachmentUploading ? 'Uploading...' : 'Add PDF / Document'}</span>
                       <input
-                        type="text"
-                        placeholder="Search subscribers..."
-                        value={recipientSearch}
-                        onChange={(e) => setRecipientSearch(e.target.value)}
-                        style={{
-                          padding: '6px 10px',
-                          borderRadius: '4px',
-                          border: '1px solid rgba(230, 199, 122, 0.2)',
-                          background: '#000',
-                          color: '#FAF8F1',
-                          fontSize: '12px',
-                          width: '240px',
-                        }}
+                        type="file"
+                        accept=".pdf,.jpg,.jpeg,.png,.webp"
+                        onChange={handleAttachmentUpload}
+                        style={{ display: 'none' }}
+                        disabled={attachmentUploading}
                       />
-                      <div style={{ display: 'flex', gap: '8px' }}>
-                        <button type="button" className="btn btn-outline btn-xs" onClick={handleSelectAllRecipients}>
-                          Select All
-                        </button>
-                        <button type="button" className="btn btn-outline btn-xs" onClick={handleClearAllRecipients}>
-                          Clear
-                        </button>
+                    </label>
+                  </div>
+
+                  {formData.attachments.length > 0 && (
+                    <div style={{ display: 'flex', flexDirection: 'column', gap: '8px', marginTop: '10px' }}>
+                      {formData.attachments.map((att, idx) => (
+                        <div
+                          key={idx}
+                          className="admin-attachment-card"
+                          style={{
+                            display: 'flex',
+                            justifyContent: 'space-between',
+                            alignItems: 'center',
+                            padding: '10px 14px',
+                            background: 'rgba(21, 57, 29, 0.4)',
+                            border: '1px solid rgba(230, 199, 122, 0.2)',
+                            borderRadius: '6px',
+                            gap: '12px',
+                          }}
+                        >
+                          <div style={{ display: 'flex', alignItems: 'center', gap: '10px', minWidth: 0, flex: 1 }}>
+                            <FileText size={18} style={{ color: 'var(--gold)', flexShrink: 0 }} />
+                            <div style={{ minWidth: 0, overflow: 'hidden' }}>
+                              <p style={{ margin: 0, fontWeight: 500, fontSize: '13px', color: '#FAF8F1', textOverflow: 'ellipsis', overflow: 'hidden', whiteSpace: 'nowrap' }}>
+                                {att.filename || 'Document'}
+                              </p>
+                              {att.size ? (
+                                <span style={{ fontSize: '11px', color: 'rgba(243, 243, 235, 0.6)' }}>
+                                  {formatFileSize(att.size)}
+                                </span>
+                              ) : null}
+                            </div>
+                          </div>
+                          <button
+                            type="button"
+                            className="admin-action-btn danger"
+                            onClick={() => handleRemoveAttachment(idx)}
+                            title="Remove attachment"
+                            aria-label={`Remove ${att.filename || 'attachment'}`}
+                          >
+                            <Trash2 size={14} />
+                          </button>
+                        </div>
+                      ))}
+                    </div>
+                  )}
+                </div>
+
+                {/* Target Audience */}
+                <div className="admin-form-group" style={{ borderTop: '1px solid rgba(230, 199, 122, 0.15)', paddingTop: '16px' }}>
+                  <label style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
+                    <Users size={16} /> Target Audience
+                  </label>
+                  <div style={{ display: 'flex', gap: '20px', margin: '10px 0' }}>
+                    <label style={{ display: 'flex', alignItems: 'center', gap: '8px', cursor: 'pointer', fontSize: '13px' }}>
+                      <input
+                        type="radio"
+                        name="targetAudience"
+                        value="all"
+                        checked={formData.targetAudience === 'all'}
+                        onChange={() => setFormData({ ...formData, targetAudience: 'all' })}
+                      />
+                      <span>All Active Subscribers ({activeSubscribers.length})</span>
+                    </label>
+                    <label style={{ display: 'flex', alignItems: 'center', gap: '8px', cursor: 'pointer', fontSize: '13px' }}>
+                      <input
+                        type="radio"
+                        name="targetAudience"
+                        value="custom"
+                        checked={formData.targetAudience === 'custom'}
+                        onChange={() => setFormData({ ...formData, targetAudience: 'custom' })}
+                      />
+                      <span>Select Specific Subscribers ({formData.selectedRecipients.length} chosen)</span>
+                    </label>
+                  </div>
+
+                  {formData.targetAudience === 'custom' && (
+                    <div
+                      style={{
+                        border: '1px solid rgba(230, 199, 122, 0.15)',
+                        borderRadius: '6px',
+                        padding: '12px',
+                        background: 'rgba(14, 22, 18, 0.8)',
+                      }}
+                    >
+                      <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '10px' }}>
+                        <input
+                          type="text"
+                          placeholder="Search subscribers..."
+                          value={recipientSearch}
+                          onChange={(e) => setRecipientSearch(e.target.value)}
+                          style={{
+                            padding: '6px 10px',
+                            borderRadius: '4px',
+                            border: '1px solid rgba(230, 199, 122, 0.2)',
+                            background: '#000',
+                            color: '#FAF8F1',
+                            fontSize: '12px',
+                            width: '240px',
+                          }}
+                        />
+                        <div style={{ display: 'flex', gap: '8px' }}>
+                          <button type="button" className="btn btn-outline btn-xs" onClick={handleSelectAllRecipients}>
+                            Select All
+                          </button>
+                          <button type="button" className="btn btn-outline btn-xs" onClick={handleClearAllRecipients}>
+                            Clear
+                          </button>
+                        </div>
+                      </div>
+
+                      <div style={{ maxHeight: '180px', overflowY: 'auto', display: 'flex', flexDirection: 'column', gap: '6px' }}>
+                        {filteredActiveSubscribers.length === 0 ? (
+                          <p style={{ fontSize: '12px', color: 'rgba(243, 243, 235, 0.5)', margin: 0 }}>No active subscribers match search.</p>
+                        ) : (
+                          filteredActiveSubscribers.map((s) => {
+                            const isSelected = formData.selectedRecipients.includes(s.email.toLowerCase().trim());
+                            return (
+                              <label
+                                key={s._id}
+                                style={{
+                                  display: 'flex',
+                                  alignItems: 'center',
+                                  gap: '8px',
+                                  fontSize: '13px',
+                                  cursor: 'pointer',
+                                  padding: '4px 6px',
+                                  borderRadius: '4px',
+                                  background: isSelected ? 'rgba(230, 199, 122, 0.1)' : 'transparent',
+                                }}
+                              >
+                                <input
+                                  type="checkbox"
+                                  checked={isSelected}
+                                  onChange={() => handleToggleRecipient(s.email)}
+                                />
+                                <span>{s.email}</span>
+                              </label>
+                            );
+                          })
+                        )}
                       </div>
                     </div>
+                  )}
+                </div>
 
-                    <div style={{ maxHeight: '180px', overflowY: 'auto', display: 'flex', flexDirection: 'column', gap: '6px' }}>
-                      {filteredActiveSubscribers.length === 0 ? (
-                        <p style={{ fontSize: '12px', color: 'rgba(243, 243, 235, 0.5)', margin: 0 }}>No active subscribers match search.</p>
-                      ) : (
-                        filteredActiveSubscribers.map((s) => {
-                          const isSelected = formData.selectedRecipients.includes(s.email.toLowerCase().trim());
-                          return (
-                            <label
-                              key={s._id}
-                              style={{
-                                display: 'flex',
-                                alignItems: 'center',
-                                gap: '8px',
-                                fontSize: '13px',
-                                cursor: 'pointer',
-                                padding: '4px 6px',
-                                borderRadius: '4px',
-                                background: isSelected ? 'rgba(230, 199, 122, 0.1)' : 'transparent',
-                              }}
-                            >
-                              <input
-                                type="checkbox"
-                                checked={isSelected}
-                                onChange={() => handleToggleRecipient(s.email)}
-                              />
-                              <span>{s.email}</span>
-                            </label>
-                          );
-                        })
-                      )}
-                    </div>
-                  </div>
-                )}
-              </div>
-
-              {/* Form Actions */}
-              <div className="admin-modal-actions modal-footer admin-modal-footer" style={{ marginTop: '24px' }}>
-                <button type="button" className="btn btn-outline" onClick={handleAttemptCloseEditor}>
-                  Cancel
-                </button>
-                <button type="submit" className="btn btn-gold" disabled={formSaving}>
-                  {formSaving ? <Loader2 className="spin-icon" size={16} /> : <FileText size={16} />}
-                  <span>{formSaving ? 'Saving Draft...' : 'Save Campaign Draft'}</span>
-                </button>
-              </div>
-            </form>
-          </div>
-        </div>
-      )}
-
-      {/* PREVIEW MODAL */}
-      {previewOpen && (
-        <div className="admin-modal-backdrop" onClick={() => setPreviewOpen(false)}>
-          <div
-            className="admin-modal admin-modal-dark modal-container admin-modal-lg"
-            style={{ maxWidth: '780px', maxHeight: '90vh', overflowY: 'auto' }}
-            onClick={(e) => e.stopPropagation()}
-            role="dialog"
-            aria-modal="true"
-            aria-labelledby="preview-modal-title"
-          >
-            <div className="admin-modal-header modal-header">
-              <h2 id="preview-modal-title" style={{ margin: 0, fontSize: '20px', fontFamily: 'Cinzel, serif', color: 'var(--gold)' }}>Newsletter Live Preview</h2>
-              <button className="admin-modal-close-btn modal-close" onClick={() => setPreviewOpen(false)} aria-label="Close preview">
-                <X size={20} />
-              </button>
-            </div>
-
-            {previewLoading ? (
-              <div className="admin-loading-container" style={{ padding: '60px 0' }}>
-                <Loader2 className="spin-icon" size={32} />
-                <p>Rendering Email Frame...</p>
-              </div>
-            ) : (
-              <div className="modal-body admin-modal-body">
-                <iframe
-                  title="Newsletter Email Preview"
-                  srcDoc={previewHtml}
-                  style={{
-                    width: '100%',
-                    height: '520px',
-                    border: '1px solid rgba(230, 199, 122, 0.2)',
-                    borderRadius: '4px',
-                    backgroundColor: '#0E1612',
-                  }}
-                  sandbox="allow-same-origin"
-                />
-                <div style={{ display: 'flex', justifyContent: 'flex-end', marginTop: '16px' }}>
-                  <button className="btn btn-outline btn-sm" onClick={() => setPreviewOpen(false)}>
-                    Close Preview
+                {/* Form Actions */}
+                <div className="admin-modal-footer">
+                  <button type="button" className="btn btn-outline" onClick={handleAttemptCloseEditor}>
+                    Cancel
+                  </button>
+                  <button type="submit" className="btn btn-gold" disabled={formSaving}>
+                    {formSaving ? <Loader2 className="spin-icon" size={16} /> : <FileText size={16} />}
+                    <span>{formSaving ? 'Saving Draft...' : 'Save Campaign Draft'}</span>
                   </button>
                 </div>
-              </div>
-            )}
-          </div>
-        </div>
-      )}
-
-      {/* WHATSAPP SHARE MODAL */}
-      {whatsAppModalOpen && (
-        <div className="admin-modal-backdrop" onClick={() => setWhatsAppModalOpen(false)}>
-          <div
-            className="admin-modal admin-modal-dark modal-container admin-modal-md"
-            style={{ maxWidth: '580px' }}
-            onClick={(e) => e.stopPropagation()}
-            role="dialog"
-            aria-modal="true"
-            aria-labelledby="whatsapp-modal-title"
-          >
-            <div className="admin-modal-header modal-header">
-              <h2 id="whatsapp-modal-title" style={{ margin: 0, fontSize: '20px', fontFamily: 'Cinzel, serif', color: 'var(--gold)' }}>Share Campaign via WhatsApp</h2>
-              <button className="admin-modal-close-btn modal-close" onClick={() => setWhatsAppModalOpen(false)} aria-label="Close modal">
-                <X size={20} />
-              </button>
+              </form>
             </div>
+          </div>,
+          document.body
+        )}
 
-            <div className="admin-form modal-body admin-modal-body">
-              <div className="admin-form-group">
-                <label>Recipient WhatsApp Number (International Format) *</label>
-                <input
-                  type="text"
-                  placeholder="+971501234567"
-                  value={whatsAppPhone}
-                  onChange={(e) => setWhatsAppPhone(e.target.value)}
-                />
-                <small style={{ color: 'rgba(243, 243, 235, 0.6)', marginTop: '4px', display: 'block' }}>
-                  Include country code (e.g. +971 for UAE, +44 for UK, +1 for US).
-                </small>
-              </div>
-
-              <div style={{ display: 'flex', justifyContent: 'flex-end', marginBottom: '16px' }}>
+      {/* PREVIEW MODAL */}
+      {previewOpen &&
+        createPortal(
+          <div
+            className="admin-modal-backdrop"
+            onClick={(e) => {
+              if (e.target === e.currentTarget) setPreviewOpen(false);
+            }}
+            role="presentation"
+          >
+            <div
+              className="admin-modal admin-modal-dark admin-modal-lg"
+              style={{ maxWidth: '820px' }}
+              onClick={(e) => e.stopPropagation()}
+              role="dialog"
+              aria-modal="true"
+              aria-labelledby="preview-modal-title"
+            >
+              <div className="admin-modal-header">
+                <h2 id="preview-modal-title">Newsletter Live Preview</h2>
                 <button
                   type="button"
-                  className="btn btn-gold btn-sm"
-                  onClick={handleGenerateWhatsApp}
-                  disabled={whatsAppLoading || !whatsAppPhone.trim()}
+                  className="admin-modal-close-btn"
+                  onClick={() => setPreviewOpen(false)}
+                  aria-label="Close preview"
                 >
-                  {whatsAppLoading ? <Loader2 className="spin-icon" size={14} /> : <Share2 size={14} />}
-                  <span>Generate WhatsApp Message</span>
+                  <X size={20} />
                 </button>
               </div>
 
-              {whatsAppPreview && (
-                <div
-                  style={{
-                    background: '#075E54',
-                    color: '#FAF8F1',
-                    borderRadius: '8px',
-                    padding: '16px',
-                    marginTop: '12px',
-                    fontSize: '13px',
-                    lineHeight: '1.6',
-                    whiteSpace: 'pre-wrap',
-                    fontFamily: 'monospace',
-                  }}
-                >
-                  {whatsAppPreview.messageText}
-                </div>
-              )}
+              <div className="admin-modal-body">
+                {previewLoading ? (
+                  <div className="admin-loading-container" style={{ padding: '60px 0' }}>
+                    <Loader2 className="spin-icon" size={32} />
+                    <p>Rendering Email Frame...</p>
+                  </div>
+                ) : (
+                  <iframe
+                    title="Newsletter Email Preview"
+                    srcDoc={previewHtml}
+                    style={{
+                      width: '100%',
+                      height: '520px',
+                      border: '1px solid rgba(230, 199, 122, 0.2)',
+                      borderRadius: '4px',
+                      backgroundColor: '#0E1612',
+                    }}
+                    sandbox="allow-same-origin"
+                  />
+                )}
+              </div>
 
-              <div className="admin-modal-actions modal-footer admin-modal-footer" style={{ marginTop: '20px' }}>
+              <div className="admin-modal-footer">
+                <button type="button" className="btn btn-outline btn-sm" onClick={() => setPreviewOpen(false)}>
+                  Close Preview
+                </button>
+              </div>
+            </div>
+          </div>,
+          document.body
+        )}
+
+      {/* WHATSAPP SHARE MODAL */}
+      {whatsAppModalOpen &&
+        createPortal(
+          <div
+            className="admin-modal-backdrop"
+            onClick={(e) => {
+              if (e.target === e.currentTarget) setWhatsAppModalOpen(false);
+            }}
+            role="presentation"
+          >
+            <div
+              className="admin-modal admin-modal-dark admin-modal-md"
+              style={{ maxWidth: '580px' }}
+              onClick={(e) => e.stopPropagation()}
+              role="dialog"
+              aria-modal="true"
+              aria-labelledby="whatsapp-modal-title"
+            >
+              <div className="admin-modal-header">
+                <h2 id="whatsapp-modal-title">Share Campaign via WhatsApp</h2>
+                <button
+                  type="button"
+                  className="admin-modal-close-btn"
+                  onClick={() => setWhatsAppModalOpen(false)}
+                  aria-label="Close WhatsApp dialog"
+                >
+                  <X size={20} />
+                </button>
+              </div>
+
+              <div className="admin-modal-body admin-form">
+                <div className="admin-form-group">
+                  <label>Recipient WhatsApp Number (International Format) *</label>
+                  <input
+                    type="text"
+                    placeholder="+971501234567"
+                    value={whatsAppPhone}
+                    onChange={(e) => setWhatsAppPhone(e.target.value)}
+                  />
+                  <small style={{ color: 'rgba(243, 243, 235, 0.6)', marginTop: '4px', display: 'block' }}>
+                    Include country code (e.g. +971 for UAE, +44 for UK, +1 for US).
+                  </small>
+                </div>
+
+                <div style={{ display: 'flex', justifyContent: 'flex-end', marginBottom: '8px' }}>
+                  <button
+                    type="button"
+                    className="btn btn-gold btn-sm"
+                    onClick={handleGenerateWhatsApp}
+                    disabled={whatsAppLoading || !whatsAppPhone.trim()}
+                  >
+                    {whatsAppLoading ? <Loader2 className="spin-icon" size={14} /> : <Share2 size={14} />}
+                    <span>Generate WhatsApp Message</span>
+                  </button>
+                </div>
+
+                {whatsAppPreview && (
+                  <div
+                    style={{
+                      background: '#075E54',
+                      color: '#FAF8F1',
+                      borderRadius: '8px',
+                      padding: '16px',
+                      marginTop: '12px',
+                      fontSize: '13px',
+                      lineHeight: '1.6',
+                      whiteSpace: 'pre-wrap',
+                      fontFamily: 'monospace',
+                    }}
+                  >
+                    {whatsAppPreview.messageText}
+                  </div>
+                )}
+              </div>
+
+              <div className="admin-modal-footer">
                 <button type="button" className="btn btn-outline" onClick={() => setWhatsAppModalOpen(false)}>
                   Cancel
                 </button>
@@ -1155,9 +1224,9 @@ export default function NewsletterManager() {
                 )}
               </div>
             </div>
-          </div>
-        </div>
-      )}
+          </div>,
+          document.body
+        )}
     </div>
   );
 }
