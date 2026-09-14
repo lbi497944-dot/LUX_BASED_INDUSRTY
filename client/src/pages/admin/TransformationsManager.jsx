@@ -14,13 +14,16 @@ import ModalConfirm from '../../components/modals/ModalConfirm';
 import Toast from '../../components/common/Toast';
 import SEO from '../../components/common/SEO';
 import AdminImageUpload from '../../components/ui/AdminImageUpload';
+import AdminLivePreviewFrame from '../../components/admin/AdminLivePreviewFrame';
+import TransformationLivePreview from '../../components/admin/TransformationLivePreview';
 
 export default function TransformationsManager() {
   const [transformations, setTransformations] = useState([]);
   const [loading, setLoading] = useState(true);
   const [toast, setToast] = useState(null);
 
-  // Modal states for Create/Edit
+  // Workspace tab & Modal states for Create/Edit
+  const [workspaceTab, setWorkspaceTab] = useState('editor'); // 'editor' | 'preview'
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [editingItem, setEditingItem] = useState(null);
   const [formData, setFormData] = useState({
@@ -342,147 +345,197 @@ export default function TransformationsManager() {
 
       {/* CREATE / EDIT MODAL */}
       {isModalOpen && (
-        <div className="modal-backdrop" onClick={() => !modalLoading && setIsModalOpen(false)}>
-          <div className="modal-container admin-transformation-modal" onClick={(e) => e.stopPropagation()}>
-            <div className="modal-header">
-              <h3>{editingItem ? 'Edit Transformation' : 'Add Transformation'}</h3>
+        <div className="admin-modal-backdrop" onClick={() => !modalLoading && setIsModalOpen(false)} role="presentation">
+          <div
+            className="admin-modal admin-modal-dark admin-modal-workspace admin-transformation-modal"
+            onClick={(e) => e.stopPropagation()}
+            role="dialog"
+            aria-modal="true"
+            aria-labelledby="transformation-editor-title"
+          >
+            {/* Workspace Header */}
+            <div className="admin-workspace-header">
+              <div className="admin-workspace-title-wrap">
+                <h2 id="transformation-editor-title">
+                  {editingItem ? 'Edit Transformation' : 'Add Transformation'}
+                </h2>
+                <span className="admin-preview-dirty-badge">
+                  {formData.title ? formData.title : 'Untitled Case Study'}
+                </span>
+              </div>
               <button
-                className="modal-close"
+                type="button"
+                className="admin-modal-close-btn"
                 onClick={() => setIsModalOpen(false)}
                 disabled={modalLoading}
-                aria-label="Close dialog"
+                aria-label="Close transformation dialog"
               >
-                <X size={18} />
+                <X size={20} />
               </button>
             </div>
 
-            <form onSubmit={handleFormSubmit}>
-              <div className="modal-body">
-                {/* 1. TITLE */}
-                <div className="form-group">
-                  <label className="field-label">
-                    CASE STUDY TITLE *
-                  </label>
-                  <input
-                    type="text"
-                    required
-                    maxLength={120}
-                    placeholder="e.g. Penthouse Grand Salon & Gallery Illumination"
-                    value={formData.title}
-                    onChange={(e) => setFormData((prev) => ({ ...prev, title: e.target.value }))}
-                  />
-                </div>
+            {/* Mobile Switcher Tabs (<1024px) */}
+            <div className="admin-workspace-tabs" role="tablist">
+              <button
+                type="button"
+                className={`admin-workspace-tab-btn ${workspaceTab === 'editor' ? 'active' : ''}`}
+                onClick={() => setWorkspaceTab('editor')}
+              >
+                <span>✏️ Case Study Details</span>
+              </button>
+              <button
+                type="button"
+                className={`admin-workspace-tab-btn ${workspaceTab === 'preview' ? 'active' : ''}`}
+                onClick={() => setWorkspaceTab('preview')}
+              >
+                <span>👁️ Live Interactive Slider</span>
+              </button>
+            </div>
 
-                {/* 2. DUAL PHOTOS (BEFORE & AFTER) */}
-                <div className="form-row" style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(260px, 1fr))', gap: '16px' }}>
-                  <AdminImageUpload
-                    label="BEFORE PHOTO (UNLIT)"
-                    required
-                    value={formData.beforeImage}
-                    publicId={formData.beforePublicId}
-                    onChange={({ url, publicId }) =>
-                      setFormData((prev) => ({ ...prev, beforeImage: url, beforePublicId: publicId }))
-                    }
-                    helpText="Unlit space (JPG, PNG, WEBP · Max 10MB)"
-                  />
-                  <AdminImageUpload
-                    label="AFTER PHOTO (ILLUMINATED)"
-                    required
-                    value={formData.afterImage}
-                    publicId={formData.afterPublicId}
-                    onChange={({ url, publicId }) =>
-                      setFormData((prev) => ({ ...prev, afterImage: url, afterPublicId: publicId }))
-                    }
-                    helpText="Illuminated space (JPG, PNG, WEBP · Max 10MB)"
-                  />
-                </div>
-
-                {/* 3. SHORT DESCRIPTION */}
-                <div className="form-group mt-2">
-                  <label className="field-label">
-                    SHORT SUMMARY (CARD VIEW) <span className="optional-tag">(MAX 300 CHARS)</span>
-                  </label>
-                  <input
-                    type="text"
-                    maxLength={300}
-                    placeholder="e.g. Masterful cove integration with bespoke low-glare crystal fixtures."
-                    value={formData.shortDescription}
-                    onChange={(e) => setFormData((prev) => ({ ...prev, shortDescription: e.target.value }))}
-                  />
-                </div>
-
-                {/* 4. DETAILED DESCRIPTION */}
-                <div className="form-group">
-                  <label className="field-label">
-                    CASE STUDY DETAILS <span className="optional-tag">(MAX 2000 CHARS)</span>
-                  </label>
-                  <textarea
-                    rows={4}
-                    maxLength={2000}
-                    placeholder="Describe the spatial geometry, ambient layering, lux levels, and architectural fixtures engineered for this space..."
-                    value={formData.detailedDescription}
-                    onChange={(e) => setFormData((prev) => ({ ...prev, detailedDescription: e.target.value }))}
-                  />
-                </div>
-
-                {/* 5. ORDER & ACTIVE TOGGLE */}
-                <div className="form-row">
+            {/* Workspace Body: 2 Columns */}
+            <div className="admin-workspace-body">
+              <div className="admin-workspace-grid">
+                {/* Left Column: Form Editor */}
+                <form
+                  id="transformation-editor-form"
+                  onSubmit={handleFormSubmit}
+                  className={`admin-workspace-editor ${workspaceTab === 'editor' ? 'active' : ''}`}
+                >
+                  {/* 1. TITLE */}
                   <div className="form-group">
                     <label className="field-label">
-                      DISPLAY ORDER
+                      CASE STUDY TITLE *
                     </label>
                     <input
-                      type="number"
-                      value={formData.order}
-                      onChange={(e) => setFormData((prev) => ({ ...prev, order: parseInt(e.target.value, 10) || 0 }))}
+                      type="text"
+                      required
+                      maxLength={120}
+                      placeholder="e.g. Penthouse Grand Salon & Gallery Illumination"
+                      value={formData.title}
+                      onChange={(e) => setFormData((prev) => ({ ...prev, title: e.target.value }))}
                     />
-                    <small className="field-hint">
-                      Ascending sort order in the public slider (1, 2, 3...).
-                    </small>
                   </div>
 
+                  {/* 2. DUAL PHOTOS (BEFORE & AFTER) */}
+                  <div className="form-row" style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(240px, 1fr))', gap: '16px' }}>
+                    <AdminImageUpload
+                      label="BEFORE PHOTO (UNLIT)"
+                      required
+                      value={formData.beforeImage}
+                      publicId={formData.beforePublicId}
+                      onChange={({ url, publicId }) =>
+                        setFormData((prev) => ({ ...prev, beforeImage: url, beforePublicId: publicId }))
+                      }
+                      helpText="Unlit space (JPG, PNG, WEBP · Max 10MB)"
+                    />
+                    <AdminImageUpload
+                      label="AFTER PHOTO (ILLUMINATED)"
+                      required
+                      value={formData.afterImage}
+                      publicId={formData.afterPublicId}
+                      onChange={({ url, publicId }) =>
+                        setFormData((prev) => ({ ...prev, afterImage: url, afterPublicId: publicId }))
+                      }
+                      helpText="Illuminated space (JPG, PNG, WEBP · Max 10MB)"
+                    />
+                  </div>
+
+                  {/* 3. SHORT DESCRIPTION */}
+                  <div className="form-group mt-2">
+                    <label className="field-label">
+                      SHORT SUMMARY (CARD VIEW) <span className="optional-tag">(MAX 300 CHARS)</span>
+                    </label>
+                    <input
+                      type="text"
+                      maxLength={300}
+                      placeholder="e.g. Masterful cove integration with bespoke low-glare crystal fixtures."
+                      value={formData.shortDescription}
+                      onChange={(e) => setFormData((prev) => ({ ...prev, shortDescription: e.target.value }))}
+                    />
+                  </div>
+
+                  {/* 4. DETAILED DESCRIPTION */}
                   <div className="form-group">
                     <label className="field-label">
-                      VISIBILITY STATUS
+                      CASE STUDY DETAILS <span className="optional-tag">(MAX 2000 CHARS)</span>
                     </label>
-                    <label className="admin-checkbox-label mt-2">
-                      <input
-                        type="checkbox"
-                        checked={formData.isActive}
-                        onChange={(e) => setFormData((prev) => ({ ...prev, isActive: e.target.checked }))}
-                      />
-                      <span>Active on public website</span>
-                    </label>
+                    <textarea
+                      rows={4}
+                      maxLength={2000}
+                      placeholder="Describe the spatial geometry, ambient layering, lux levels, and architectural fixtures engineered for this space..."
+                      value={formData.detailedDescription}
+                      onChange={(e) => setFormData((prev) => ({ ...prev, detailedDescription: e.target.value }))}
+                    />
                   </div>
+
+                  {/* 5. ORDER & ACTIVE TOGGLE */}
+                  <div className="form-row">
+                    <div className="form-group">
+                      <label className="field-label">
+                        DISPLAY ORDER
+                      </label>
+                      <input
+                        type="number"
+                        value={formData.order}
+                        onChange={(e) => setFormData((prev) => ({ ...prev, order: parseInt(e.target.value, 10) || 0 }))}
+                      />
+                      <small className="field-hint">
+                        Ascending sort order in the public slider (1, 2, 3...).
+                      </small>
+                    </div>
+
+                    <div className="form-group">
+                      <label className="field-label">
+                        VISIBILITY STATUS
+                      </label>
+                      <label className="admin-checkbox-label mt-2">
+                        <input
+                          type="checkbox"
+                          checked={formData.isActive}
+                          onChange={(e) => setFormData((prev) => ({ ...prev, isActive: e.target.checked }))}
+                        />
+                        <span>Active on public website</span>
+                      </label>
+                    </div>
+                  </div>
+                </form>
+
+                {/* Right Column: Live Before/After Slider Preview */}
+                <div className={`admin-workspace-preview-column ${workspaceTab === 'preview' ? 'active' : ''}`}>
+                  <AdminLivePreviewFrame title="LIVE BEFORE / AFTER INTERACTIVE SLIDER">
+                    <TransformationLivePreview formData={formData} />
+                  </AdminLivePreviewFrame>
                 </div>
               </div>
+            </div>
 
-              <div className="modal-footer">
-                <button
-                  type="button"
-                  className="btn btn-outline btn-sm"
-                  onClick={() => setIsModalOpen(false)}
-                  disabled={modalLoading}
-                >
-                  Cancel
-                </button>
-                <button
-                  type="submit"
-                  className="btn btn-gold btn-sm"
-                  disabled={modalLoading || !formData.beforeImage || !formData.afterImage}
-                >
-                  {modalLoading ? (
-                    <>
-                      <Loader2 size={14} className="animate-spin" /> Saving...
-                    </>
-                  ) : editingItem ? (
-                    'Update Transformation'
-                  ) : (
-                    'Add Transformation'
-                  )}
-                </button>
-              </div>
-            </form>
+            {/* Sticky Workspace Footer */}
+            <div className="admin-workspace-footer">
+              <button
+                type="button"
+                className="btn btn-outline"
+                onClick={() => setIsModalOpen(false)}
+                disabled={modalLoading}
+              >
+                Cancel
+              </button>
+              <button
+                type="submit"
+                form="transformation-editor-form"
+                className="btn btn-gold"
+                disabled={modalLoading || !formData.beforeImage || !formData.afterImage}
+              >
+                {modalLoading ? (
+                  <>
+                    <Loader2 size={14} className="animate-spin" /> Saving...
+                  </>
+                ) : editingItem ? (
+                  'Update Transformation'
+                ) : (
+                  'Add Transformation'
+                )}
+              </button>
+            </div>
           </div>
         </div>
       )}

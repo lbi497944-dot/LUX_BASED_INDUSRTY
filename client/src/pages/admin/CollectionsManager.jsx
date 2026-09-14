@@ -5,12 +5,15 @@ import ModalConfirm from '../../components/modals/ModalConfirm';
 import Toast from '../../components/common/Toast';
 import SEO from '../../components/common/SEO';
 import AdminImageUpload from '../../components/ui/AdminImageUpload';
+import AdminLivePreviewFrame from '../../components/admin/AdminLivePreviewFrame';
+import CollectionLivePreview from '../../components/admin/CollectionLivePreview';
 
 export default function CollectionsManager() {
   const [collections, setCollections] = useState([]);
   const [loading, setLoading] = useState(true);
   const [toast, setToast] = useState(null);
 
+  const [workspaceTab, setWorkspaceTab] = useState('editor'); // 'editor' | 'preview'
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [editingCollection, setEditingCollection] = useState(null);
 
@@ -218,131 +221,195 @@ export default function CollectionsManager() {
 
       {/* Modal */}
       {isModalOpen && (
-        <div className="modal-backdrop" onClick={() => setIsModalOpen(false)}>
-          <div className="modal-container admin-editor-modal" onClick={(e) => e.stopPropagation()}>
-            <div className="modal-header-luxury">
-              <h3>{editingCollection ? 'Edit Collection' : 'Add New Collection'}</h3>
-              <button className="modal-close" onClick={() => setIsModalOpen(false)}>
-                <X size={18} />
+        <div className="admin-modal-backdrop" onClick={() => setIsModalOpen(false)} role="presentation">
+          <div
+            className="admin-modal admin-modal-dark admin-modal-workspace"
+            onClick={(e) => e.stopPropagation()}
+            role="dialog"
+            aria-modal="true"
+            aria-labelledby="collection-editor-title"
+          >
+            {/* Workspace Header */}
+            <div className="admin-workspace-header">
+              <div className="admin-workspace-title-wrap">
+                <h2 id="collection-editor-title">
+                  {editingCollection ? 'Edit Collection' : 'Add New Collection'}
+                </h2>
+                <span className="admin-preview-dirty-badge">
+                  {formData.name ? formData.name : 'Untitled Collection'}
+                </span>
+              </div>
+              <button
+                type="button"
+                className="admin-modal-close-btn"
+                onClick={() => setIsModalOpen(false)}
+                aria-label="Close collection editor"
+              >
+                <X size={20} />
               </button>
             </div>
 
-            <form onSubmit={handleFormSubmit} className="admin-form-grid">
-              <div className="form-row">
-                <label>
-                  COLLECTION TITLE *
-                  <input
-                    type="text"
+            {/* Mobile Switcher Tabs (<1024px) */}
+            <div className="admin-workspace-tabs" role="tablist">
+              <button
+                type="button"
+                className={`admin-workspace-tab-btn ${workspaceTab === 'editor' ? 'active' : ''}`}
+                onClick={() => setWorkspaceTab('editor')}
+              >
+                <span>✏️ Collection Details</span>
+              </button>
+              <button
+                type="button"
+                className={`admin-workspace-tab-btn ${workspaceTab === 'preview' ? 'active' : ''}`}
+                onClick={() => setWorkspaceTab('preview')}
+              >
+                <span>👁️ Live Customer View</span>
+              </button>
+            </div>
+
+            {/* Workspace Body: 2 Columns */}
+            <div className="admin-workspace-body">
+              <div className="admin-workspace-grid">
+                {/* Left Column: Form Editor */}
+                <form
+                  id="collection-editor-form"
+                  onSubmit={handleFormSubmit}
+                  className={`admin-workspace-editor admin-form-grid ${workspaceTab === 'editor' ? 'active' : ''}`}
+                >
+                  <div className="form-row">
+                    <label>
+                      COLLECTION TITLE *
+                      <input
+                        type="text"
+                        required
+                        value={formData.name}
+                        onChange={(e) => setFormData({ ...formData, name: e.target.value })}
+                        placeholder="e.g. Grand Chandeliers"
+                      />
+                    </label>
+                    <label>
+                      EYEBROW LABEL
+                      <input
+                        type="text"
+                        value={formData.eyebrow}
+                        onChange={(e) => setFormData({ ...formData, eyebrow: e.target.value })}
+                        placeholder="e.g. 01 / STATEMENT ELEGANCE"
+                      />
+                    </label>
+                  </div>
+
+                  <label>
+                    TAGLINE *
+                    <input
+                      type="text"
+                      required
+                      value={formData.tagline}
+                      onChange={(e) => setFormData({ ...formData, tagline: e.target.value })}
+                      placeholder="Timeless elegance in every crystal."
+                    />
+                  </label>
+
+                  {/* Hero Image Upload */}
+                  <AdminImageUpload
+                    label="HERO IMAGE"
                     required
-                    value={formData.name}
-                    onChange={(e) => setFormData({ ...formData, name: e.target.value })}
-                    placeholder="e.g. Grand Chandeliers"
+                    value={formData.heroImage}
+                    publicId={formData.heroImagePublicId}
+                    onChange={({ url, publicId }) =>
+                      setFormData((prev) => ({ ...prev, heroImage: url, heroImagePublicId: publicId }))
+                    }
+                    helpText="JPG, PNG, WEBP · Max 10MB"
                   />
-                </label>
-                <label>
-                  EYEBROW LABEL
-                  <input
-                    type="text"
-                    value={formData.eyebrow}
-                    onChange={(e) => setFormData({ ...formData, eyebrow: e.target.value })}
-                    placeholder="e.g. 01 / STATEMENT ELEGANCE"
-                  />
-                </label>
+
+                  <label>
+                    DESCRIPTION *
+                    <textarea
+                      rows="3"
+                      required
+                      value={formData.description}
+                      onChange={(e) => setFormData({ ...formData, description: e.target.value })}
+                      placeholder="Architectural overview of this collection..."
+                    ></textarea>
+                  </label>
+
+                  <div className="form-row">
+                    <label>
+                      MATERIALS & FINISHES
+                      <input
+                        type="text"
+                        value={formData.materials}
+                        onChange={(e) => setFormData({ ...formData, materials: e.target.value })}
+                        placeholder="Solid Brushed Brass, Hand-Cut Lead-Free Crystal"
+                      />
+                    </label>
+                    <label>
+                      RECOMMENDED APPLICATIONS
+                      <input
+                        type="text"
+                        value={formData.applications}
+                        onChange={(e) => setFormData({ ...formData, applications: e.target.value })}
+                        placeholder="Grand foyers, double-height living rooms"
+                      />
+                    </label>
+                  </div>
+
+                  <label>
+                    KEY FEATURES & TECHNICAL CHARACTERISTICS (One per line)
+                    <textarea
+                      rows="3"
+                      value={formData.featuresText}
+                      onChange={(e) => setFormData({ ...formData, featuresText: e.target.value })}
+                      placeholder="Hand-blown Czech crystal elements&#10;Custom drop lengths available&#10;DALI / 0-10V dimming"
+                    ></textarea>
+                  </label>
+
+                  <div className="form-checkbox-row">
+                    <label className="admin-checkbox-label">
+                      <input
+                        type="checkbox"
+                        checked={formData.featured}
+                        onChange={(e) => setFormData({ ...formData, featured: e.target.checked })}
+                      />
+                      <span>Feature on Homepage</span>
+                    </label>
+                    <label className="admin-checkbox-label">
+                      <input
+                        type="checkbox"
+                        checked={formData.isActive}
+                        onChange={(e) => setFormData({ ...formData, isActive: e.target.checked })}
+                      />
+                      <span>Active in Public Navigation</span>
+                    </label>
+                  </div>
+                </form>
+
+                {/* Right Column: Live Collection Preview */}
+                <div className={`admin-workspace-preview-column ${workspaceTab === 'preview' ? 'active' : ''}`}>
+                  <AdminLivePreviewFrame title="LIVE COLLECTION HERO & DETAILS">
+                    <CollectionLivePreview formData={formData} />
+                  </AdminLivePreviewFrame>
+                </div>
               </div>
+            </div>
 
-              <label>
-                TAGLINE *
-                <input
-                  type="text"
-                  required
-                  value={formData.tagline}
-                  onChange={(e) => setFormData({ ...formData, tagline: e.target.value })}
-                  placeholder="Timeless elegance in every crystal."
-                />
-              </label>
-
-              {/* Hero Image Upload */}
-              <AdminImageUpload
-                label="HERO IMAGE"
-                required
-                value={formData.heroImage}
-                publicId={formData.heroImagePublicId}
-                onChange={({ url, publicId }) =>
-                  setFormData((prev) => ({ ...prev, heroImage: url, heroImagePublicId: publicId }))
-                }
-                helpText="JPG, PNG, WEBP · Max 10MB"
-              />
-
-              <label>
-                DESCRIPTION *
-                <textarea
-                  rows="3"
-                  required
-                  value={formData.description}
-                  onChange={(e) => setFormData({ ...formData, description: e.target.value })}
-                  placeholder="Architectural overview of this collection..."
-                ></textarea>
-              </label>
-
-              <div className="form-row">
-                <label>
-                  MATERIALS & FINISHES
-                  <input
-                    type="text"
-                    value={formData.materials}
-                    onChange={(e) => setFormData({ ...formData, materials: e.target.value })}
-                    placeholder="Solid Brushed Brass, Hand-Cut Lead-Free Crystal"
-                  />
-                </label>
-                <label>
-                  RECOMMENDED APPLICATIONS
-                  <input
-                    type="text"
-                    value={formData.applications}
-                    onChange={(e) => setFormData({ ...formData, applications: e.target.value })}
-                    placeholder="Grand foyers, double-height living rooms"
-                  />
-                </label>
-              </div>
-
-              <label>
-                KEY FEATURES & TECHNICAL CHARACTERISTICS (One per line)
-                <textarea
-                  rows="3"
-                  value={formData.featuresText}
-                  onChange={(e) => setFormData({ ...formData, featuresText: e.target.value })}
-                  placeholder="Hand-blown Czech crystal elements&#10;Custom drop lengths available&#10;DALI / 0-10V dimming"
-                ></textarea>
-              </label>
-
-              <div className="form-checkbox-row">
-                <label className="admin-checkbox-label">
-                  <input
-                    type="checkbox"
-                    checked={formData.featured}
-                    onChange={(e) => setFormData({ ...formData, featured: e.target.checked })}
-                  />
-                  <span>Feature on Homepage</span>
-                </label>
-                <label className="admin-checkbox-label">
-                  <input
-                    type="checkbox"
-                    checked={formData.isActive}
-                    onChange={(e) => setFormData({ ...formData, isActive: e.target.checked })}
-                  />
-                  <span>Active in Public Navigation</span>
-                </label>
-              </div>
-
-              <div className="admin-modal-actions">
-                <button type="button" className="btn btn-outline btn-sm" onClick={() => setIsModalOpen(false)}>
-                  Cancel
-                </button>
-                <button type="submit" className="btn btn-gold btn-sm" disabled={modalLoading}>
-                  {modalLoading ? 'Saving...' : editingCollection ? 'Save Changes' : 'Create Collection'}
-                </button>
-              </div>
-            </form>
+            {/* Sticky Workspace Footer */}
+            <div className="admin-workspace-footer">
+              <button
+                type="button"
+                className="btn btn-outline"
+                onClick={() => setIsModalOpen(false)}
+              >
+                Cancel
+              </button>
+              <button
+                type="submit"
+                form="collection-editor-form"
+                className="btn btn-gold"
+                disabled={modalLoading}
+              >
+                {modalLoading ? 'Saving...' : editingCollection ? 'Save Changes' : 'Create Collection'}
+              </button>
+            </div>
           </div>
         </div>
       )}

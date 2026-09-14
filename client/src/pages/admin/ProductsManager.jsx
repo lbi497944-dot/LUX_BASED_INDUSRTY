@@ -6,6 +6,8 @@ import ModalConfirm from '../../components/modals/ModalConfirm';
 import Toast from '../../components/common/Toast';
 import SEO from '../../components/common/SEO';
 import AdminImageUpload from '../../components/ui/AdminImageUpload';
+import AdminLivePreviewFrame from '../../components/admin/AdminLivePreviewFrame';
+import ProductLivePreview from '../../components/admin/ProductLivePreview';
 
 const DEFAULT_CATEGORIES = [
   'Grand Chandelier',
@@ -27,7 +29,8 @@ export default function ProductsManager() {
   const [isAddingNewCategory, setIsAddingNewCategory] = useState(false);
   const [newCategoryName, setNewCategoryName] = useState('');
 
-  // Edit/Create Modal state
+  // Workspace tab & Edit/Create Modal state
+  const [workspaceTab, setWorkspaceTab] = useState('editor'); // 'editor' | 'preview'
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [editingProduct, setEditingProduct] = useState(null);
   const [formData, setFormData] = useState({
@@ -318,211 +321,267 @@ export default function ProductsManager() {
 
       {/* Create / Edit Product Modal */}
       {isModalOpen && (
-        <div className="modal-backdrop" onClick={() => setIsModalOpen(false)}>
-          <div className="modal-container admin-editor-modal" onClick={(e) => e.stopPropagation()}>
-            <div className="modal-header-luxury">
-              <h3>{editingProduct ? 'Edit Product' : 'Add New Product'}</h3>
-              <button className="modal-close" onClick={() => setIsModalOpen(false)}>
-                <X size={18} />
+        <div className="admin-modal-backdrop" onClick={() => setIsModalOpen(false)} role="presentation">
+          <div
+            className="admin-modal admin-modal-dark admin-modal-workspace"
+            onClick={(e) => e.stopPropagation()}
+            role="dialog"
+            aria-modal="true"
+            aria-labelledby="product-editor-title"
+          >
+            {/* Workspace Header */}
+            <div className="admin-workspace-header">
+              <div className="admin-workspace-title-wrap">
+                <h2 id="product-editor-title">
+                  {editingProduct ? 'Edit Product' : 'Add New Product'}
+                </h2>
+                <span className="admin-preview-dirty-badge">
+                  {formData.name ? formData.name : 'Untitled Product'}
+                </span>
+              </div>
+              <button
+                type="button"
+                className="admin-modal-close-btn"
+                onClick={() => setIsModalOpen(false)}
+                aria-label="Close product editor"
+              >
+                <X size={20} />
               </button>
             </div>
 
-            <form onSubmit={handleFormSubmit} className="admin-form-grid">
-              <div className="form-row">
-                <label>
-                  PRODUCT NAME *
-                  <input
-                    type="text"
-                    required
-                    value={formData.name}
-                    onChange={(e) => setFormData({ ...formData, name: e.target.value })}
-                    placeholder="e.g. The Aurelia Grand Chandelier"
-                  />
-                </label>
-                <div className="admin-cat-select-wrap">
-                  <label className="field-label">CATEGORY *</label>
-                  {!isAddingNewCategory ? (
-                    <select
-                      value={formData.category}
-                      onChange={(e) => {
-                        if (e.target.value === '__ADD_NEW__') {
-                          setIsAddingNewCategory(true);
-                          setNewCategoryName('');
-                        } else {
-                          setFormData((prev) => ({ ...prev, category: e.target.value }));
-                        }
-                      }}
-                      aria-label="Product Category"
-                    >
-                      {allCategories.map((cat) => (
-                        <option key={cat} value={cat}>
-                          {cat}
-                        </option>
-                      ))}
-                      <option value="__ADD_NEW__">+ Add New Category...</option>
-                    </select>
-                  ) : (
-                    <div className="admin-new-cat-box">
+            {/* Mobile Switcher Tabs (<1024px) */}
+            <div className="admin-workspace-tabs" role="tablist">
+              <button
+                type="button"
+                className={`admin-workspace-tab-btn ${workspaceTab === 'editor' ? 'active' : ''}`}
+                onClick={() => setWorkspaceTab('editor')}
+              >
+                <span>✏️ Product Details</span>
+              </button>
+              <button
+                type="button"
+                className={`admin-workspace-tab-btn ${workspaceTab === 'preview' ? 'active' : ''}`}
+                onClick={() => setWorkspaceTab('preview')}
+              >
+                <span>👁️ Live Customer View</span>
+              </button>
+            </div>
+
+            {/* Workspace Body: 2 Columns */}
+            <div className="admin-workspace-body">
+              <div className="admin-workspace-grid">
+                {/* Left Column: Product Form */}
+                <form
+                  id="product-editor-form"
+                  onSubmit={handleFormSubmit}
+                  className={`admin-workspace-editor admin-form-grid ${workspaceTab === 'editor' ? 'active' : ''}`}
+                >
+                  <div className="form-row">
+                    <label>
+                      PRODUCT NAME *
                       <input
                         type="text"
-                        placeholder="Enter category name..."
-                        value={newCategoryName}
-                        onChange={(e) => setNewCategoryName(e.target.value)}
-                        autoFocus
-                        maxLength={50}
-                        onKeyDown={(e) => {
-                          if (e.key === 'Enter') {
-                            e.preventDefault();
-                            handleAddNewCategory();
-                          } else if (e.key === 'Escape') {
-                            setIsAddingNewCategory(false);
-                          }
-                        }}
+                        required
+                        value={formData.name}
+                        onChange={(e) => setFormData({ ...formData, name: e.target.value })}
+                        placeholder="e.g. The Aurelia Grand Chandelier"
                       />
-                      <div className="admin-new-cat-actions">
-                        <button
-                          type="button"
-                          className="btn btn-gold btn-xs"
-                          onClick={handleAddNewCategory}
-                        >
-                          Add
-                        </button>
-                        <button
-                          type="button"
-                          className="btn btn-outline btn-xs"
-                          onClick={() => {
-                            setIsAddingNewCategory(false);
-                            setNewCategoryName('');
+                    </label>
+                    <div className="admin-cat-select-wrap">
+                      <label className="field-label">CATEGORY *</label>
+                      {!isAddingNewCategory ? (
+                        <select
+                          value={formData.category}
+                          onChange={(e) => {
+                            if (e.target.value === '__ADD_NEW__') {
+                              setIsAddingNewCategory(true);
+                              setNewCategoryName('');
+                            } else {
+                              setFormData((prev) => ({ ...prev, category: e.target.value }));
+                            }
                           }}
+                          aria-label="Product Category"
                         >
-                          Cancel
-                        </button>
-                      </div>
+                          {allCategories.map((cat) => (
+                            <option key={cat} value={cat}>
+                              {cat}
+                            </option>
+                          ))}
+                          <option value="__ADD_NEW__">+ Add New Category...</option>
+                        </select>
+                      ) : (
+                        <div className="admin-new-cat-box">
+                          <input
+                            type="text"
+                            placeholder="Enter category name..."
+                            value={newCategoryName}
+                            onChange={(e) => setNewCategoryName(e.target.value)}
+                            autoFocus
+                            maxLength={50}
+                            onKeyDown={(e) => {
+                              if (e.key === 'Enter') {
+                                e.preventDefault();
+                                handleAddNewCategory();
+                              } else if (e.key === 'Escape') {
+                                setIsAddingNewCategory(false);
+                              }
+                            }}
+                          />
+                          <div className="admin-new-cat-actions">
+                            <button
+                              type="button"
+                              className="btn btn-gold btn-xs"
+                              onClick={handleAddNewCategory}
+                            >
+                              Add
+                            </button>
+                            <button
+                              type="button"
+                              className="btn btn-outline btn-xs"
+                              onClick={() => {
+                                setIsAddingNewCategory(false);
+                                setNewCategoryName('');
+                              }}
+                            >
+                              Cancel
+                            </button>
+                          </div>
+                        </div>
+                      )}
                     </div>
-                  )}
+                  </div>
+
+                  <div className="form-row">
+                    <label>
+                      COLLECTION LINK *
+                      <select
+                        value={formData.collectionSlug}
+                        onChange={(e) => setFormData({ ...formData, collectionSlug: e.target.value })}
+                      >
+                        {collections.map((col) => (
+                          <option key={col.slug} value={col.slug}>
+                            {col.name || col.title} ({col.slug})
+                          </option>
+                        ))}
+                        {collections.length === 0 && (
+                          <option value="grand-chandeliers">Grand Chandeliers</option>
+                        )}
+                      </select>
+                    </label>
+                  </div>
+
+                  {/* Primary Image Upload */}
+                  <AdminImageUpload
+                    label="PRIMARY FIXTURE IMAGE"
+                    required
+                    value={formData.image}
+                    publicId={formData.imagePublicId}
+                    onChange={({ url, publicId }) =>
+                      setFormData((prev) => ({ ...prev, image: url, imagePublicId: publicId }))
+                    }
+                    helpText="JPG, PNG, WEBP · Max 10MB"
+                  />
+
+                  <label>
+                    DESCRIPTION *
+                    <textarea
+                      rows="3"
+                      required
+                      value={formData.description}
+                      onChange={(e) => setFormData({ ...formData, description: e.target.value })}
+                      placeholder="Architectural design description and silhouette intent..."
+                    ></textarea>
+                  </label>
+
+                  <div className="form-row">
+                    <label>
+                      SPECIFICATIONS SUMMARY
+                      <input
+                        type="text"
+                        value={formData.specifications}
+                        onChange={(e) => setFormData({ ...formData, specifications: e.target.value })}
+                        placeholder="Diameter: 1400mm | Drop: 2200mm | 120W LED | 2700K"
+                      />
+                    </label>
+                    <label>
+                      MATERIALS & FINISH
+                      <input
+                        type="text"
+                        value={formData.materials}
+                        onChange={(e) => setFormData({ ...formData, materials: e.target.value })}
+                        placeholder="Solid Brushed Brass, Czech Crystal"
+                      />
+                    </label>
+                  </div>
+
+                  <div className="form-row">
+                    <label>
+                      DIMENSIONS
+                      <input
+                        type="text"
+                        value={formData.dimensions}
+                        onChange={(e) => setFormData({ ...formData, dimensions: e.target.value })}
+                        placeholder="Dia: 1400mm x H: 2200mm"
+                      />
+                    </label>
+                    <label>
+                      WATTAGE / LIGHT SOURCE
+                      <input
+                        type="text"
+                        value={formData.wattage}
+                        onChange={(e) => setFormData({ ...formData, wattage: e.target.value })}
+                        placeholder="120W Integrated High-CRI LED"
+                      />
+                    </label>
+                  </div>
+
+                  <div className="form-checkbox-row">
+                    <label className="admin-checkbox-label">
+                      <input
+                        type="checkbox"
+                        checked={formData.featured}
+                        onChange={(e) => setFormData({ ...formData, featured: e.target.checked })}
+                      />
+                      <span>Feature on Homepage Signature Pieces</span>
+                    </label>
+                    <label className="admin-checkbox-label">
+                      <input
+                        type="checkbox"
+                        checked={formData.isActive}
+                        onChange={(e) => setFormData({ ...formData, isActive: e.target.checked })}
+                      />
+                      <span>Active in Public Catalogue</span>
+                    </label>
+                  </div>
+                </form>
+
+                {/* Right Column: Live Product Preview */}
+                <div className={`admin-workspace-preview-column ${workspaceTab === 'preview' ? 'active' : ''}`}>
+                  <AdminLivePreviewFrame title="LIVE CUSTOMER PRODUCT VIEW">
+                    <ProductLivePreview formData={formData} />
+                  </AdminLivePreviewFrame>
                 </div>
               </div>
+            </div>
 
-              <div className="form-row">
-                <label>
-                  COLLECTION LINK *
-                  <select
-                    value={formData.collectionSlug}
-                    onChange={(e) => setFormData({ ...formData, collectionSlug: e.target.value })}
-                  >
-                    {collections.map((col) => (
-                      <option key={col.slug} value={col.slug}>
-                        {col.name || col.title} ({col.slug})
-                      </option>
-                    ))}
-                    {collections.length === 0 && (
-                      <option value="grand-chandeliers">Grand Chandeliers</option>
-                    )}
-                  </select>
-                </label>
-              </div>
-
-              {/* Primary Image Upload */}
-              <AdminImageUpload
-                label="PRIMARY FIXTURE IMAGE"
-                required
-                value={formData.image}
-                publicId={formData.imagePublicId}
-                onChange={({ url, publicId }) =>
-                  setFormData((prev) => ({ ...prev, image: url, imagePublicId: publicId }))
-                }
-                helpText="JPG, PNG, WEBP · Max 10MB"
-              />
-
-              <label>
-                DESCRIPTION *
-                <textarea
-                  rows="3"
-                  required
-                  value={formData.description}
-                  onChange={(e) => setFormData({ ...formData, description: e.target.value })}
-                  placeholder="Architectural design description and silhouette intent..."
-                ></textarea>
-              </label>
-
-              <div className="form-row">
-                <label>
-                  SPECIFICATIONS SUMMARY
-                  <input
-                    type="text"
-                    value={formData.specifications}
-                    onChange={(e) => setFormData({ ...formData, specifications: e.target.value })}
-                    placeholder="Diameter: 1400mm | Drop: 2200mm | 120W LED | 2700K"
-                  />
-                </label>
-                <label>
-                  MATERIALS & FINISH
-                  <input
-                    type="text"
-                    value={formData.materials}
-                    onChange={(e) => setFormData({ ...formData, materials: e.target.value })}
-                    placeholder="Solid Brushed Brass, Czech Crystal"
-                  />
-                </label>
-              </div>
-
-              <div className="form-row">
-                <label>
-                  DIMENSIONS
-                  <input
-                    type="text"
-                    value={formData.dimensions}
-                    onChange={(e) => setFormData({ ...formData, dimensions: e.target.value })}
-                    placeholder="Dia: 1400mm x H: 2200mm"
-                  />
-                </label>
-                <label>
-                  WATTAGE / LIGHT SOURCE
-                  <input
-                    type="text"
-                    value={formData.wattage}
-                    onChange={(e) => setFormData({ ...formData, wattage: e.target.value })}
-                    placeholder="120W Integrated High-CRI LED"
-                  />
-                </label>
-              </div>
-
-              <div className="form-checkbox-row">
-                <label className="admin-checkbox-label">
-                  <input
-                    type="checkbox"
-                    checked={formData.featured}
-                    onChange={(e) => setFormData({ ...formData, featured: e.target.checked })}
-                  />
-                  <span>Feature on Homepage Signature Pieces</span>
-                </label>
-                <label className="admin-checkbox-label">
-                  <input
-                    type="checkbox"
-                    checked={formData.isActive}
-                    onChange={(e) => setFormData({ ...formData, isActive: e.target.checked })}
-                  />
-                  <span>Active in Public Catalogue</span>
-                </label>
-              </div>
-
-              <div className="admin-modal-actions">
-                <button
-                  type="button"
-                  className="btn btn-outline btn-sm"
-                  onClick={() => setIsModalOpen(false)}
-                >
-                  Cancel
-                </button>
-                <button
-                  type="submit"
-                  className="btn btn-gold btn-sm"
-                  disabled={modalLoading}
-                >
-                  {modalLoading ? 'Saving...' : editingProduct ? 'Save Changes' : 'Create Product'}
-                </button>
-              </div>
-            </form>
+            {/* Sticky Workspace Footer */}
+            <div className="admin-workspace-footer">
+              <button
+                type="button"
+                className="btn btn-outline"
+                onClick={() => setIsModalOpen(false)}
+              >
+                Cancel
+              </button>
+              <button
+                type="submit"
+                form="product-editor-form"
+                className="btn btn-gold"
+                disabled={modalLoading}
+              >
+                {modalLoading ? 'Saving...' : editingProduct ? 'Save Changes' : 'Create Product'}
+              </button>
+            </div>
           </div>
         </div>
       )}

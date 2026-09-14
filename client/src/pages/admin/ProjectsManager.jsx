@@ -6,6 +6,8 @@ import ModalConfirm from '../../components/modals/ModalConfirm';
 import Toast from '../../components/common/Toast';
 import SEO from '../../components/common/SEO';
 import AdminImageUpload from '../../components/ui/AdminImageUpload';
+import AdminLivePreviewFrame from '../../components/admin/AdminLivePreviewFrame';
+import ProjectLivePreview from '../../components/admin/ProjectLivePreview';
 
 export default function ProjectsManager() {
   const [projects, setProjects] = useState([]);
@@ -13,6 +15,7 @@ export default function ProjectsManager() {
   const [selectedCategory, setSelectedCategory] = useState('ALL');
   const [toast, setToast] = useState(null);
 
+  const [workspaceTab, setWorkspaceTab] = useState('editor'); // 'editor' | 'preview'
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [editingProject, setEditingProject] = useState(null);
   const [galleryUploading, setGalleryUploading] = useState(false);
@@ -312,269 +315,333 @@ export default function ProjectsManager() {
         )}
       </div>
 
-      {/* Modal */}
+      {/* Create / Edit Project Modal */}
       {isModalOpen && (
-        <div className="modal-backdrop" onClick={() => setIsModalOpen(false)}>
-          <div className="modal-container admin-editor-modal" onClick={(e) => e.stopPropagation()}>
-            <div className="modal-header-luxury">
-              <h3>{editingProject ? 'Edit Project' : 'Add New Project'}</h3>
-              <button className="modal-close" onClick={() => setIsModalOpen(false)}>
-                <X size={18} />
+        <div className="admin-modal-backdrop" onClick={() => setIsModalOpen(false)} role="presentation">
+          <div
+            className="admin-modal admin-modal-dark admin-modal-workspace"
+            onClick={(e) => e.stopPropagation()}
+            role="dialog"
+            aria-modal="true"
+            aria-labelledby="project-editor-title"
+          >
+            {/* Workspace Header */}
+            <div className="admin-workspace-header">
+              <div className="admin-workspace-title-wrap">
+                <h2 id="project-editor-title">
+                  {editingProject ? 'Edit Project' : 'Add New Project'}
+                </h2>
+                <span className="admin-preview-dirty-badge">
+                  {formData.title ? formData.title : 'Untitled Project'}
+                </span>
+              </div>
+              <button
+                type="button"
+                className="admin-modal-close-btn"
+                onClick={() => setIsModalOpen(false)}
+                aria-label="Close project editor"
+              >
+                <X size={20} />
               </button>
             </div>
 
-            <form onSubmit={handleFormSubmit} className="admin-form-grid">
-              <div className="form-row">
-                <label>
-                  PROJECT TITLE *
-                  <input
-                    type="text"
-                    required
-                    value={formData.title}
-                    onChange={(e) => setFormData({ ...formData, title: e.target.value })}
-                    placeholder="e.g. PRIVATE RESIDENCE"
-                  />
-                </label>
-                <label>
-                  CATEGORY *
-                  <select
-                    value={formData.category}
-                    onChange={(e) => setFormData({ ...formData, category: e.target.value })}
-                  >
-                    <option value="Residential">Residential</option>
-                    <option value="Hospitality">Hospitality</option>
-                    <option value="Restaurant">Restaurant</option>
-                    <option value="Commercial">Commercial</option>
-                  </select>
-                </label>
-              </div>
+            {/* Mobile Switcher Tabs (<1024px) */}
+            <div className="admin-workspace-tabs" role="tablist">
+              <button
+                type="button"
+                className={`admin-workspace-tab-btn ${workspaceTab === 'editor' ? 'active' : ''}`}
+                onClick={() => setWorkspaceTab('editor')}
+              >
+                <span>✏️ Project Details</span>
+              </button>
+              <button
+                type="button"
+                className={`admin-workspace-tab-btn ${workspaceTab === 'preview' ? 'active' : ''}`}
+                onClick={() => setWorkspaceTab('preview')}
+              >
+                <span>👁️ Live Portfolio View</span>
+              </button>
+            </div>
 
-              <div className="form-row">
-                <label>
-                  LOCATION *
-                  <input
-                    type="text"
-                    required
-                    value={formData.location}
-                    onChange={(e) => setFormData({ ...formData, location: e.target.value })}
-                    placeholder="e.g. Emirates Hills, Dubai, UAE"
-                  />
-                </label>
-                <label>
-                  COMPLETION YEAR
-                  <input
-                    type="text"
-                    value={formData.year}
-                    onChange={(e) => setFormData({ ...formData, year: e.target.value })}
-                    placeholder="2025"
-                  />
-                </label>
-              </div>
-
-              {/* Primary Cover Image Upload */}
-              <AdminImageUpload
-                label="PROJECT COVER IMAGE"
-                required
-                value={formData.coverImage}
-                publicId={formData.coverImagePublicId}
-                onChange={({ url, publicId }) =>
-                  setFormData((prev) => ({ ...prev, coverImage: url, coverImagePublicId: publicId }))
-                }
-                helpText="JPG, PNG, WEBP · Max 10MB"
-              />
-
-              {/* Scope & Deliverables */}
-              <div className="form-row">
-                <label>
-                  DELIVERABLES / SCOPE
-                  <input
-                    type="text"
-                    value={formData.scope}
-                    onChange={(e) => setFormData({ ...formData, scope: e.target.value })}
-                    placeholder="Interior Lighting Design, Custom Chandelier Fabrication"
-                  />
-                </label>
-              </div>
-
-              {/* Project Gallery Images Section */}
-              <div className="admin-media-upload-section" style={{ marginBottom: '16px' }}>
-                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '8px' }}>
-                  <span style={{ fontSize: '11px', fontWeight: 600, letterSpacing: '0.05em', color: 'rgba(243, 243, 235, 0.55)', textTransform: 'uppercase' }}>
-                    PROJECT GALLERY IMAGES ({formData.gallery.length})
-                  </span>
-                </div>
-
-                {/* Upload Gallery Files Box */}
-                <label
-                  className="file-upload-box"
-                  style={{
-                    display: 'block',
-                    padding: '12px',
-                    borderRadius: '4px',
-                    cursor: galleryUploading ? 'wait' : 'pointer',
-                    border: '1px dashed rgba(230, 199, 122, 0.25)',
-                    backgroundColor: 'rgba(255, 255, 255, 0.02)',
-                    marginBottom: '8px',
-                  }}
+            {/* Workspace Body: 2 Columns */}
+            <div className="admin-workspace-body">
+              <div className="admin-workspace-grid">
+                {/* Left Column: Form Editor */}
+                <form
+                  id="project-editor-form"
+                  onSubmit={handleFormSubmit}
+                  className={`admin-workspace-editor admin-form-grid ${workspaceTab === 'editor' ? 'active' : ''}`}
                 >
-                  <input
-                    type="file"
-                    accept=".jpg,.jpeg,.png,.webp"
-                    multiple
-                    onChange={handleGalleryFilesSelect}
-                    disabled={galleryUploading}
-                    className="file-input-hidden"
-                  />
-                  <div className="file-upload-label" style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '8px' }}>
-                    {galleryUploading ? (
-                      <>
-                        <Loader2 size={16} className="spin-icon" style={{ color: 'var(--gold)' }} />
-                        <span style={{ color: 'var(--gold)' }}>Uploading gallery images to Cloudinary...</span>
-                      </>
-                    ) : (
-                      <>
-                        <Upload size={16} style={{ color: 'var(--gold)' }} />
-                        <span>Upload Gallery Image(s) (Select multiple · JPG, PNG, WEBP · Max 10MB each)</span>
-                      </>
-                    )}
+                  <div className="form-row">
+                    <label>
+                      PROJECT TITLE *
+                      <input
+                        type="text"
+                        required
+                        value={formData.title}
+                        onChange={(e) => setFormData({ ...formData, title: e.target.value })}
+                        placeholder="e.g. PRIVATE RESIDENCE"
+                      />
+                    </label>
+                    <label>
+                      CATEGORY *
+                      <select
+                        value={formData.category}
+                        onChange={(e) => setFormData({ ...formData, category: e.target.value })}
+                      >
+                        <option value="Residential">Residential</option>
+                        <option value="Hospitality">Hospitality</option>
+                        <option value="Restaurant">Restaurant</option>
+                        <option value="Commercial">Commercial</option>
+                      </select>
+                    </label>
                   </div>
-                </label>
 
-                {/* Or Add External URL */}
-                <div style={{ display: 'flex', gap: '8px', marginBottom: '8px' }}>
-                  <input
-                    type="url"
-                    value={galleryExternalUrl}
-                    onChange={(e) => setGalleryExternalUrl(e.target.value)}
-                    placeholder="Or enter external gallery image URL..."
-                    style={{ flex: 1 }}
+                  <div className="form-row">
+                    <label>
+                      LOCATION *
+                      <input
+                        type="text"
+                        required
+                        value={formData.location}
+                        onChange={(e) => setFormData({ ...formData, location: e.target.value })}
+                        placeholder="e.g. Emirates Hills, Dubai, UAE"
+                      />
+                    </label>
+                    <label>
+                      COMPLETION YEAR
+                      <input
+                        type="text"
+                        value={formData.year}
+                        onChange={(e) => setFormData({ ...formData, year: e.target.value })}
+                        placeholder="2025"
+                      />
+                    </label>
+                  </div>
+
+                  {/* Primary Cover Image Upload */}
+                  <AdminImageUpload
+                    label="PROJECT COVER IMAGE"
+                    required
+                    value={formData.coverImage}
+                    publicId={formData.coverImagePublicId}
+                    onChange={({ url, publicId }) =>
+                      setFormData((prev) => ({ ...prev, coverImage: url, coverImagePublicId: publicId }))
+                    }
+                    helpText="JPG, PNG, WEBP · Max 10MB"
                   />
-                  <button
-                    type="button"
-                    className="btn btn-outline btn-sm"
-                    onClick={handleAddExternalGalleryUrl}
-                    disabled={!galleryExternalUrl.trim()}
-                    style={{ whiteSpace: 'nowrap' }}
-                  >
-                    <Plus size={14} style={{ marginRight: '4px' }} /> Add URL
-                  </button>
-                </div>
 
-                {galleryUploadError && (
-                  <p style={{ color: '#f87171', fontSize: '12px', marginTop: '4px', marginBottom: '8px' }}>
-                    {galleryUploadError}
-                  </p>
-                )}
+                  {/* Scope & Deliverables */}
+                  <div className="form-row">
+                    <label>
+                      DELIVERABLES / SCOPE
+                      <input
+                        type="text"
+                        value={formData.scope}
+                        onChange={(e) => setFormData({ ...formData, scope: e.target.value })}
+                        placeholder="Interior Lighting Design, Custom Chandelier Fabrication"
+                      />
+                    </label>
+                  </div>
 
-                {/* Gallery Thumbnails List */}
-                {formData.gallery.length > 0 && (
-                  <div
-                    style={{
-                      display: 'grid',
-                      gridTemplateColumns: 'repeat(auto-fill, minmax(100px, 1fr))',
-                      gap: '8px',
-                      marginTop: '8px',
-                    }}
-                  >
-                    {formData.gallery.map((imgUrl, idx) => (
+                  {/* Project Gallery Images Section */}
+                  <div className="admin-media-upload-section" style={{ marginBottom: '16px' }}>
+                    <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '8px' }}>
+                      <span style={{ fontSize: '11px', fontWeight: 600, letterSpacing: '0.05em', color: 'rgba(243, 243, 235, 0.55)', textTransform: 'uppercase' }}>
+                        PROJECT GALLERY IMAGES ({formData.gallery.length})
+                      </span>
+                    </div>
+
+                    {/* Upload Gallery Files Box */}
+                    <label
+                      className="file-upload-box"
+                      style={{
+                        display: 'block',
+                        padding: '12px',
+                        borderRadius: '4px',
+                        cursor: galleryUploading ? 'wait' : 'pointer',
+                        border: '1px dashed rgba(230, 199, 122, 0.25)',
+                        backgroundColor: 'rgba(255, 255, 255, 0.02)',
+                        marginBottom: '8px',
+                      }}
+                    >
+                      <input
+                        type="file"
+                        accept=".jpg,.jpeg,.png,.webp"
+                        multiple
+                        onChange={handleGalleryFilesSelect}
+                        disabled={galleryUploading}
+                        className="file-input-hidden"
+                      />
+                      <div className="file-upload-label" style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '8px' }}>
+                        {galleryUploading ? (
+                          <>
+                            <Loader2 size={16} className="spin-icon" style={{ color: 'var(--gold)' }} />
+                            <span style={{ color: 'var(--gold)' }}>Uploading gallery images to Cloudinary...</span>
+                          </>
+                        ) : (
+                          <>
+                            <Upload size={16} style={{ color: 'var(--gold)' }} />
+                            <span>Upload Gallery Image(s) (Select multiple · JPG, PNG, WEBP · Max 10MB each)</span>
+                          </>
+                        )}
+                      </div>
+                    </label>
+
+                    {/* Or Add External URL */}
+                    <div style={{ display: 'flex', gap: '8px', marginBottom: '8px' }}>
+                      <input
+                        type="url"
+                        value={galleryExternalUrl}
+                        onChange={(e) => setGalleryExternalUrl(e.target.value)}
+                        placeholder="Or enter external gallery image URL..."
+                        style={{ flex: 1 }}
+                      />
+                      <button
+                        type="button"
+                        className="btn btn-outline btn-sm"
+                        onClick={handleAddExternalGalleryUrl}
+                        disabled={!galleryExternalUrl.trim()}
+                        style={{ whiteSpace: 'nowrap' }}
+                      >
+                        <Plus size={14} style={{ marginRight: '4px' }} /> Add URL
+                      </button>
+                    </div>
+
+                    {galleryUploadError && (
+                      <p style={{ color: '#f87171', fontSize: '12px', marginTop: '4px', marginBottom: '8px' }}>
+                        {galleryUploadError}
+                      </p>
+                    )}
+
+                    {/* Gallery Thumbnails List */}
+                    {formData.gallery.length > 0 && (
                       <div
-                        key={`proj-gallery-${idx}`}
                         style={{
-                          position: 'relative',
-                          borderRadius: '4px',
-                          overflow: 'hidden',
-                          border: '1px solid rgba(230, 199, 122, 0.2)',
-                          background: 'rgba(255, 255, 255, 0.03)',
+                          display: 'grid',
+                          gridTemplateColumns: 'repeat(auto-fill, minmax(100px, 1fr))',
+                          gap: '8px',
+                          marginTop: '8px',
                         }}
                       >
-                        <img
-                          src={imgUrl}
-                          alt={`Gallery ${idx + 1}`}
-                          style={{ width: '100%', height: '70px', objectFit: 'cover', display: 'block' }}
-                          onError={(e) => { e.target.style.display = 'none'; }}
-                        />
-                        <div
-                          style={{
-                            padding: '2px 4px',
-                            fontSize: '9px',
-                            textAlign: 'center',
-                            background: 'rgba(0, 0, 0, 0.6)',
-                            color: formData.galleryPublicIds[idx] ? '#4ade80' : 'rgba(243, 243, 235, 0.55)',
-                            whiteSpace: 'nowrap',
-                            overflow: 'hidden',
-                            textOverflow: 'ellipsis',
-                          }}
-                        >
-                          {formData.galleryPublicIds[idx] ? '✓ Cloudinary' : 'External'}
-                        </div>
-                        <button
-                          type="button"
-                          onClick={() => handleRemoveGalleryItem(idx)}
-                          title="Remove image"
-                          style={{
-                            position: 'absolute',
-                            top: '4px',
-                            right: '4px',
-                            background: 'rgba(0, 0, 0, 0.75)',
-                            border: 'none',
-                            color: '#f87171',
-                            borderRadius: '50%',
-                            width: '20px',
-                            height: '20px',
-                            display: 'flex',
-                            alignItems: 'center',
-                            justifyContent: 'center',
-                            cursor: 'pointer',
-                            padding: 0,
-                          }}
-                        >
-                          <X size={12} />
-                        </button>
+                        {formData.gallery.map((imgUrl, idx) => (
+                          <div
+                            key={`proj-gallery-${idx}`}
+                            style={{
+                              position: 'relative',
+                              borderRadius: '4px',
+                              overflow: 'hidden',
+                              border: '1px solid rgba(230, 199, 122, 0.2)',
+                              background: 'rgba(255, 255, 255, 0.03)',
+                            }}
+                          >
+                            <img
+                              src={imgUrl}
+                              alt={`Gallery ${idx + 1}`}
+                              style={{ width: '100%', height: '70px', objectFit: 'cover', display: 'block' }}
+                              onError={(e) => { e.target.style.display = 'none'; }}
+                            />
+                            <div
+                              style={{
+                                padding: '2px 4px',
+                                fontSize: '9px',
+                                textAlign: 'center',
+                                background: 'rgba(0, 0, 0, 0.6)',
+                                color: formData.galleryPublicIds[idx] ? '#4ade80' : 'rgba(243, 243, 235, 0.55)',
+                                whiteSpace: 'nowrap',
+                                overflow: 'hidden',
+                                textOverflow: 'ellipsis',
+                              }}
+                            >
+                              {formData.galleryPublicIds[idx] ? '✓ Cloudinary' : 'External'}
+                            </div>
+                            <button
+                              type="button"
+                              onClick={() => handleRemoveGalleryItem(idx)}
+                              title="Remove image"
+                              style={{
+                                position: 'absolute',
+                                top: '4px',
+                                right: '4px',
+                                background: 'rgba(0, 0, 0, 0.75)',
+                                border: 'none',
+                                color: '#f87171',
+                                borderRadius: '50%',
+                                width: '20px',
+                                height: '20px',
+                                display: 'flex',
+                                alignItems: 'center',
+                                justifyContent: 'center',
+                                cursor: 'pointer',
+                                padding: 0,
+                              }}
+                            >
+                              <X size={12} />
+                            </button>
+                          </div>
+                        ))}
                       </div>
-                    ))}
+                    )}
                   </div>
-                )}
-              </div>
 
-              <label>
-                PROJECT DESCRIPTION *
-                <textarea
-                  rows="3"
-                  required
-                  value={formData.description}
-                  onChange={(e) => setFormData({ ...formData, description: e.target.value })}
-                  placeholder="Comprehensive narrative of the architectural lighting scheme..."
-                ></textarea>
-              </label>
+                  <label>
+                    PROJECT DESCRIPTION *
+                    <textarea
+                      rows="3"
+                      required
+                      value={formData.description}
+                      onChange={(e) => setFormData({ ...formData, description: e.target.value })}
+                      placeholder="Comprehensive narrative of the architectural lighting scheme..."
+                    ></textarea>
+                  </label>
 
-              <div className="form-checkbox-row">
-                <label className="admin-checkbox-label">
-                  <input
-                    type="checkbox"
-                    checked={formData.featured}
-                    onChange={(e) => setFormData({ ...formData, featured: e.target.checked })}
-                  />
-                  <span>Feature on Homepage Projects</span>
-                </label>
-                <label className="admin-checkbox-label">
-                  <input
-                    type="checkbox"
-                    checked={formData.isActive}
-                    onChange={(e) => setFormData({ ...formData, isActive: e.target.checked })}
-                  />
-                  <span>Active in Portfolio</span>
-                </label>
-              </div>
+                  <div className="form-checkbox-row">
+                    <label className="admin-checkbox-label">
+                      <input
+                        type="checkbox"
+                        checked={formData.featured}
+                        onChange={(e) => setFormData({ ...formData, featured: e.target.checked })}
+                      />
+                      <span>Feature on Homepage Projects</span>
+                    </label>
+                    <label className="admin-checkbox-label">
+                      <input
+                        type="checkbox"
+                        checked={formData.isActive}
+                        onChange={(e) => setFormData({ ...formData, isActive: e.target.checked })}
+                      />
+                      <span>Active in Portfolio</span>
+                    </label>
+                  </div>
+                </form>
 
-              <div className="admin-modal-actions">
-                <button type="button" className="btn btn-outline btn-sm" onClick={() => setIsModalOpen(false)}>
-                  Cancel
-                </button>
-                <button type="submit" className="btn btn-gold btn-sm" disabled={modalLoading}>
-                  {modalLoading ? 'Saving...' : editingProject ? 'Save Changes' : 'Create Project'}
-                </button>
+                {/* Right Column: Live Project Showcase Preview */}
+                <div className={`admin-workspace-preview-column ${workspaceTab === 'preview' ? 'active' : ''}`}>
+                  <AdminLivePreviewFrame title="LIVE PORTFOLIO SHOWCASE VIEW">
+                    <ProjectLivePreview formData={formData} />
+                  </AdminLivePreviewFrame>
+                </div>
               </div>
-            </form>
+            </div>
+
+            {/* Sticky Workspace Footer */}
+            <div className="admin-workspace-footer">
+              <button
+                type="button"
+                className="btn btn-outline"
+                onClick={() => setIsModalOpen(false)}
+              >
+                Cancel
+              </button>
+              <button
+                type="submit"
+                form="project-editor-form"
+                className="btn btn-gold"
+                disabled={modalLoading}
+              >
+                {modalLoading ? 'Saving...' : editingProject ? 'Save Changes' : 'Create Project'}
+              </button>
+            </div>
           </div>
         </div>
       )}

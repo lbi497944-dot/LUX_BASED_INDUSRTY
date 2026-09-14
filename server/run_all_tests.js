@@ -23,6 +23,7 @@ const testSuites = [
   { name: 'Phase 5F SEO & Conversion Audit Suite', file: 'test_phase5f_seo_conversion.js' },
   { name: 'Phase 5G Security & Hardening Suite', file: 'test_phase5g_security.js' },
   { name: 'Phase 5H Newsletter & Notifications Suite', file: 'test_phase5h_newsletter_notifications.js' },
+  { name: 'Phase 6B Live Preview & Workspace Modals Suite', file: 'test_phase6b_live_previews.js' },
 ];
 
 console.log('========================================================');
