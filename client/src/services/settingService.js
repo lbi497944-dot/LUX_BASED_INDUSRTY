@@ -9,6 +9,10 @@ export const settingService = {
     return await api.put('/settings', data);
   },
 
+  updateSocialLinks: async (socialLinks) => {
+    return await api.put('/settings', { socialLinks });
+  },
+
   getCatalogue: async () => {
     return await api.get('/catalogue');
   },

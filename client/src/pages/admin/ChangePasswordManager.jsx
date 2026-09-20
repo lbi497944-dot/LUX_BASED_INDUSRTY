@@ -14,18 +14,12 @@ const PASSWORD_REGEX = /(?=.*[a-z])(?=.*[A-Z])(?=.*\d)/;
 
 export default function ChangePasswordManager() {
   const [formData, setFormData] = useState(EMPTY_FORM);
-  const [showPasswords, setShowPasswords] = useState({
-    current: false,
-    new: false,
-    confirm: false,
-  });
+  const [showCurrentPassword, setShowCurrentPassword] = useState(false);
+  const [showNewPassword, setShowNewPassword] = useState(false);
+  const [showConfirmPassword, setShowConfirmPassword] = useState(false);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
   const [toast, setToast] = useState(null);
-
-  const toggleVisibility = (field) => {
-    setShowPasswords((prev) => ({ ...prev, [field]: !prev[field] }));
-  };
 
   const handleChange = (field) => (e) => {
     setFormData((prev) => ({ ...prev, [field]: e.target.value }));
@@ -105,12 +99,15 @@ export default function ChangePasswordManager() {
         <form onSubmit={handleSubmit} noValidate>
           <div className="admin-form-grid">
             {/* Current Password */}
-            <label>
-              CURRENT PASSWORD
+            <div className="admin-form-group">
+              <label htmlFor="currentPassword" style={{ display: 'block', marginBottom: '8px' }}>
+                CURRENT PASSWORD
+              </label>
               <div className="admin-input-wrap">
                 <KeyRound size={16} className="input-icon" />
                 <input
-                  type={showPasswords.current ? 'text' : 'password'}
+                  id="currentPassword"
+                  type={showCurrentPassword ? 'text' : 'password'}
                   value={formData.currentPassword}
                   onChange={handleChange('currentPassword')}
                   autoComplete="current-password"
@@ -120,22 +117,31 @@ export default function ChangePasswordManager() {
                 <button
                   type="button"
                   className="password-toggle-btn"
-                  onClick={() => toggleVisibility('current')}
-                  aria-label={showPasswords.current ? 'Hide current password' : 'Show current password'}
-                  title={showPasswords.current ? 'Hide current password' : 'Show current password'}
+                  onClick={(e) => {
+                    e.preventDefault();
+                    e.stopPropagation();
+                    setShowCurrentPassword((prev) => !prev);
+                  }}
+                  onMouseDown={(e) => e.preventDefault()}
+                  aria-label={showCurrentPassword ? 'Hide current password' : 'Show current password'}
+                  aria-pressed={showCurrentPassword}
+                  title={showCurrentPassword ? 'Hide current password' : 'Show current password'}
                 >
-                  {showPasswords.current ? <EyeOff size={16} /> : <Eye size={16} />}
+                  {showCurrentPassword ? <EyeOff size={16} /> : <Eye size={16} />}
                 </button>
               </div>
-            </label>
+            </div>
 
             {/* New Password */}
-            <label>
-              NEW PASSWORD
+            <div className="admin-form-group">
+              <label htmlFor="newPassword" style={{ display: 'block', marginBottom: '8px' }}>
+                NEW PASSWORD
+              </label>
               <div className="admin-input-wrap">
                 <KeyRound size={16} className="input-icon" />
                 <input
-                  type={showPasswords.new ? 'text' : 'password'}
+                  id="newPassword"
+                  type={showNewPassword ? 'text' : 'password'}
                   value={formData.newPassword}
                   onChange={handleChange('newPassword')}
                   autoComplete="new-password"
@@ -145,11 +151,17 @@ export default function ChangePasswordManager() {
                 <button
                   type="button"
                   className="password-toggle-btn"
-                  onClick={() => toggleVisibility('new')}
-                  aria-label={showPasswords.new ? 'Hide new password' : 'Show new password'}
-                  title={showPasswords.new ? 'Hide new password' : 'Show new password'}
+                  onClick={(e) => {
+                    e.preventDefault();
+                    e.stopPropagation();
+                    setShowNewPassword((prev) => !prev);
+                  }}
+                  onMouseDown={(e) => e.preventDefault()}
+                  aria-label={showNewPassword ? 'Hide new password' : 'Show new password'}
+                  aria-pressed={showNewPassword}
+                  title={showNewPassword ? 'Hide new password' : 'Show new password'}
                 >
-                  {showPasswords.new ? <EyeOff size={16} /> : <Eye size={16} />}
+                  {showNewPassword ? <EyeOff size={16} /> : <Eye size={16} />}
                 </button>
               </div>
               <span style={{
@@ -158,18 +170,22 @@ export default function ChangePasswordManager() {
                 fontWeight: 400,
                 letterSpacing: 0,
                 marginTop: '4px',
+                display: 'block',
               }}>
                 Password must be at least 8 characters and include an uppercase letter, lowercase letter, and number.
               </span>
-            </label>
+            </div>
 
             {/* Confirm New Password */}
-            <label>
-              CONFIRM NEW PASSWORD
+            <div className="admin-form-group">
+              <label htmlFor="confirmNewPassword" style={{ display: 'block', marginBottom: '8px' }}>
+                CONFIRM NEW PASSWORD
+              </label>
               <div className="admin-input-wrap">
                 <KeyRound size={16} className="input-icon" />
                 <input
-                  type={showPasswords.confirm ? 'text' : 'password'}
+                  id="confirmNewPassword"
+                  type={showConfirmPassword ? 'text' : 'password'}
                   value={formData.confirmNewPassword}
                   onChange={handleChange('confirmNewPassword')}
                   autoComplete="new-password"
@@ -179,14 +195,20 @@ export default function ChangePasswordManager() {
                 <button
                   type="button"
                   className="password-toggle-btn"
-                  onClick={() => toggleVisibility('confirm')}
-                  aria-label={showPasswords.confirm ? 'Hide confirm password' : 'Show confirm password'}
-                  title={showPasswords.confirm ? 'Hide confirm password' : 'Show confirm password'}
+                  onClick={(e) => {
+                    e.preventDefault();
+                    e.stopPropagation();
+                    setShowConfirmPassword((prev) => !prev);
+                  }}
+                  onMouseDown={(e) => e.preventDefault()}
+                  aria-label={showConfirmPassword ? 'Hide confirm password' : 'Show confirm password'}
+                  aria-pressed={showConfirmPassword}
+                  title={showConfirmPassword ? 'Hide confirm password' : 'Show confirm password'}
                 >
-                  {showPasswords.confirm ? <EyeOff size={16} /> : <Eye size={16} />}
+                  {showConfirmPassword ? <EyeOff size={16} /> : <Eye size={16} />}
                 </button>
               </div>
-            </label>
+            </div>
           </div>
 
           <div style={{ marginTop: '24px' }}>

@@ -1,8 +1,22 @@
 import { createPortal } from 'react-dom';
 import { AlertTriangle, X } from 'lucide-react';
 
-export default function ModalConfirm({ isOpen, title, message, onConfirm, onCancel, confirmText = 'Delete', loading = false }) {
+export default function ModalConfirm({
+  isOpen,
+  title,
+  message,
+  onConfirm,
+  onCancel,
+  confirmText = 'Delete',
+  cancelText = 'Cancel',
+  confirmLabel,
+  cancelLabel,
+  loading = false,
+}) {
   if (!isOpen) return null;
+
+  const displayConfirmText = confirmLabel || confirmText;
+  const displayCancelText = cancelLabel || cancelText;
 
   return createPortal(
     <div
@@ -25,10 +39,10 @@ export default function ModalConfirm({ isOpen, title, message, onConfirm, onCanc
         <p>{message}</p>
         <div className="confirm-actions">
           <button className="btn btn-outline btn-sm" onClick={onCancel} disabled={loading}>
-            Cancel
+            {displayCancelText}
           </button>
           <button className="btn btn-danger btn-sm" onClick={onConfirm} disabled={loading}>
-            {loading ? 'Processing...' : confirmText}
+            {loading ? 'Processing...' : displayConfirmText}
           </button>
         </div>
       </div>

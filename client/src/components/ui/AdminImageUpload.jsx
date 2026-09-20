@@ -186,7 +186,49 @@ export default function AdminImageUpload({
       )}
 
       {/* Main Upload / Input Area */}
-      {mode === 'upload' ? (
+      {value ? (
+        <div className="admin-upload-preview-card">
+          <div className="admin-preview-thumb-wrap">
+            <img
+              src={value}
+              alt="Uploaded Preview"
+              className="admin-preview-img"
+              onError={(e) => {
+                e.currentTarget.style.display = 'none';
+              }}
+            />
+          </div>
+          <div className="admin-preview-info">
+            <p className="admin-preview-url" title={value}>
+              {value}
+            </p>
+            <span className={`admin-preview-badge ${publicId ? 'is-cloudinary' : 'is-external'}`}>
+              {publicId ? '✓ Cloudinary Hosted' : 'External Web Image'}
+            </span>
+          </div>
+          <div className="admin-preview-actions">
+            <button
+              type="button"
+              className="btn btn-outline btn-xs"
+              onClick={handleChooseFileClick}
+              disabled={disabled || uploading}
+              title="Replace image"
+            >
+              {uploading ? <Loader2 size={12} className="spin-icon" /> : <Upload size={12} />}
+              <span>{uploading ? 'Uploading...' : 'Replace'}</span>
+            </button>
+            <button
+              type="button"
+              className="btn btn-outline btn-xs btn-danger-subtle"
+              onClick={handleClear}
+              disabled={disabled || uploading}
+              title="Remove image"
+            >
+              <X size={12} /> Remove
+            </button>
+          </div>
+        </div>
+      ) : mode === 'upload' ? (
         <div
           className={`admin-upload-dropzone admin-file-dropzone ${isDragging ? 'is-dragging' : ''} ${uploading ? 'is-uploading' : ''} ${disabled ? 'is-disabled' : ''}`}
           onDragOver={handleDragOver}
@@ -250,50 +292,6 @@ export default function AdminImageUpload({
         <div className="admin-upload-error" role="alert">
           <AlertCircle size={14} />
           <span>{error}</span>
-        </div>
-      )}
-
-      {/* Preview Card */}
-      {value && (
-        <div className="admin-upload-preview-card">
-          <div className="admin-preview-thumb-wrap">
-            <img
-              src={value}
-              alt="Uploaded Preview"
-              className="admin-preview-img"
-              onError={(e) => {
-                e.currentTarget.style.display = 'none';
-              }}
-            />
-          </div>
-          <div className="admin-preview-info">
-            <p className="admin-preview-url" title={value}>
-              {value}
-            </p>
-            <span className={`admin-preview-badge ${publicId ? 'is-cloudinary' : 'is-external'}`}>
-              {publicId ? '✓ Cloudinary Hosted' : 'External Web Image'}
-            </span>
-          </div>
-          <div className="admin-preview-actions">
-            <button
-              type="button"
-              className="btn btn-outline btn-xs"
-              onClick={handleChooseFileClick}
-              disabled={disabled || uploading}
-              title="Replace with a new file"
-            >
-              <Upload size={12} /> Replace
-            </button>
-            <button
-              type="button"
-              className="btn btn-outline btn-xs btn-danger-subtle"
-              onClick={handleClear}
-              disabled={disabled || uploading}
-              title="Remove image"
-            >
-              <X size={12} /> Remove
-            </button>
-          </div>
         </div>
       )}
     </div>

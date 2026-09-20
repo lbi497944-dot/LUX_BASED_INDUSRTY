@@ -53,8 +53,11 @@ export const normalizeSocialLinks = (socialLinks) => {
         const isSafe = rawUrl.length > 0 && validateSafeSocialUrl(rawUrl);
         const url = containsVeloura ? '' : (isSafe ? rawUrl : '');
         const icon = typeof item.icon === 'string' ? item.icon.trim() : platform;
-        const active = isSafe && !containsVeloura ? (item.active !== undefined ? Boolean(item.active) : true) : false;
-        const displayOrder = Number.isFinite(Number(item.displayOrder !== undefined ? item.displayOrder : item.order))
+        const rawActive = item.active !== undefined
+          ? item.active
+          : (item.isActive !== undefined ? item.isActive : true);
+        const active = isSafe && !containsVeloura ? Boolean(rawActive) : false;
+        const orderVal = Number.isFinite(Number(item.displayOrder !== undefined ? item.displayOrder : item.order))
           ? Number(item.displayOrder !== undefined ? item.displayOrder : item.order)
           : idx;
         const id = item.id || item._id || `${platform}-${idx}`;
@@ -66,7 +69,9 @@ export const normalizeSocialLinks = (socialLinks) => {
           url,
           icon: icon || platform,
           active,
-          displayOrder,
+          isActive: active,
+          displayOrder: orderVal,
+          order: orderVal,
         };
       });
 
@@ -91,15 +96,19 @@ export const normalizeSocialLinks = (socialLinks) => {
         const containsVeloura = /veloura/i.test(rawUrl);
         const isSafe = rawUrl.length > 0 && validateSafeSocialUrl(rawUrl);
         const url = containsVeloura ? '' : (isSafe ? rawUrl : '');
+        const active = isSafe && !containsVeloura;
         normalized.push({
           id: p.platform,
           platform: p.platform,
           label: p.label,
           url,
           icon: p.platform,
-          active: isSafe && !containsVeloura,
-          displayOrder: orderIndex++,
+          active,
+          isActive: active,
+          displayOrder: orderIndex,
+          order: orderIndex,
         });
+        orderIndex++;
       }
     });
 

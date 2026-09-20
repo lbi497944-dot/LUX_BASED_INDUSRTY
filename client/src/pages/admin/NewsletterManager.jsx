@@ -3,6 +3,7 @@ import { createPortal } from 'react-dom';
 import { newsletterService } from '../../services/newsletterService';
 import {
   Send,
+  Mail,
   Plus,
   Trash2,
   Copy,
@@ -510,10 +511,10 @@ export default function NewsletterManager() {
       {/* Discard Unsaved Changes Modal */}
       <ModalConfirm
         isOpen={discardConfirmOpen}
-        title="Discard Unsaved Changes?"
-        message="You have unsaved changes in this campaign draft. Are you sure you want to discard your edits and close the editor?"
-        confirmLabel="Discard & Exit"
-        cancelLabel="Continue Editing"
+        title="You have unsaved changes."
+        message="You have unsaved edits in this newsletter campaign. Are you sure you want to discard your changes?"
+        confirmText="Discard Changes"
+        cancelText="Keep Editing"
         onConfirm={handleConfirmDiscard}
         onCancel={() => setDiscardConfirmOpen(false)}
       />
@@ -840,16 +841,42 @@ export default function NewsletterManager() {
               {/* Workspace Header */}
               <div className="admin-workspace-header">
                 <div className="admin-workspace-title-wrap">
-                  <h2 id="campaign-editor-title">
-                    {editingCampaign ? 'Edit Newsletter Campaign' : 'Create Newsletter Campaign'}
-                  </h2>
-                  {isFormDirty() && <span className="admin-preview-dirty-badge">Unsaved Changes</span>}
+                  <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
+                    <div
+                      style={{
+                        width: '36px',
+                        height: '36px',
+                        borderRadius: '6px',
+                        backgroundColor: 'rgba(230, 199, 122, 0.15)',
+                        border: '1px solid rgba(230, 199, 122, 0.3)',
+                        display: 'flex',
+                        alignItems: 'center',
+                        justifyContent: 'center',
+                        color: 'var(--gold, #e6c77a)',
+                        flexShrink: 0,
+                      }}
+                    >
+                      <Mail size={18} />
+                    </div>
+                    <div>
+                      <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
+                        <h2 id="campaign-editor-title" style={{ fontSize: '18px', fontWeight: 600, letterSpacing: '0.04em' }}>
+                          {editingCampaign ? 'EDIT NEWSLETTER CAMPAIGN' : 'CREATE NEWSLETTER CAMPAIGN'}
+                        </h2>
+                        {isFormDirty() && <span className="admin-preview-dirty-badge">Unsaved Changes</span>}
+                      </div>
+                      <p style={{ margin: '2px 0 0', fontSize: '12px', color: 'rgba(243, 243, 235, 0.65)' }}>
+                        Design your campaign and preview exactly how it will appear to your subscribers.
+                      </p>
+                    </div>
+                  </div>
                 </div>
                 <button
                   type="button"
                   className="admin-modal-close-btn"
                   onClick={handleAttemptCloseEditor}
                   aria-label="Close newsletter editor"
+                  title="Close editor"
                 >
                   <X size={20} />
                 </button>
@@ -875,60 +902,101 @@ export default function NewsletterManager() {
 
               {/* Workspace Body: 2 Columns */}
               <div className="admin-workspace-body">
-                <div className="admin-workspace-grid">
+                <div className="admin-workspace-grid newsletter-workspace-grid" style={{ gridTemplateColumns: '46% 54%' }}>
                   {/* Left Column: Form Editor */}
                   <form
                     id="newsletter-campaign-form"
                     onSubmit={handleSaveCampaign}
                     className={`admin-workspace-editor admin-form ${workspaceTab === 'editor' ? 'active' : ''}`}
+                    style={{ padding: '24px 28px', gap: '20px' }}
                   >
-                    <div className="admin-form-group">
-                      <label>Campaign Title (Internal Reference) *</label>
-                      <input
-                        type="text"
-                        required
-                        placeholder="e.g. Winter Architectural Collections Preview"
-                        value={formData.title}
-                        onChange={(e) => setFormData({ ...formData, title: e.target.value })}
-                      />
-                    </div>
-
-                    <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '16px' }}>
+                    {/* CAMPAIGN DETAILS */}
+                    <div className="newsletter-form-section">
                       <div className="admin-form-group">
-                        <label>Email Subject Line *</label>
+                        <label>Campaign Title (Internal Reference) *</label>
                         <input
                           type="text"
                           required
-                          placeholder="e.g. Exclusive Preview: LUX Bespoke Luminaires"
-                          value={formData.subject}
-                          onChange={(e) => setFormData({ ...formData, subject: e.target.value })}
+                          placeholder="e.g. Winter Architecture Collection 2026"
+                          value={formData.title}
+                          onChange={(e) => setFormData({ ...formData, title: e.target.value })}
                         />
                       </div>
-                      <div className="admin-form-group">
-                        <label>Preview Text (Inbox Preheader)</label>
+
+                      <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '16px', marginTop: '16px' }}>
+                        <div className="admin-form-group">
+                          <label>Email Subject Line *</label>
+                          <input
+                            type="text"
+                            required
+                            placeholder="e.g. Exclusive Preview: LUX Bespoke Luminaires"
+                            value={formData.subject}
+                            onChange={(e) => setFormData({ ...formData, subject: e.target.value })}
+                          />
+                        </div>
+                        <div className="admin-form-group">
+                          <label>Preview Text (Inbox Preheader)</label>
+                          <input
+                            type="text"
+                            placeholder="e.g. Architectural luminaires engineered for luxury interiors"
+                            value={formData.previewText}
+                            onChange={(e) => setFormData({ ...formData, previewText: e.target.value })}
+                          />
+                        </div>
+                      </div>
+
+                      <div className="admin-form-group" style={{ marginTop: '16px' }}>
+                        <label>Heading (Inside Email Template)</label>
                         <input
                           type="text"
-                          placeholder="e.g. Architectural luminaires engineered for luxury interiors"
-                          value={formData.previewText}
-                          onChange={(e) => setFormData({ ...formData, previewText: e.target.value })}
+                          placeholder="e.g. Architectural Illumination · 2026 Collection"
+                          value={formData.heading}
+                          onChange={(e) => setFormData({ ...formData, heading: e.target.value })}
                         />
                       </div>
                     </div>
 
-                    <div className="admin-form-group">
-                      <label>Heading (Inside Email Template)</label>
-                      <input
-                        type="text"
-                        placeholder="e.g. Architectural Illumination · 2026 Collection"
-                        value={formData.heading}
-                        onChange={(e) => setFormData({ ...formData, heading: e.target.value })}
-                      />
-                    </div>
+                    {/* FEATURED IMAGE */}
+                    <div className="newsletter-form-section" style={{ borderTop: '1px solid rgba(230, 199, 122, 0.15)', paddingTop: '18px' }}>
+                      <div style={{ marginBottom: '8px' }}>
+                        <label style={{ margin: 0, fontWeight: 600, fontSize: '13px', color: '#FAF8F1' }}>
+                          Featured Image
+                        </label>
+                        <p style={{ margin: '2px 0 8px', fontSize: '12px', color: 'rgba(243, 243, 235, 0.55)' }}>
+                          This image will be displayed at the top of your email.
+                        </p>
+                      </div>
 
-                    {/* Banner Image Upload */}
-                    <div className="admin-form-group">
+                      {/* Image Guidelines Panel */}
+                      <div
+                        style={{
+                          display: 'flex',
+                          flexWrap: 'wrap',
+                          gap: '8px 16px',
+                          padding: '8px 12px',
+                          backgroundColor: 'rgba(230, 199, 122, 0.05)',
+                          border: '1px solid rgba(230, 199, 122, 0.18)',
+                          borderRadius: '4px',
+                          marginBottom: '12px',
+                          fontSize: '11px',
+                          color: 'rgba(243, 243, 235, 0.75)',
+                        }}
+                      >
+                        <span style={{ fontWeight: 600, color: 'var(--gold, #e6c77a)' }}>
+                          Banner Guidelines:
+                        </span>
+                        <span style={{ display: 'inline-flex', alignItems: 'center', gap: '4px' }}>
+                          <Check size={13} style={{ color: 'var(--gold, #e6c77a)' }} /> Recommended: 1200 &times; 630px
+                        </span>
+                        <span style={{ display: 'inline-flex', alignItems: 'center', gap: '4px' }}>
+                          <Check size={13} style={{ color: 'var(--gold, #e6c77a)' }} /> Maximum 10MB
+                        </span>
+                        <span style={{ display: 'inline-flex', alignItems: 'center', gap: '4px' }}>
+                          <Check size={13} style={{ color: 'var(--gold, #e6c77a)' }} /> JPG, PNG or WEBP
+                        </span>
+                      </div>
+
                       <AdminImageUpload
-                        label="CAMPAIGN FEATURED IMAGE"
                         value={formData.imageUrl}
                         publicId={formData.imagePublicId}
                         onChange={({ url, publicId }) => {
@@ -940,8 +1008,8 @@ export default function NewsletterManager() {
                     </div>
 
                     {/* Content Body */}
-                    <div className="admin-form-group">
-                      <label>Editorial Content (HTML / Formatted Text) *</label>
+                    <div className="newsletter-form-section" style={{ borderTop: '1px solid rgba(230, 199, 122, 0.15)', paddingTop: '18px' }}>
+                      <label style={{ display: 'block', marginBottom: '6px' }}>Editorial Content (HTML / Formatted Text) *</label>
                       <textarea
                         rows={10}
                         style={{ minHeight: '220px', fontFamily: 'inherit', lineHeight: '1.6' }}
@@ -953,12 +1021,12 @@ export default function NewsletterManager() {
                     </div>
 
                     {/* CTA Button */}
-                    <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '16px' }}>
+                    <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '16px', borderTop: '1px solid rgba(230, 199, 122, 0.15)', paddingTop: '18px' }}>
                       <div className="admin-form-group">
                         <label>CTA Button Label</label>
                         <input
                           type="text"
-                          placeholder="e.g. Explore Pendants"
+                          placeholder="e.g. Explore Collections"
                           value={formData.ctaText}
                           onChange={(e) => setFormData({ ...formData, ctaText: e.target.value })}
                         />
@@ -975,7 +1043,7 @@ export default function NewsletterManager() {
                     </div>
 
                     {/* Attachments Section */}
-                    <div className="admin-form-group" style={{ borderTop: '1px solid rgba(230, 199, 122, 0.15)', paddingTop: '16px' }}>
+                    <div className="admin-form-group" style={{ borderTop: '1px solid rgba(230, 199, 122, 0.15)', paddingTop: '18px' }}>
                       <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '8px' }}>
                         <label style={{ margin: 0, display: 'flex', alignItems: 'center', gap: '6px' }}>
                           <Paperclip size={16} /> Attached Documents / Lookbooks ({formData.attachments.length})
@@ -1039,7 +1107,7 @@ export default function NewsletterManager() {
                     </div>
 
                     {/* Target Audience */}
-                    <div className="admin-form-group" style={{ borderTop: '1px solid rgba(230, 199, 122, 0.15)', paddingTop: '16px' }}>
+                    <div className="admin-form-group" style={{ borderTop: '1px solid rgba(230, 199, 122, 0.15)', paddingTop: '18px' }}>
                       <label style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
                         <Users size={16} /> Target Audience
                       </label>
@@ -1147,19 +1215,37 @@ export default function NewsletterManager() {
               </div>
 
               {/* Workspace Sticky Footer */}
-              <div className="admin-workspace-footer">
-                <button type="button" className="btn btn-outline" onClick={handleAttemptCloseEditor}>
-                  Cancel
-                </button>
+              <div className="admin-workspace-footer" style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '14px 24px', background: '#112e17', borderTop: '1px solid rgba(230, 199, 122, 0.2)' }}>
                 <button
-                  type="submit"
-                  form="newsletter-campaign-form"
-                  className="btn btn-gold"
+                  type="button"
+                  className="btn btn-outline btn-sm"
+                  onClick={handleAttemptCloseEditor}
                   disabled={formSaving}
                 >
-                  {formSaving ? <Loader2 className="spin-icon" size={16} /> : <FileText size={16} />}
-                  <span>{formSaving ? 'Saving Draft...' : 'Save Campaign Draft'}</span>
+                  Cancel
                 </button>
+                <div style={{ display: 'flex', gap: '12px', alignItems: 'center' }}>
+                  <button
+                    type="submit"
+                    form="newsletter-campaign-form"
+                    className="btn btn-outline btn-sm"
+                    disabled={formSaving}
+                    title="Save draft without publishing"
+                  >
+                    {formSaving ? <Loader2 className="spin-icon" size={14} /> : <FileText size={14} />}
+                    <span>Save as Draft</span>
+                  </button>
+                  <button
+                    type="submit"
+                    form="newsletter-campaign-form"
+                    className="btn btn-gold btn-sm"
+                    disabled={formSaving}
+                    title="Save campaign"
+                  >
+                    {formSaving ? <Loader2 className="spin-icon" size={14} /> : <Send size={14} />}
+                    <span>{formSaving ? 'Saving Campaign...' : 'Save Campaign'}</span>
+                  </button>
+                </div>
               </div>
             </div>
           </div>,

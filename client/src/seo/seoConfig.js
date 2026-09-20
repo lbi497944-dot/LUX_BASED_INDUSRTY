@@ -176,14 +176,27 @@ export const getOrganizationSchema = (settings = {}) => {
   const email = settings.contact_email || siteConfig.contact.email;
   const phone = settings.contact_phone || siteConfig.contact.phone;
 
-  return {
+  const sameAs = Array.isArray(settings?.socialLinks)
+    ? settings.socialLinks
+        .filter(
+          (s) =>
+            s &&
+            s.active !== false &&
+            s.isActive !== false &&
+            typeof s.url === 'string' &&
+            s.url.trim().length > 0
+        )
+        .map((s) => s.url.trim())
+    : [];
+
+  const schema = {
     '@context': 'https://schema.org',
     '@type': 'Organization',
     '@id': `${siteConfig.siteUrl}/#organization`,
-    name: siteConfig.siteName,
+    name: settings.brandName || siteConfig.siteName,
     url: siteConfig.siteUrl,
-    logo: siteConfig.defaultImage,
-    description: siteConfig.defaultDescription,
+    logo: settings.logo || siteConfig.defaultImage,
+    description: settings.tagline || siteConfig.defaultDescription,
     email: email,
     telephone: phone,
     address: {
@@ -193,6 +206,12 @@ export const getOrganizationSchema = (settings = {}) => {
       addressCountry: 'AE'
     }
   };
+
+  if (sameAs.length > 0) {
+    schema.sameAs = sameAs;
+  }
+
+  return schema;
 };
 
 export const getWebSiteSchema = () => {

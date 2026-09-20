@@ -7,6 +7,8 @@ const router = express.Router();
 
 router.get('/', settingController.getSettings);
 router.put('/', protect, authorize('admin'), settingController.updateSettings);
+router.put('/social', protect, authorize('admin'), settingController.updateSettings);
+router.patch('/social', protect, authorize('admin'), settingController.updateSettings);
 
 // Public catalogue availability route
 router.get('/catalogue', settingController.getCatalogue);

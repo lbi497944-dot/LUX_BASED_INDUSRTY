@@ -123,6 +123,7 @@ export default function Footer() {
         (item) =>
           item &&
           item.active !== false &&
+          item.isActive !== false &&
           typeof item.url === 'string' &&
           item.url.trim().length > 0 &&
           validateSafeSocialUrl(item.url)

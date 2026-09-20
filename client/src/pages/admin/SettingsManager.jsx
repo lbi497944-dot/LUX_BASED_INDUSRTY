@@ -123,6 +123,10 @@ export default function SettingsManager() {
   const [socialFormData, setSocialFormData] = useState(EMPTY_SOCIAL);
   const [socialFormError, setSocialFormError] = useState('');
   const [deleteSocialTarget, setDeleteSocialTarget] = useState(null);
+  const [socialModalSaving, setSocialModalSaving] = useState(false);
+  const [socialDeleting, setSocialDeleting] = useState(false);
+  const [socialTogglingIndex, setSocialTogglingIndex] = useState(null);
+  const [socialReordering, setSocialReordering] = useState(false);
 
   // Authoritative normalization and application of settings into local form state
   const applySettingsToFormData = useCallback((sourceSettings) => {
@@ -546,14 +550,15 @@ export default function SettingsManager() {
     });
   };
 
-  const handleSaveSocialModal = (e) => {
+  const handleSaveSocialModal = async (e) => {
     e.preventDefault();
     const trimmedUrl = (socialFormData.url || '').trim();
     if (trimmedUrl && !validateSafeSocialUrl(trimmedUrl)) {
-      setSocialFormError('Please enter a valid, safe URL starting with https://, http://, or whatsapp://');
+      setSocialFormError('Please enter a valid social media URL starting with https://, http://, or whatsapp://');
       return;
     }
 
+    const isEdit = editingSocialIndex !== null;
     const updatedSocials = [...formData.socialLinks];
     const meta = getPlatformMetadata(socialFormData.platform, socialFormData.label);
     const itemToSave = {
@@ -561,9 +566,11 @@ export default function SettingsManager() {
       label: (socialFormData.label || '').trim() || meta.name,
       url: trimmedUrl,
       icon: socialFormData.platform,
+      active: socialFormData.active !== undefined ? Boolean(socialFormData.active) : true,
+      isActive: socialFormData.active !== undefined ? Boolean(socialFormData.active) : true,
     };
 
-    if (editingSocialIndex !== null) {
+    if (isEdit) {
       updatedSocials[editingSocialIndex] = itemToSave;
     } else {
       updatedSocials.push(itemToSave);
@@ -571,18 +578,42 @@ export default function SettingsManager() {
 
     updatedSocials.forEach((item, idx) => {
       item.displayOrder = idx;
+      item.order = idx;
     });
 
-    setIsDirty(true);
-    setFormData((prev) => ({
-      ...prev,
-      socialLinks: updatedSocials,
-    }));
+    const platformName = itemToSave.label || meta.name;
 
-    setIsSocialModalOpen(false);
+    try {
+      setSocialModalSaving(true);
+      const res = await settingService.updateSettings({ socialLinks: updatedSocials });
+      const persisted = res?.data?.settings?.socialLinks || updatedSocials;
+      setFormData((prev) => ({
+        ...prev,
+        socialLinks: persisted,
+      }));
+      await refreshSettings();
+      setIsSocialModalOpen(false);
+      setToast({
+        type: 'success',
+        title: isEdit ? 'Channel Updated' : 'Channel Added',
+        message: `${platformName} ${isEdit ? 'updated' : 'added'} successfully.`,
+      });
+    } catch (err) {
+      setSocialFormError(
+        `Unable to ${isEdit ? 'update' : 'add'} ${platformName}. Please try again.`
+      );
+      setToast({
+        type: 'error',
+        title: isEdit ? 'Update Failed' : 'Add Failed',
+        message: `Unable to ${isEdit ? 'update' : 'add'} ${platformName}. Please try again.`,
+      });
+    } finally {
+      setSocialModalSaving(false);
+    }
   };
 
-  const handleMoveSocial = (index, direction) => {
+  const handleMoveSocial = async (index, direction) => {
+    if (socialReordering || socialTogglingIndex !== null) return;
     const targetIndex = index + direction;
     if (targetIndex < 0 || targetIndex >= formData.socialLinks.length) return;
 
@@ -593,46 +624,108 @@ export default function SettingsManager() {
 
     updated.forEach((item, idx) => {
       item.displayOrder = idx;
+      item.order = idx;
     });
 
-    setIsDirty(true);
-    setFormData((prev) => ({
-      ...prev,
-      socialLinks: updated,
-    }));
+    try {
+      setSocialReordering(true);
+      const res = await settingService.updateSettings({ socialLinks: updated });
+      const persisted = res?.data?.settings?.socialLinks || updated;
+      setFormData((prev) => ({
+        ...prev,
+        socialLinks: persisted,
+      }));
+      await refreshSettings();
+      setToast({
+        type: 'success',
+        title: 'Order Updated',
+        message: 'Social channel order updated.',
+      });
+    } catch (err) {
+      setToast({
+        type: 'error',
+        title: 'Reorder Failed',
+        message: 'Unable to update social channel order. Please try again.',
+      });
+    } finally {
+      setSocialReordering(false);
+    }
   };
 
-  const handleToggleSocialActive = (index) => {
+  const handleToggleSocialActive = async (index) => {
+    if (socialTogglingIndex !== null || socialReordering) return;
+    const current = formData.socialLinks[index];
+    if (!current) return;
+
+    const nextActive = !current.active;
     const updated = [...formData.socialLinks];
     updated[index] = {
       ...updated[index],
-      active: !updated[index].active,
+      active: nextActive,
+      isActive: nextActive,
     };
-    setIsDirty(true);
-    setFormData((prev) => ({
-      ...prev,
-      socialLinks: updated,
-    }));
+
+    const channelName = current.label || current.platform || 'Channel';
+
+    try {
+      setSocialTogglingIndex(index);
+      const res = await settingService.updateSettings({ socialLinks: updated });
+      const persisted = res?.data?.settings?.socialLinks || updated;
+      setFormData((prev) => ({
+        ...prev,
+        socialLinks: persisted,
+      }));
+      await refreshSettings();
+      setToast({
+        type: 'success',
+        title: nextActive ? 'Channel Activated' : 'Channel Deactivated',
+        message: `${channelName} ${nextActive ? 'activated.' : 'deactivated.'}`,
+      });
+    } catch (err) {
+      setToast({
+        type: 'error',
+        title: 'Update Failed',
+        message: `Unable to update ${channelName}. Please try again.`,
+      });
+    } finally {
+      setSocialTogglingIndex(null);
+    }
   };
 
-  const handleDeleteSocialConfirm = () => {
+  const handleDeleteSocialConfirm = async () => {
     if (deleteSocialTarget === null) return;
-    const channelName = formData.socialLinks[deleteSocialTarget]?.label || 'Channel';
+    const channelToDelete = formData.socialLinks[deleteSocialTarget];
+    const channelName = channelToDelete?.label || channelToDelete?.platform || 'Channel';
     const updated = formData.socialLinks.filter((_, idx) => idx !== deleteSocialTarget);
     updated.forEach((item, idx) => {
       item.displayOrder = idx;
+      item.order = idx;
     });
-    setIsDirty(true);
-    setFormData((prev) => ({
-      ...prev,
-      socialLinks: updated,
-    }));
-    setDeleteSocialTarget(null);
-    setToast({
-      type: 'info',
-      title: 'Channel Removed (Unsaved)',
-      message: `"${channelName}" removed. Click "Save Global Settings" below to persist changes to the database.`,
-    });
+
+    try {
+      setSocialDeleting(true);
+      const res = await settingService.updateSettings({ socialLinks: updated });
+      const persisted = res?.data?.settings?.socialLinks || updated;
+      setFormData((prev) => ({
+        ...prev,
+        socialLinks: persisted,
+      }));
+      await refreshSettings();
+      setDeleteSocialTarget(null);
+      setToast({
+        type: 'success',
+        title: 'Channel Deleted',
+        message: `${channelName} deleted successfully.`,
+      });
+    } catch (err) {
+      setToast({
+        type: 'error',
+        title: 'Delete Failed',
+        message: `Unable to delete ${channelName}. Please try again.`,
+      });
+    } finally {
+      setSocialDeleting(false);
+    }
   };
 
   // Form Submission
@@ -810,17 +903,21 @@ export default function SettingsManager() {
       {/* Delete Social Channel Confirmation Modal */}
       <ModalConfirm
         isOpen={deleteSocialTarget !== null}
-        title="Delete Social Channel"
-        message={`Are you sure you want to remove "${formData.socialLinks[deleteSocialTarget]?.label || 'this social channel'}"?`}
+        title={`Delete ${formData.socialLinks[deleteSocialTarget]?.label || 'Channel'}?`}
+        message={`The ${formData.socialLinks[deleteSocialTarget]?.label || 'Channel'} social channel will be permanently removed.`}
+        confirmText={socialDeleting ? 'Deleting...' : 'Delete'}
         onConfirm={handleDeleteSocialConfirm}
-        onCancel={() => setDeleteSocialTarget(null)}
+        onCancel={() => {
+          if (!socialDeleting) setDeleteSocialTarget(null);
+        }}
+        loading={socialDeleting}
       />
 
       {/* Social Channel Add / Edit Modal */}
       {isSocialModalOpen && (
-        <div className="modal-backdrop" onClick={() => setIsSocialModalOpen(false)} role="dialog" aria-modal="true">
+        <div className="modal-backdrop" onClick={() => !socialModalSaving && setIsSocialModalOpen(false)} role="dialog" aria-modal="true">
           <div className="modal-container admin-modal-md" onClick={(e) => e.stopPropagation()}>
-            <button className="modal-close" onClick={() => setIsSocialModalOpen(false)} aria-label="Close modal">
+            <button className="modal-close" onClick={() => !socialModalSaving && setIsSocialModalOpen(false)} aria-label="Close modal">
               <X size={18} />
             </button>
             <div className="modal-header">
@@ -840,6 +937,7 @@ export default function SettingsManager() {
                 <select
                   value={socialFormData.platform}
                   onChange={(e) => handleSocialPlatformChange(e.target.value)}
+                  disabled={socialModalSaving}
                   style={{
                     width: '100%',
                     padding: '10px 14px',
@@ -865,6 +963,7 @@ export default function SettingsManager() {
                   placeholder="e.g. Instagram, Official YouTube, Portfolio"
                   value={socialFormData.label}
                   onChange={(e) => setSocialFormData({ ...socialFormData, label: e.target.value })}
+                  disabled={socialModalSaving}
                 />
               </label>
 
@@ -875,6 +974,7 @@ export default function SettingsManager() {
                   placeholder={getPlatformMetadata(socialFormData.platform).placeholder}
                   value={socialFormData.url}
                   onChange={(e) => setSocialFormData({ ...socialFormData, url: e.target.value })}
+                  disabled={socialModalSaving}
                 />
                 <span className="field-hint" style={{ fontSize: '11px', color: 'var(--text-muted)', marginTop: '4px', display: 'block' }}>
                   Must start with https://, http://, or whatsapp:// (no dangerous javascript/data links)
@@ -898,17 +998,31 @@ export default function SettingsManager() {
                     type="checkbox"
                     checked={socialFormData.active}
                     onChange={(e) => setSocialFormData({ ...socialFormData, active: e.target.checked })}
+                    disabled={socialModalSaving}
                   />
                   <span>Active & Visible in Public Footer (only displayed if URL is non-empty)</span>
                 </label>
               </div>
 
               <div className="modal-actions" style={{ marginTop: '20px' }}>
-                <button type="button" className="btn btn-outline btn-sm" onClick={() => setIsSocialModalOpen(false)}>
+                <button
+                  type="button"
+                  className="btn btn-outline btn-sm"
+                  onClick={() => setIsSocialModalOpen(false)}
+                  disabled={socialModalSaving}
+                >
                   Cancel
                 </button>
-                <button type="submit" className="btn btn-gold btn-sm">
-                  {editingSocialIndex !== null ? 'Update Channel' : 'Add Channel'}
+                <button type="submit" className="btn btn-gold btn-sm" disabled={socialModalSaving}>
+                  {socialModalSaving ? (
+                    <>
+                      <Loader2 size={14} className="spin-icon" /> Saving...
+                    </>
+                  ) : editingSocialIndex !== null ? (
+                    'Update Channel'
+                  ) : (
+                    'Add Channel'
+                  )}
                 </button>
               </div>
             </form>
@@ -1420,21 +1534,6 @@ export default function SettingsManager() {
                   Manage brand social profiles, live public display, ordering, and platform links.
                 </p>
               </div>
-              {isDirty && (
-                <span
-                  style={{
-                    fontSize: '11px',
-                    color: 'var(--gold)',
-                    backgroundColor: 'rgba(230, 199, 122, 0.12)',
-                    border: '1px solid rgba(230, 199, 122, 0.3)',
-                    padding: '3px 8px',
-                    borderRadius: '4px',
-                    whiteSpace: 'nowrap',
-                  }}
-                >
-                  Unsaved changes staged
-                </span>
-              )}
             </div>
             <button type="button" className="btn btn-gold btn-sm" onClick={handleOpenAddSocial}>
               <Plus size={14} /> ADD SOCIAL CHANNEL
@@ -1480,8 +1579,9 @@ export default function SettingsManager() {
                             type="button"
                             className="btn-icon"
                             onClick={() => handleMoveSocial(idx, -1)}
-                            disabled={idx === 0}
-                            title="Move Up"
+                            disabled={idx === 0 || socialReordering || socialTogglingIndex !== null}
+                            aria-label={`Move ${social.label || meta.name} up`}
+                            title={`Move ${social.label || meta.name} up`}
                           >
                             <ArrowUp size={14} />
                           </button>
@@ -1489,8 +1589,9 @@ export default function SettingsManager() {
                             type="button"
                             className="btn-icon"
                             onClick={() => handleMoveSocial(idx, 1)}
-                            disabled={idx === formData.socialLinks.length - 1}
-                            title="Move Down"
+                            disabled={idx === formData.socialLinks.length - 1 || socialReordering || socialTogglingIndex !== null}
+                            aria-label={`Move ${social.label || meta.name} down`}
+                            title={`Move ${social.label || meta.name} down`}
                           >
                             <ArrowDown size={14} />
                           </button>
@@ -1498,7 +1599,9 @@ export default function SettingsManager() {
                             type="button"
                             className="btn-icon"
                             onClick={() => handleOpenEditSocial(idx)}
-                            title="Edit Channel"
+                            disabled={socialReordering || socialTogglingIndex !== null}
+                            aria-label={`Edit ${social.label || meta.name}`}
+                            title={`Edit ${social.label || meta.name}`}
                           >
                             <Edit2 size={14} />
                           </button>
@@ -1506,7 +1609,9 @@ export default function SettingsManager() {
                             type="button"
                             className="btn-icon btn-danger"
                             onClick={() => setDeleteSocialTarget(idx)}
-                            title="Delete Channel"
+                            disabled={socialReordering || socialTogglingIndex !== null}
+                            aria-label={`Delete ${social.label || meta.name}`}
+                            title={`Delete ${social.label || meta.name}`}
                           >
                             <Trash2 size={14} />
                           </button>
@@ -1531,8 +1636,18 @@ export default function SettingsManager() {
                           type="button"
                           className="btn-text-action"
                           onClick={() => handleToggleSocialActive(idx)}
+                          disabled={socialTogglingIndex === idx || socialReordering}
+                          aria-label={social.active ? `Deactivate ${social.label || meta.name}` : `Activate ${social.label || meta.name}`}
                         >
-                          {social.active ? 'Deactivate' : 'Activate'}
+                          {socialTogglingIndex === idx ? (
+                            <span style={{ display: 'inline-flex', alignItems: 'center', gap: '4px' }}>
+                              <Loader2 size={12} className="spin-icon" /> Saving...
+                            </span>
+                          ) : social.active ? (
+                            'Deactivate'
+                          ) : (
+                            'Activate'
+                          )}
                         </button>
                       </div>
                     </div>
