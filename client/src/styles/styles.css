@@ -3913,6 +3913,28 @@ h1 em, h2 em, h3 em {
   gap: 20px;
 }
 
+.admin-send-review-btn {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 12px;
+  font-weight: 500;
+  color: var(--gold, #e6c77a);
+  background-color: rgba(230, 199, 122, 0.08);
+  padding: 6px 12px;
+  border-radius: 4px;
+  border: 1px solid rgba(230, 199, 122, 0.35);
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.admin-send-review-btn:hover {
+  background-color: rgba(230, 199, 122, 0.16);
+  border-color: var(--gold, #e6c77a);
+  color: #fff;
+  box-shadow: 0 0 10px rgba(230, 199, 122, 0.25);
+}
+
 .admin-view-site-btn {
   display: flex;
   align-items: center;
@@ -5394,6 +5416,7 @@ select option:checked {
     gap: 8px;
   }
 
+  .admin-send-review-btn span,
   .admin-view-site-btn span,
   .admin-logout-btn span,
   .admin-role-tag {
